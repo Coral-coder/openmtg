@@ -392,7 +392,7 @@ extension GameEffects on Game {
           final canMana = mana != null && canAfford(p, mana);
           final canLife = life != null && state.player(p).life >= life;
           if (canMana || canLife || alternative != null) {
-            final labels = ['Decline', if (canMana) 'Pay ${mana!.text}', if (canLife) 'Pay $life life', if (alternative != null) 'Do the alternative'];
+            final labels = ['Decline', if (canMana) 'Pay ${mana.text}', if (canLife) 'Pay $life life', if (alternative != null) 'Do the alternative'];
             final pick = ask(Decision(kind: DecisionKind.option, player: p, prompt: '${ctx.sourceLki?.name ?? 'Effect'}: pay to avoid it?', labels: labels, source: ctx.source));
             final choice = labels[pick.first];
             if (choice.startsWith('Pay ') && choice.endsWith('life')) {

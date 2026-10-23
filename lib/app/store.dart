@@ -184,6 +184,9 @@ class AppStore extends ChangeNotifier implements MatchArchive {
     notifyListeners();
   }
 
+  /// Redraws listeners after a setting kept elsewhere changed (the updater's).
+  void refresh() => notifyListeners();
+
   Future<void> setBotDelay(int ms) async {
     botDelay = ms;
     session?.botDelay = ms;

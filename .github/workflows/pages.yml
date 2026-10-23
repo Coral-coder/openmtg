@@ -1,0 +1,115 @@
+# Publishes the website (https://coral-coder.github.io/openmtg/): the landing page in site/,
+# the browser game under play/, and the card database under data/ (cards.json,
+# printings.json, coverage.json, manifest.json), rebuilt from Scryfall's bulk data so the app
+# can download it. Runs on pushes to main that touch the site, the app or the engine, weekly to
+# pick up new cards, and by hand.
+#
+# The github-pages environment only accepts deployments from main. On other branches the publish
+# job asks main's copy of this workflow to publish that branch, when site/ changed.
+name: Website
+
+on:
+  push:
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+      - "tools/fetch_scryfall.sh"
+      - "lib/**"
+      - "packages/rules/lib/**"
+      - "packages/rules/bin/**"
+      - "web/**"
+      - "assets/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch to publish from (empty: main)"
+        required: false
+        default: ""
+
+permissions:
+  actions: write
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    if: github.ref != 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Skip unless the landing page changed
+        id: changed
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if git cat-file -e "$BEFORE^{commit}" 2>/dev/null && git diff --quiet "$BEFORE" HEAD -- site .github/workflows/pages.yml; then
+            echo "site=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Ask main to publish this branch's site
+        if: steps.changed.outputs.site == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main -f ref="${GITHUB_REF_NAME}" || echo "::warning::main has no pages.yml yet; merge to main to publish"
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref_name }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Scryfall bulk data
+        run: tools/fetch_scryfall.sh .scryfall-cache
+      - name: Card database and coverage
+        working-directory: packages/rules
+        run: |
+          dart pub get
+          dart run bin/build_db.dart --oracle ../../.scryfall-cache/oracle-cards.jsonl.gz --default ../../.scryfall-cache/default-cards.jsonl.gz --out ../../_site/data
+          ls -la ../../_site/data
+      - name: Coverage summary
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          c = json.load(open('_site/data/coverage.json'))
+          print(f"### Card coverage: {c['supported']:,} of {c['total']:,} cards fully supported\n")
+          print("| Format | Supported | Cards |\n|---|---:|---:|")
+          for k, v in c['formats'].items():
+              print(f"| {k} | {v[0]:,} | {v[1]:,} |")
+          PY
+      - name: Landing page
+        run: |
+          mkdir -p _site
+          cp -r site/* _site/
+          touch _site/.nojekyll
+      - name: The game for the browser
+        run: |
+          flutter pub get
+          flutter build web --release --base-href /openmtg/play/
+          cp -r build/web _site/play
+          du -sh _site/play _site/data
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

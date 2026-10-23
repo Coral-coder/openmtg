@@ -8,6 +8,7 @@ import 'ui/decks.dart';
 import 'ui/lobbies.dart';
 import 'ui/menu.dart';
 import 'ui/table.dart';
+import 'ui/update.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,7 +54,7 @@ class _OpenMtgAppState extends State<OpenMtgApp> with WidgetsBindingObserver {
             theme: theme.material(),
             debugShowCheckedModeBanner: false,
             builder: (context, child) => ThemeScope(theme: store.theme, child: child ?? const SizedBox()),
-            home: store.ready ? const MainMenuScreen() : const _Loading(),
+            home: store.ready ? const UpdateCheck(child: MainMenuScreen()) : const _Loading(),
             onGenerateRoute: (settings) {
               final args = settings.arguments;
               final page = switch (settings.name) {

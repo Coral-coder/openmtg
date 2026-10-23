@@ -4,10 +4,23 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>OpenMTG uses Bluetooth to find and play against a nearby player without a network.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>OpenMTG uses Bluetooth to host a game for a nearby player.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>OpenMTG finds players on your Wi‑Fi so you can play without a server.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+		<string>bluetooth-peripheral</string>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Openmtg</string>
+	<string>OpenMTG</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

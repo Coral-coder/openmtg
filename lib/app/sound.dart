@@ -29,7 +29,11 @@ class Console {
   final List<AudioPlayer> _players = [];
   int _next = 0;
 
+  /// Off in widget tests (no audio plugin there).
+  static bool available = true;
+
   Future<void> init() async {
+    if (!available) return;
     for (final fx in Fx.values) {
       _waves[fx] = _wave(fx, _style);
     }

@@ -1,0 +1,57 @@
+# Checks every pull request and branch push: the rules engine's tests, the chaos harness (bot
+# games replayed from their logs, fingerprints compared), the Foundations coverage floor, the
+# analyzer, the app's widget tests, and a web build. Android and iOS builds run in their own
+# release workflows.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: packages/rules
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: dart pub get
+      - run: dart analyze --fatal-warnings
+      - run: dart test --reporter expanded
+      - name: Chaos harness (300 bot games, each replayed)
+        run: dart run bin/chaos.dart --games 300 --seed ${{ github.run_number }}
+      - name: Foundations coverage
+        run: |
+          dart run bin/cards.dart test/fixtures/fdn.json fdn --quiet | tee coverage.txt
+          supported=$(tail -1 coverage.txt | cut -d/ -f1)
+          echo "### Foundations: $(tail -1 coverage.txt)" >> "$GITHUB_STEP_SUMMARY"
+          # The milestone pool must not shrink.
+          floor=$(cat test/fixtures/fdn-floor.txt)
+          if [ "$supported" -lt "$floor" ]; then echo "::error::Foundations coverage fell to $supported (floor $floor)"; exit 1; fi
+
+  app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test --reporter expanded
+      - run: flutter build web --release --base-href /openmtg/play/

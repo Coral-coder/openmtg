@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rules/rules.dart';
 
 import '../app/store.dart';
+import '../app/updater.dart';
 import '../net/relay.dart';
 import '../theme/theme.dart';
 
@@ -125,6 +126,10 @@ class SettingsScreen extends StatelessWidget {
           SwitchListTile(value: r.firstPlayerDraws, onChanged: (v) => store.setRules(r.copyWith(firstPlayerDraws: v)), title: Text('First player draws on turn one', style: t.body)),
           SwitchListTile(value: r.maxHandSize, onChanged: (v) => store.setRules(r.copyWith(maxHandSize: v)), title: Text('Maximum hand size', style: t.body)),
           if (!r.isStandard) TextButton(onPressed: () => store.setRules(RulesOptions.standard), child: const Text('Back to the standard rules')),
+          if (Updater.shared.supported) ...[
+            const ThemedHeader('Updates'),
+            SwitchListTile(value: Updater.shared.autoDownload, onChanged: (v) => Updater.shared.setAutoDownload(v).then((_) => store.refresh()), title: Text('Download updates automatically', style: t.body)),
+          ],
           const ThemedHeader('Online'),
           Text('Public Nostr relays carry online matches (encrypted with the match code).', style: t.small),
           for (final relay in store.relays) ListTile(dense: true, title: Text(relay, style: t.small)),

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenMTG</title>
+<meta name="description" content="OpenMTG: a free, fan-made Magic: The Gathering game with every card, the full rules, and a visual theme for every world. Play in your browser, on Android or iPhone, against the computer or a friend anywhere.">
+<meta property="og:title" content="OpenMTG">
+<meta property="og:description" content="Every card. The full rules. A theme for every world. Free and fan-made.">
+<meta property="og:image" content="https://cards.scryfall.io/large/front/b/8/b8c5e74c-96e7-4a1f-93b7-14d776fe4b2d.jpg">
+<link rel="icon" href="play/favicon.png">
+<style>
+  :root {
+    --bg: #15100c; --bg2: #1e1712; --panel: #2a2019; --line: #5e4027;
+    --text: #f1e6d2; --muted: #b5a58c; --gold: #d9a441; --gold2: #ffd36b;
+    --w: #f8f1d8; --u: #6fa8dc; --b: #8e7f86; --r: #e0674f; --g: #5fa35c;
+    --serif: Georgia, 'Palatino Linotype', Palatino, 'Times New Roman', serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: radial-gradient(ellipse at top, #2b3a2a 0%, var(--bg) 55%) fixed; color: var(--text); font-family: var(--sans); line-height: 1.5; }
+  a { color: var(--gold2); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 28px 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .logo { font-family: var(--serif); font-size: 30px; font-weight: 700; letter-spacing: .02em; color: var(--gold); text-decoration: none; }
+  .logo span { color: var(--text); }
+  nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 15px; }
+  nav a:hover { color: var(--gold2); }
+
+  .hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: 32px; align-items: center; padding: 36px 0 28px; }
+  h1 { font-family: var(--serif); font-size: clamp(34px, 6vw, 60px); line-height: 1.05; margin: 0 0 14px; }
+  h1 em { font-style: normal; color: var(--gold); }
+  .lead { font-size: clamp(17px, 2.2vw, 21px); color: var(--text); margin: 0 0 22px; max-width: 34em; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 24px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 17px; border: 2px solid var(--line); transition: transform .15s, filter .15s; }
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+  .btn.primary { background: linear-gradient(#e6b75a, #b8862f); color: #1b140e; border-color: #8c6239; }
+  .btn.ghost { background: transparent; color: var(--gold2); border-color: var(--gold); }
+  .btn small { display: block; font-weight: 500; font-size: 12px; opacity: .8; }
+  .btn svg { width: 22px; height: 22px; flex: none; }
+  .note { color: var(--muted); font-size: 14px; }
+
+  .fan { position: relative; height: 420px; }
+  .fan img { position: absolute; width: 230px; border-radius: 12px; box-shadow: 0 18px 40px rgba(0,0,0,.6); transition: transform .3s; }
+  .fan img:nth-child(1) { left: 6%; top: 40px; transform: rotate(-12deg); }
+  .fan img:nth-child(2) { left: 28%; top: 6px; transform: rotate(-2deg); z-index: 2; }
+  .fan img:nth-child(3) { left: 50%; top: 36px; transform: rotate(10deg); }
+  .fan:hover img:nth-child(1) { transform: rotate(-16deg) translateX(-12px); }
+  .fan:hover img:nth-child(3) { transform: rotate(14deg) translateX(12px); }
+
+  section { padding: 34px 0; }
+  h2 { font-family: var(--serif); font-size: 30px; margin: 0 0 6px; color: var(--gold); }
+  .sub { color: var(--muted); margin: 0 0 22px; }
+
+  .readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .readout { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .readout b { display: block; font-family: var(--serif); font-size: 30px; color: var(--gold2); line-height: 1.1; }
+  .readout span { color: var(--muted); font-size: 13px; }
+  .bars { margin-top: 18px; display: grid; gap: 7px; }
+  .bar { display: grid; grid-template-columns: 150px 1fr 110px; gap: 10px; align-items: center; font-size: 14px; }
+  .bar .track { height: 10px; background: rgba(255,255,255,.08); border-radius: 5px; overflow: hidden; }
+  .bar .fill { height: 100%; background: linear-gradient(90deg, var(--g), #9fd78f); }
+  .bar .n { color: var(--muted); text-align: right; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card h3 { margin: 0 0 6px; font-family: var(--serif); font-size: 19px; color: var(--text); }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .pip { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; border: 1px solid rgba(0,0,0,.4); }
+
+  /* Theme previews: each drawn with CSS, inspired by its world. */
+  .themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .theme { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); }
+  .theme .shot { height: 150px; position: relative; overflow: hidden; }
+  .theme .cap { padding: 10px 14px 14px; }
+  .theme .cap b { font-family: var(--serif); font-size: 17px; }
+  .theme .cap p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+  .t-classic { background: radial-gradient(circle at 40% 30%, #2b3a2a, #141c14); }
+  .t-classic .bar1 { position: absolute; left: 14px; right: 14px; top: 14px; height: 30px; background: linear-gradient(#3a2a1c, #241a11); border-bottom: 2px solid var(--gold); border-radius: 4px; }
+  .t-classic .btn1 { position: absolute; left: 14px; right: 14px; bottom: 16px; height: 34px; border-radius: 6px; background: linear-gradient(#e6b75a, #b8862f); }
+  .t-lcars { background: #000; }
+  .t-lcars .elbow { position: absolute; left: 10px; top: 10px; width: 70px; height: 120px; background: #ff9900; border-radius: 30px 0 0 0; }
+  .t-lcars .elbow::after { content: ""; position: absolute; left: 34px; top: 22px; width: 40px; height: 120px; background: #000; border-radius: 14px 0 0 0; }
+  .t-lcars .rail { position: absolute; left: 84px; right: 10px; top: 10px; height: 22px; background: #ff9900; border-radius: 0 11px 11px 0; }
+  .t-lcars .pill { position: absolute; left: 60px; height: 22px; border-radius: 11px; }
+  .t-crystal { background: linear-gradient(#0b1650, #030716); }
+  .t-crystal .win { position: absolute; left: 14px; right: 14px; top: 24px; bottom: 24px; border: 2px solid #fff; border-radius: 6px; background: linear-gradient(#2a47b8, #0e1b4d); }
+  .t-crystal .gem { position: absolute; width: 14px; height: 24px; background: #8fd3ff; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); opacity: .8; }
+  .t-ink { background: #f1e7d0; }
+  .t-ink .stroke { position: absolute; left: -10px; right: -10px; height: 20px; border-radius: 10px; opacity: .25; }
+  .t-ink .seal { position: absolute; right: 18px; bottom: 18px; width: 38px; height: 38px; border-radius: 6px; background: #b8442c; }
+  .t-comic { background: linear-gradient(135deg, #1f2a5c, #0a0f24); }
+  .t-comic .dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(226,54,54,.35) 2px, transparent 2.5px); background-size: 12px 12px; }
+  .t-comic .panel1 { position: absolute; left: 14px; top: 16px; width: 58%; height: 52px; background: #e23636; border: 3px solid #000; box-shadow: 4px 4px 0 #000; }
+  .t-comic .panel2 { position: absolute; right: 14px; bottom: 16px; width: 52%; height: 44px; background: #fff; border: 3px solid #000; box-shadow: 4px 4px 0 #000; }
+
+  ol.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; counter-reset: s; }
+  ol.steps li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 16px 62px; position: relative; font-size: 15px; }
+  ol.steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 18px; top: 10px; font-family: var(--serif); font-size: 32px; color: var(--gold); }
+
+  .play { text-align: center; padding: 46px 0 30px; }
+  .play .btn { min-height: 66px; font-size: 21px; padding: 0 36px; }
+  footer { border-top: 1px solid var(--line); margin-top: 20px; padding: 22px 0 40px; color: var(--muted); font-size: 13px; }
+  footer p { margin: 0 0 8px; max-width: 70em; }
+
+  @media (max-width: 820px) {
+    .hero { grid-template-columns: 1fr; }
+    .fan { height: 300px; }
+    .fan img { width: 160px; }
+    nav { display: none; }
+    .bar { grid-template-columns: 110px 1fr 90px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .btn, .fan img { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="logo" href="./">Open<span>MTG</span></a>
+    <nav><a href="#play">Play</a><a href="#coverage">Coverage</a><a href="#themes">Themes</a><a href="#how">How it works</a><a href="https://github.com/Coral-coder/openmtg">Source</a></nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Every card. <em>The full rules.</em> A theme for every world.</h1>
+      <p class="lead">A free, fan-made Magic: The Gathering game. Play the computer, a friend on the same phone, or anyone anywhere with a six-letter code. In your browser, on Android and on iPhone. No account, no server, nothing to buy.</p>
+      <div class="buttons">
+        <a class="btn primary" href="play/">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          <span>Play in your browser<small>Nothing to install</small></span>
+        </a>
+        <a class="btn ghost" href="https://github.com/Coral-coder/openmtg/releases/latest/download/OpenMTG.apk" id="apk">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.4 11.4 0 0 0-8.94 0L5.65 5.67a.63.63 0 0 0-.87-.2c-.28.18-.37.54-.22.83L6.4 9.48A10.8 10.8 0 0 0 1 18h22a10.8 10.8 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg>
+          <span>Android<small id="apk-sub">latest release</small></span>
+        </a>
+      </div>
+      <p class="note" id="release-line">iPhone: TestFlight beta coming. The browser version works on iPhone today.</p>
+    </div>
+    <div class="fan" aria-hidden="true">
+      <img src="https://cards.scryfall.io/normal/front/7/0/702c4781-670b-49ae-b511-90ed119841b0.jpg" alt="" loading="lazy">
+      <img src="https://cards.scryfall.io/normal/front/b/8/b8c5e74c-96e7-4a1f-93b7-14d776fe4b2d.jpg" alt="" loading="lazy">
+      <img src="https://cards.scryfall.io/normal/front/6/a/6a0b230b-d391-4998-a3f7-7b158a0ec2cd.jpg" alt="" loading="lazy">
+    </div>
+  </div>
+
+  <section id="coverage">
+    <h2>Measured coverage</h2>
+    <p class="sub">Every card on Scryfall is in the database. A card is <b>fully supported</b> when the rules engine understands every line of it; the rest can be viewed, with the exact text that isn't handled yet, but not played online. Coverage grows mechanic by mechanic, with tests for each.</p>
+    <div class="readouts">
+      <div class="readout"><b id="r-total">—</b><span>cards in the database</span></div>
+      <div class="readout"><b id="r-supported">—</b><span>fully supported</span></div>
+      <div class="readout"><b id="r-std">—</b><span>of Standard</span></div>
+      <div class="readout"><b id="r-data">—</b><span>card data from Scryfall</span></div>
+    </div>
+    <div class="bars" id="bars"></div>
+  </section>
+
+  <section id="themes">
+    <h2>A theme for every world</h2>
+    <p class="sub">Your deck's main set picks the look of the table: colors, type, frames, the backdrop and the sounds. Each theme is drawn from scratch and inspired by its setting; pick one in Settings to always use it.</p>
+    <div class="themes">
+      <div class="theme"><div class="shot t-classic"><div class="bar1"></div><div class="btn1"></div></div><div class="cap"><b>Classic</b><p>Dark wood, brass and parchment, for every set.</p></div></div>
+      <div class="theme"><div class="shot t-lcars"><div class="elbow"></div><div class="rail"></div><div class="pill" style="top:50px;width:120px;background:#cc99cc"></div><div class="pill" style="top:80px;width:90px;background:#9999ff"></div><div class="pill" style="top:110px;width:140px;background:#ffcc99"></div></div><div class="cap"><b>Starship console</b><p>Rounded elbows and a starfield, for the final frontier.</p></div></div>
+      <div class="theme"><div class="shot t-crystal"><div class="win"></div><div class="gem" style="left:24px;top:8px"></div><div class="gem" style="right:30px;bottom:6px;background:#c59bff"></div><div class="gem" style="left:60%;top:4px;background:#e6c979"></div></div><div class="cap"><b>Crystal</b><p>Deep-blue windows and crystal glints, for a world of summons.</p></div></div>
+      <div class="theme"><div class="shot t-ink"><div class="stroke" style="top:20px;background:#2f6e9e"></div><div class="stroke" style="top:58px;background:#4f7a3a"></div><div class="stroke" style="top:96px;background:#b8442c"></div><div class="seal"></div></div><div class="cap"><b>Four elements</b><p>Ink-wash paper and brush strokes: water, earth, fire, air.</p></div></div>
+      <div class="theme"><div class="shot t-comic"><div class="dots"></div><div class="panel1"></div><div class="panel2"></div></div><div class="cap"><b>Web-slinger</b><p>Halftone panels and bold outlines, city-night red and blue.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Built on the Comprehensive Rules</h2>
+    <p class="sub">The engine is organised by the rules themselves, not around one card at a time.</p>
+    <div class="grid">
+      <div class="card"><h3>The stack and priority</h3><p>Respond to anything at instant speed. The table stops when you can act and passes for you when you can't.</p></div>
+      <div class="card"><h3>Layers and timestamps</h3><p>Continuous effects apply in the order the rules say: copy, control, type, color, abilities, power and toughness.</p></div>
+      <div class="card"><h3>Replacement and prevention</h3><p>Enters tapped, enters with counters, double damage, prevent damage, "if it would die, exile it instead".</p></div>
+      <div class="card"><h3>Full combat</h3><p>First and double strike, trample, deathtouch, menace, flying and reach, multiple blockers, lifelink.</p></div>
+      <div class="card"><h3>Triggers and state-based actions</h3><p>Enters, dies, attacks, casts, upkeep and end step, landfall, prowess, ward; the legend rule and lethal damage.</p></div>
+      <div class="card"><h3>Costs</h3><p>Kicker, flashback, additional and alternative costs, X spells, cost reductions, sacrifices and Phyrexian mana.</p></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>Multiplayer with no server</h2>
+    <p class="sub">A game is a random seed plus an ordered list of moves. Every device runs the same deterministic engine, so a phone and a browser always agree; each move carries a fingerprint of the game after it.</p>
+    <ol class="steps">
+      <li><b>Online, by code.</b> One player creates a six-letter code, the other types it. Moves travel encrypted through public Nostr relays; a match can continue days later.</li>
+      <li><b>Nearby, on phones.</b> Same Wi‑Fi (or type the host's IP address), or Bluetooth with no network at all.</li>
+      <li><b>Crash-proof.</b> Every move is saved as it's made. When devices reconnect they compare move logs and go back to the last move they share.</li>
+      <li><b>Fair.</b> Online and rated games only allow cards the engine fully supports, and both devices check every move.</li>
+    </ol>
+  </section>
+
+  <section class="play" id="play">
+    <p class="lead" style="margin: 0 auto 20px">Ten starter decks from <i>Foundations</i>, a computer opponent, a guided tour of the table, and a coach that says what you can do.</p>
+    <a class="btn primary" href="play/">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      <span>Play now<small>In your browser</small></span>
+    </a>
+  </section>
+
+  <footer>
+    <p>OpenMTG is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC. OpenMTG is free, with no ads and nothing to buy.</p>
+    <p>Card data and images courtesy of <a href="https://scryfall.com">Scryfall</a>; images are shown whole with their artist credit. Star Trek, Final Fantasy, Avatar: The Last Airbender and Marvel are trademarks of their owners; the themes are fan tributes, not affiliated with them.</p>
+    <p>Source, releases and bug reports: <a href="https://github.com/Coral-coder/openmtg">github.com/Coral-coder/openmtg</a>. Grew out of <a href="https://github.com/Coral-coder/magictrek">MagicTrek</a>.</p>
+  </footer>
+</div>
+
+<script>
+  // Live coverage from the published card data.
+  (async function () {
+    try {
+      const [m, c] = await Promise.all([fetch('data/manifest.json').then(r => r.json()), fetch('data/coverage.json').then(r => r.json())]);
+      const fmt = n => n.toLocaleString();
+      document.getElementById('r-total').textContent = fmt(m.cards);
+      document.getElementById('r-supported').textContent = fmt(m.supported);
+      const std = c.formats && c.formats.standard;
+      if (std) document.getElementById('r-std').textContent = Math.round(100 * std[0] / std[1]) + '%';
+      document.getElementById('r-data').textContent = m.version;
+      const names = { standard: 'Standard', pioneer: 'Pioneer', modern: 'Modern', pauper: 'Pauper', legacy: 'Legacy', vintage: 'Vintage', commander: 'Commander' };
+      const bars = document.getElementById('bars');
+      for (const k of Object.keys(names)) {
+        const v = c.formats[k]; if (!v) continue;
+        const row = document.createElement('div'); row.className = 'bar';
+        row.innerHTML = `<span>${names[k]}</span><div class="track"><div class="fill" style="width:${(100 * v[0] / v[1]).toFixed(1)}%"></div></div><span class="n">${fmt(v[0])} / ${fmt(v[1])}</span>`;
+        bars.appendChild(row);
+      }
+    } catch (e) { document.getElementById('r-total').textContent = '35,000+'; }
+  })();
+  // Latest Android build, from the GitHub API.
+  (async function () {
+    try {
+      const r = await fetch('https://api.github.com/repos/Coral-coder/openmtg/releases/latest', { headers: { Accept: 'application/vnd.github+json' } });
+      if (!r.ok) throw new Error();
+      const rel = await r.json();
+      const apk = (rel.assets || []).find(a => a.name === 'OpenMTG.apk');
+      document.getElementById('apk-sub').textContent = (rel.name || rel.tag_name) + (apk ? ' · ' + (apk.size / 1048576).toFixed(0) + ' MB' : '');
+    } catch (e) { document.getElementById('apk-sub').textContent = 'first release coming'; }
+  })();
+</script>
+</body>
+</html>
