@@ -434,7 +434,9 @@ extension GameQuery on Game {
     out.add(PassAction(p));
     final pl = state.player(p);
     for (final id in pl.hand) {
-      if (canPlayLand(p, id)) out.add(PlayLandAction(p, id));
+      for (final f in landFaces(id)) {
+        if (canPlayLand(p, id, face: f)) out.add(PlayLandAction(p, id, face: f));
+      }
     }
     for (final id in _castCandidates(p)) {
       final o = state.obj(id);
@@ -444,8 +446,11 @@ extension GameQuery on Game {
         continue;
       }
       final opts = castOptions(p, id);
-      for (final opt in opts) {
-        if (_probe(() => _castSpell(p, id, 0, opt))) out.add(CastAction(p, id, option: opt));
+      for (final face in castFaces(p, id)) {
+        for (final opt in opts) {
+          if (face != 0 && opt != -1) continue;
+          if (_probe(() => _castSpell(p, id, face, opt))) out.add(CastAction(p, id, face: face, option: opt));
+        }
       }
     }
     for (final id in [...state.battlefield, ...pl.hand, ...pl.graveyard]) {
@@ -475,7 +480,8 @@ extension GameQuery on Game {
         out.add(id);
         continue;
       }
-      if (o.zone == Zone.graveyard && (castOptions(p, id).any((i) => i >= 0) || _graveyardPermission(p, o))) out.add(id);
+      if (o.zone == Zone.graveyard && (castOptions(p, id).any((i) => i >= 0) || _graveyardPermission(p, o) || _aftermathPermission(p, o))) out.add(id);
+      if (_adventurePermission(p, o)) out.add(id);
     }
     for (final q in state.opponents(p)) {
       for (final id in state.player(q).exile) {

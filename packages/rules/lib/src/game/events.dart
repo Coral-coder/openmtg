@@ -17,6 +17,12 @@ class ZoneEvent extends GameEvent {
   final bool sacrificed;
 }
 
+/// A permanent transformed (CR 701.28).
+class TransformEvent extends GameEvent {
+  const TransformEvent(this.id);
+  final ObjId id;
+}
+
 class CastEvent extends GameEvent {
   const CastEvent(this.item, this.obj, this.player);
   final int item;

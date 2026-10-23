@@ -112,6 +112,15 @@ extension GameEffects on Game {
     }
     if (o.exileOnResolve) {
       _move(id, Zone.exile);
+    } else if (!countered && o.face == 1 && db[o.cardName]?.layout == Layout.adventure && chars(id).subtypes.contains('Omen')) {
+      // A resolved Omen is shuffled into its owner's library instead.
+      if (_move(id, Zone.library) == Zone.library) _shuffle(o.owner);
+    } else if (!countered && o.face == 1 && db[o.cardName]?.layout == Layout.adventure) {
+      // A resolved Adventure is exiled, and its caster may cast the creature later (CR 715.4).
+      if (_move(id, Zone.exile) == Zone.exile) {
+        o.adventureBy = item.controller;
+        _log('${state.player(item.controller).name} may cast ${o.cardName.split(' // ').first} from exile.', obj: id);
+      }
     } else {
       _move(id, Zone.graveyard);
     }
@@ -175,13 +184,18 @@ extension GameEffects on Game {
   }
 
   /// Puts a card or token onto the battlefield with entering replacement effects (CR 614.1c–d).
-  void _putOntoBattlefield(ObjId id, PlayerId controller, {bool tapped = false, Map<String, int> counters = const {}, ObjId? attachTo, bool attacking = false, List<String> extraTypes = const []}) {
+  void _putOntoBattlefield(ObjId id, PlayerId controller, {int face = 0, bool tapped = false, Map<String, int> counters = const {}, ObjId? attachTo, bool attacking = false, List<String> extraTypes = const []}) {
     final o = state.obj(id);
     final wasCast = o.zone == Zone.stack && o.wasCast;
     final kicked = o.zone == Zone.stack && o.kicked;
     final x = o.zone == Zone.stack ? o.x : 0;
     final from = o.zone;
     final lki = chars(id).copy();
+    // A modal double-faced spell enters with the face it was cast as up (CR 712.14); anything
+    // else enters front face up unless told otherwise.
+    final mdfc = !o.isToken && db[o.cardName]?.layout == Layout.modalDfc;
+    final enterFace = from == Zone.stack && mdfc ? o.face : face;
+    o.face = enterFace;
     final oldZcc = o.zcc;
     // What it will be on the battlefield (its own abilities apply to how it enters).
     final ctxSelf = EvalCtx(this, controller: controller, source: id, sourceZcc: o.zcc + 1, x: x, kicked: kicked, wasCast: wasCast);
@@ -226,6 +240,7 @@ extension GameEffects on Game {
       chooseType = types[pick.first];
     }
     _moveTo(id, Zone.battlefield, controller: controller);
+    o.face = enterFace;
     o.wasCast = wasCast;
     o.kicked = kicked;
     o.x = x;
@@ -550,6 +565,10 @@ extension GameEffects on Game {
         for (final id in resolveObjs(set, ctx)) {
           _untap(id);
         }
+      case TransformPermanents(:final set):
+        for (final id in resolveObjs(set, ctx)) {
+          _transform(id);
+        }
       case PutCounters(:final set, :final kind, :final amount):
         final n = evalAmount(amount, ctx);
         for (final id in resolveObjs(set, ctx)) {
@@ -853,6 +872,20 @@ extension GameEffects on Game {
       return;
     }
     _move(id, exile || state.obj(id).exileOnResolve ? Zone.exile : Zone.graveyard);
+  }
+
+  /// Transforms a permanent: only a transforming double-faced card does (CR 701.28c). It stays
+  /// the same object, with its counters, damage and attachments (CR 712.18).
+  void _transform(ObjId id) {
+    final o = state.objOrNull(id);
+    if (o == null || o.zone != Zone.battlefield || o.isToken || o.faceDown) return;
+    final def = db[o.cardName];
+    if (def == null || def.layout != Layout.transform || def.faces.length < 2) return;
+    final before = chars(id).name;
+    o.face = o.face == 0 ? 1 : 0;
+    _dirty();
+    _log('$before transforms into ${chars(id).name}.', obj: id, kind: 'info');
+    _emit(TransformEvent(id));
   }
 
   /// "End the turn" (CR 723).

@@ -279,7 +279,26 @@ List<CardAction> cardActions(TableController ctl, int id) {
   if (o == null) return const [];
   final c = g.chars(id);
   final out = <CardAction>[];
-  if ((o.zone == Zone.hand && o.owner == me) || o.playableBy == me || (o.zone == Zone.graveyard && o.owner == me)) {
+  final def = o.isToken ? null : g.db[o.cardName];
+  final halves = def != null && def.faces.length > 1 && const {Layout.split, Layout.adventure, Layout.modalDfc}.contains(def.layout);
+  if (halves && ((o.zone == Zone.hand && o.owner == me) || o.adventureBy == me || o.playableBy == me || (o.zone == Zone.graveyard && o.owner == me))) {
+    // Split cards, adventurers and modal double-faced cards: one action per half or face.
+    if (o.zone == Zone.hand) {
+      for (final f in g.landFaces(id)) {
+        final a = PlayLandAction(me, id, face: f);
+        out.add(CardAction('Play ${def.faces[f].name}', a, g.whyNot(a)));
+      }
+    }
+    for (final f in g.castFaces(me, id)) {
+      final a = CastAction(me, id, face: f);
+      final why = g.whyNot(a);
+      if (o.zone == Zone.graveyard && why != null) continue;
+      final label = f == 2
+          ? 'Cast ${def.faces[0].name} and ${def.faces[1].name} (fused)'
+          : 'Cast ${def.faces[f].name}${def.layout == Layout.adventure && f == 1 ? ' (${def.faces[1].type.subtypes.contains('Omen') ? 'Omen' : 'Adventure'})' : ''}';
+      out.add(CardAction(label, a, why));
+    }
+  } else if ((o.zone == Zone.hand && o.owner == me) || o.playableBy == me || (o.zone == Zone.graveyard && o.owner == me)) {
     if (c.isLand) {
       if (o.zone != Zone.graveyard || o.playableBy == me) {
         final a = PlayLandAction(me, id);

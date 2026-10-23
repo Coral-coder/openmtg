@@ -230,6 +230,7 @@ String eff(Effect e) => switch (e) {
       Sacrifice(:final who, :final filter, :final amount, :final self) => self ? 'sac self' : 'sac ${_pl(who)} ${_amt(amount)} ${_filter(filter)}',
       Tap(:final set) => 'tap ${_set(set)}',
       Untap(:final set) => 'untap ${_set(set)}',
+      TransformPermanents(:final set) => 'transform ${_set(set)}',
       PutCounters(:final set, :final kind, :final amount) => 'counters ${_amt(amount)} $kind on ${_set(set)}',
       RemoveCounters(:final set, :final kind, :final amount) => 'remove ${_amt(amount)} $kind from ${_set(set)}',
       DoubleCounters(:final set, :final kind) => 'doubleCounters ${kind ?? 'all'} on ${_set(set)}',

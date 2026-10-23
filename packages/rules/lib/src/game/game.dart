@@ -794,13 +794,16 @@ class Game {
 
   int landsAllowed(PlayerId p) => 1 + _rules<ExtraLandPerTurn>(p).fold<int>(0, (a, r) => a + r.n);
 
-  bool canPlayLand(PlayerId p, ObjId id) {
+  /// Whether [p] may play [id] as a land now, as its face [face] (a modal double-faced card's
+  /// back can be the land, CR 712.12).
+  bool canPlayLand(PlayerId p, ObjId id, {int face = 0}) {
     if (state.priority != p || state.pending != null) return false;
     if (state.active != p || !(state.step == TurnStep.main1 || state.step == TurnStep.main2) || state.stack.isNotEmpty) return false;
     if (state.player(p).stats.landsPlayed >= landsAllowed(p)) return false;
     final o = state.objOrNull(id);
     if (o == null) return false;
-    final c = chars(id);
+    if (face != 0 && !landFaces(id).contains(face)) return false;
+    final c = face == 0 ? chars(id) : _castChars(o, face);
     if (!c.isLand) return false;
     if (o.zone == Zone.hand && o.owner == p) return true;
     if (o.playableBy == p && (o.zone == Zone.exile || o.zone == Zone.graveyard)) return true;
@@ -809,12 +812,12 @@ class Game {
   }
 
   void _playLand(PlayerId p, ObjId id, int face) {
-    if (!canPlayLand(p, id)) throw GameError("Can't play that land now");
+    if (!canPlayLand(p, id, face: face)) throw GameError("Can't play that land now");
     final o = state.obj(id);
     if (o.zone == Zone.graveyard && o.playableBy != p) state.player(p).stats.graveyardPlays.add('land');
     state.player(p).stats.landsPlayed++;
     _log('${state.player(p).name} plays ${o.cardName}.', player: p, obj: id, kind: 'land');
-    _putOntoBattlefield(id, p);
+    _putOntoBattlefield(id, p, face: face);
     _afterPlayerAction(p);
   }
 }

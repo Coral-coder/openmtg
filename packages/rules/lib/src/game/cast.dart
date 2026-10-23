@@ -14,7 +14,7 @@ extension GameCast on Game {
     final opts = _castOptionList(c);
     final out = <int>[];
     final ctx = EvalCtx(this, controller: p, source: id, sourceZcc: o.zcc);
-    if ((o.zone == Zone.hand && o.owner == p) || o.playableBy == p || (o.zone == Zone.graveyard && _graveyardPermission(p, o))) out.add(-1);
+    if ((o.zone == Zone.hand && o.owner == p) || o.playableBy == p || (o.zone == Zone.graveyard && _graveyardPermission(p, o)) || _adventurePermission(p, o) || _aftermathPermission(p, o)) out.add(-1);
     for (var i = 0; i < opts.length; i++) {
       final opt = opts[i];
       switch (opt.kind) {
@@ -28,6 +28,71 @@ extension GameCast on Game {
     return out;
   }
 
+  /// A card that went on an Adventure: its caster may cast the creature from exile (CR 715.4).
+  bool _adventurePermission(PlayerId p, GameObject o) => o.zone == Zone.exile && o.adventureBy == p;
+
+  /// Aftermath: the second half is cast from its owner's graveyard (CR 702.127).
+  bool _aftermathPermission(PlayerId p, GameObject o) => o.zone == Zone.graveyard && o.owner == p && _faceHasKw(o, 1, 'aftermath');
+
+  bool _faceHasKw(GameObject o, int face, String kw) {
+    final def = o.isToken ? null : db[o.cardName];
+    if (def == null || face >= def.faces.length) return false;
+    final parsed = OracleParser.parse(def);
+    return face < parsed.faces.length && parsed.faces[face].abilities.any((a) => a is KeywordAbility && a.kw.name == kw);
+  }
+
+  /// The faces [p] could cast [id] as (CR 709.3, 712.11, 715.3), not counting timing or cost:
+  /// 0 and 1 are the halves or faces, 2 is a fused split spell.
+  List<int> castFaces(PlayerId p, ObjId id) {
+    final o = state.obj(id);
+    final def = o.isToken ? null : db[o.copyOfCard ?? o.cardName];
+    if (def == null || def.faces.length < 2) return const [0];
+    final fromGraveyardByAftermath = _aftermathPermission(p, o) && !(o.playableBy == p) && !_graveyardPermission(p, o);
+    switch (def.layout) {
+      case Layout.split:
+        final aftermath = _faceHasKw(o, 1, 'aftermath');
+        if (fromGraveyardByAftermath) return const [1];
+        if (aftermath) return const [0];
+        final fuse = o.zone == Zone.hand && o.owner == p && (_faceHasKw(o, 0, 'fuse') || _faceHasKw(o, 1, 'fuse')) && _fusedAbility(def) != null;
+        return [0, 1, if (fuse) 2];
+      case Layout.adventure:
+        return _adventurePermission(p, o) ? const [0] : const [0, 1];
+      case Layout.modalDfc:
+        return [for (var i = 0; i < 2; i++) if (!def.faces[i].isLand) i];
+      default:
+        return const [0];
+    }
+  }
+
+  /// The faces of [id] that are lands [p] could play (a modal double-faced card's either side).
+  List<int> landFaces(ObjId id) {
+    final o = state.obj(id);
+    final def = o.isToken ? null : db[o.cardName];
+    if (def == null || def.layout != Layout.modalDfc) return [if (chars(id).isLand) 0];
+    return [for (var i = 0; i < def.faces.length && i < 2; i++) if (def.faces[i].isLand) i];
+  }
+
+  /// Both halves of a fused split spell as one two-mode spell: each half keeps its own targets
+  /// and they resolve left to right (CR 702.102d). Null when a half is itself modal.
+  SpellAbility? _fusedAbility(CardDef def) {
+    final parsed = OracleParser.parse(def);
+    final halves = [for (final f in parsed.faces) f.abilities.whereType<SpellAbility>().firstOrNull];
+    if (halves.length < 2 || halves.any((h) => h == null || h.body.isModal)) return null;
+    return SpellAbility(halves.map((h) => h!.text).join(' // '), Body(modes: [halves[0]!.body, halves[1]!.body], minModes: 2, maxModes: 2, modeLabels: [def.faces[0].name, def.faces[1].name]));
+  }
+
+  /// [id]'s characteristics as the face it's being cast as.
+  Chars _castChars(GameObject o, int face) {
+    final def = db[o.copyOfCard ?? o.cardName];
+    if (def == null || def.faces.length < 2) return chars(o.id);
+    final c = face >= 2 ? _combinedChars(def, o) : _faceChars(def, face, o);
+    _applySelfCda(o.id, c);
+    for (final a in c.abilities) {
+      if (a is KeywordAbility) c.keywords.add(a.kw);
+    }
+    return c;
+  }
+
   bool _canCastNow(PlayerId p, Chars c) {
     if (c.isInstant || c.has(Kw.flash)) return true;
     for (final r in _rules<CastAsThoughFlash>(p)) {
@@ -39,7 +104,10 @@ extension GameCast on Game {
   void _castSpell(PlayerId p, ObjId id, int face, int option) {
     final o = state.objOrNull(id);
     if (o == null) throw GameError('No such card');
-    final c0 = chars(id);
+    if (!castFaces(p, id).contains(face)) throw GameError("Can't cast that half or face now");
+    // Alternative costs and flashback belong to the card's front face (or the whole split card).
+    if (face != 0 && option != -1) throw GameError("Can't cast that half that way");
+    final c0 = face == 0 && (db[o.cardName]?.layout != Layout.split || o.isToken) ? chars(id) : _castChars(o, face);
     if (c0.isLand) throw GameError('Lands are played, not cast');
     final options = castOptions(p, id);
     if (!options.contains(option)) throw GameError("Can't cast ${c0.name} that way now");
@@ -68,7 +136,12 @@ extension GameCast on Game {
 
     // 601.2a: the card moves to the stack.
     _moveTo(id, Zone.stack, controller: p);
-    final spellAb = c0.abilities.whereType<SpellAbility>().firstOrNull;
+    o.face = face;
+    _dirty();
+    final def = o.isToken ? null : db[o.cardName];
+    final spellAb = face == 2 && def != null ? _fusedAbility(def) : c0.abilities.whereType<SpellAbility>().firstOrNull;
+    // Aftermath: the second half is exiled whenever it leaves the stack (CR 702.127a).
+    if (face == 1 && def?.layout == Layout.split && _faceHasKw(o, 1, 'aftermath')) o.exileOnResolve = true;
     final item = StackItem(id: state.nextId++, kind: StackKind.spell, controller: p, sourceId: id, sourceZcc: o.zcc, ability: spellAb, objId: id, sourceName: c0.name, kicked: kicked);
     state.stack.add(item);
     o.kicked = kicked;
@@ -137,6 +210,11 @@ extension GameCast on Game {
         if (m.targets.every((t) => t.min == 0 || legalTargets(t, ctx, spell: spell).length >= t.min)) ok.add(i);
       }
       if (ok.length < body.minModes) throw GameError('No legal mode');
+      // No choice to make: exactly as many legal modes as must be chosen (a fused split spell).
+      if (ok.length == body.minModes && body.maxModes == body.minModes) {
+        item.modes = ok;
+        return _chooseTargetsFor(p, item, body, ok, ctx, spell: spell, cancellable: cancellable);
+      }
       modes = ask(Decision(
         kind: DecisionKind.modes,
         player: p,
@@ -151,6 +229,10 @@ extension GameCast on Game {
         ..sort();
     }
     item.modes = modes;
+    _chooseTargetsFor(p, item, body, modes, ctx, spell: spell, cancellable: cancellable);
+  }
+
+  void _chooseTargetsFor(PlayerId p, StackItem item, Body body, List<int> modes, EvalCtx ctx, {ObjId? spell, bool cancellable = true}) {
     final specs = <TargetSpec>[];
     for (final mi in modes) {
       final b = body.isModal ? body.modes[mi] : body;

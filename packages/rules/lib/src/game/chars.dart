@@ -39,6 +39,10 @@ class Chars {
   final Set<Kw> keywords = {};
   bool allCreatureTypes = false;
 
+  /// A mana value that isn't its mana cost's: a transformed permanent's is its front face's
+  /// (CR 712.8e).
+  int? mvOverride;
+
   Chars copy() => Chars(
         name: name,
         types: Set.of(types),
@@ -55,7 +59,8 @@ class Chars {
         owner: owner,
       )
         ..keywords.addAll(keywords)
-        ..allCreatureTypes = allCreatureTypes;
+        ..allCreatureTypes = allCreatureTypes
+        ..mvOverride = mvOverride;
 
   bool get isCreature => types.contains(CardType.creature);
   bool get isLand => types.contains(CardType.land);
@@ -69,7 +74,7 @@ class Chars {
   bool get isLegendary => supertypes.contains(Supertype.legendary);
   bool get isAura => types.contains(CardType.enchantment) && subtypes.contains('Aura');
   bool get isEquipment => types.contains(CardType.artifact) && subtypes.contains('Equipment');
-  int get manaValue => manaCost?.manaValue ?? 0;
+  int get manaValue => mvOverride ?? manaCost?.manaValue ?? 0;
 
   bool has(Kw k) => keywords.any((x) => x.name == k.name);
   bool hasName(String n) => keywords.any((x) => x.name == n);
