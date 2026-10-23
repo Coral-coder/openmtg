@@ -535,6 +535,8 @@ extension GameEffects on Game {
           if (n == 0) continue;
           final pick = ask(Decision(kind: DecisionKind.cards, player: p, prompt: 'Sacrifice ${n == 1 ? 'a' : n} ${_describeFilter(filter)}', options: options, min: n, max: n, source: ctx.source));
           for (final id in pick) {
+            ctx.results['sacPower'] = chars(id).power ?? 0;
+            ctx.results['sacToughness'] = chars(id).toughness ?? 0;
             _sacrifice(id);
             did++;
           }

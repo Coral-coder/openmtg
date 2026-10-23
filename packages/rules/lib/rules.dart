@@ -15,3 +15,4 @@ export 'src/game/rules_options.dart';
 export 'src/game/state.dart';
 export 'src/ai/bot.dart';
 export 'src/formats/decks.dart';
+export 'src/ir/describe.dart';

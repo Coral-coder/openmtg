@@ -274,7 +274,10 @@ class _FaceParser {
     final ctx = BodyCtx();
     final body = _modal(r, ctx) ?? _bodyOf(r, ctx);
     if (body == null) return null;
-    return [ActivatedAbility(raw, cost, body, sorcerySpeed: sorcery, oncePerTurn: once, onlyOnce: onlyOnce, yourTurnOnly: yourTurn, condition: cond)];
+    final fromGraveyard = r.contains('~ from your graveyard') || cost.parts.any((p) => p is ExileFromGraveyardCost && p.self);
+    return [
+      ActivatedAbility(raw, cost, body, sorcerySpeed: sorcery, oncePerTurn: once, onlyOnce: onlyOnce, yourTurnOnly: yourTurn, condition: cond, zone: fromGraveyard ? ZoneKind.graveyard : ZoneKind.battlefield),
+    ];
   }
 
   ManaProduce? _manaEffect(String s) {
@@ -603,6 +606,12 @@ class _FaceParser {
       if (m[1] == 'another') f = f.copyWith(other: true);
       final n = switch (m[1]) { 'a' || 'an' || 'another' => 1, 'no' => 0, _ => numberWord(m[1].split(' ').first)! };
       return CountCondition(CountOf(All(f.copyWith(controller: Who.you))), m[1] == 'no' ? Cmp.eq : Cmp.ge, n);
+    }
+    m = rx(t, r"it (was|is) (?:a|an) (.+)");
+    if (m != null && ctx.lastRemembered != null) {
+      final f = parseFilterCore(m[2]);
+      if (f == null) return null;
+      return RememberedAny(ctx.lastRemembered!, f);
     }
     m = rx(t, r"(?:it|~) (wasn't|was not|isn't|is not|was|is) (?:a|an) (.+)");
     if (m != null) {
@@ -1213,6 +1222,39 @@ class _FaceParser {
   }
 
   Effect? _clause(String t, BodyCtx ctx, EffectDuration? duration) {
+    // "…, then draws seven cards": a third-person verb with no subject keeps the last subject.
+    final carried = ctx.lastSubject;
+    if (carried != null && RegExp(r'^(draws|discards|loses|gains|mills|sacrifices|creates|reveals|shuffles|puts|returns) ').hasMatch(t)) {
+      final who = _subjectText(carried);
+      if (who != null) {
+        final r = _clause2('$who $t', ctx, duration);
+        if (r != null) return r;
+      }
+    }
+    final r = _clause2(t, ctx, duration);
+    if (r != null) _noteSubject(t, ctx);
+    return r;
+  }
+
+  String? _subjectText(PlayerRef p) => switch (p) {
+        EachPlayer() => 'each player',
+        EachOpponent() => 'each opponent',
+        You() => 'you',
+        _ => null,
+      };
+
+  void _noteSubject(String t, BodyCtx ctx) {
+    for (final (prefix, ref) in const [('each player ', EachPlayer()), ('each opponent ', EachOpponent()), ('you ', You())]) {
+      if (t.startsWith(prefix)) {
+        ctx.lastSubject = ref;
+        break;
+      }
+    }
+    final v = RegExp(r'\b(sacrifices?|destroy|exile|draw)\b').firstMatch(t);
+    ctx.lastVerb = v == null ? null : (v.group(1)!.startsWith('sacrifice') ? 'sacrifice' : v.group(1));
+  }
+
+  Effect? _clause2(String t, BodyCtx ctx, EffectDuration? duration) {
     List<String>? m;
 
     // --- Damage -------------------------------------------------------------------------------
@@ -1442,8 +1484,9 @@ class _FaceParser {
         _ => const You(),
       };
       if (who == null) return null;
-      return ForEachPlayer(who, const MoveTo(All(Filter(card: true, zone: ZoneKind.graveyard, owner: Who.notYou)), ZoneKind.exile));
+      return ForEachPlayer(who, const MoveTo(All(Filter(card: true, zone: ZoneKind.graveyard, owner: Who.that)), ZoneKind.exile));
     }
+    if (t.startsWith('exile all other ') && ctx.it is Remembered) return null;
     m = rx(t, r'exile (.+?)(?: instead)?');
     if (m != null) {
       final set = parseObjects(m[1], ctx);
@@ -1459,11 +1502,13 @@ class _FaceParser {
       if (set == null) return null;
       return MoveTo(set, ZoneKind.hand);
     }
-    m = rx(t, r'return (.+?) (?:from (?:your|a|all) graveyards? )?to (?:your|its owner\x27s|their owner\x27s) hand');
+    m = rx(t, r'return (.+?) (from (?:your|a|all) graveyards? )?to (?:your|its owner\x27s|their owner\x27s) hand');
     if (m != null) {
-      final set = parseObjects(m[1].replaceAll(' from your graveyard', '').replaceAll(' from a graveyard', ''), ctx);
+      final from = m[2].trim();
+      final where = from.isEmpty ? '' : ' ${from.replaceFirst('from ', 'in ')}';
+      final set = parseObjects('${m[1]}$where', ctx);
       if (set == null) return null;
-      return MoveTo(_inGraveyard(set, m[0]), ZoneKind.hand);
+      return MoveTo(set, ZoneKind.hand);
     }
     m = rx(t, r"return (.+?) to the battlefield( tapped)?(?: under (your|its owner's|their owner's|its owners') control)?( tapped)?(?: with (a|an|one|two|three) ([a-z+/0-9-]+) counters? on it)?");
     if (m != null) {
@@ -1629,8 +1674,6 @@ class _FaceParser {
     return null;
   }
 
-  ObjSet _inGraveyard(ObjSet s, String text) => s;
-
   /// "<recipient>" for damage: any target, target creature, each opponent, each creature...
   Effect? _damageTo(String to, Amount amount, ObjRef source, BodyCtx ctx) {
     final t = to.trim();
@@ -1725,7 +1768,13 @@ class _FaceParser {
   String _orig(String lower) {
     final src = face.oracleText.replaceAll('’', "'");
     final i = src.toLowerCase().indexOf(lower);
-    return i < 0 ? _titleCase(lower) : src.substring(i, i + lower.length);
+    if (i >= 0) return src.substring(i, i + lower.length);
+    if (lower.contains('~')) {
+      final pattern = RegExp(lower.split('~').map(RegExp.escape).join(r'([\w-]+)'), caseSensitive: false);
+      final m = pattern.firstMatch(src);
+      if (m != null) return m.group(0)!;
+    }
+    return _titleCase(lower);
   }
 
   String _titleCase(String s) => s.split(' ').map((w) => w.isEmpty ? w : (const {'of', 'the', 'a'}.contains(w) ? w : w[0].toUpperCase() + w.substring(1))).join(' ').replaceFirst(RegExp(r'^.'), s.isEmpty ? '' : s[0].toUpperCase());

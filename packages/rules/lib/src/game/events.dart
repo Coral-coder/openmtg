@@ -304,7 +304,7 @@ extension GameEvents on Game {
     }
   }
 
-  bool _whoOk(Who w, PlayerId p, PlayerId you) => switch (w) { Who.any => true, Who.you => p == you, Who.opponent || Who.notYou => p != you };
+  bool _whoOk(Who w, PlayerId p, PlayerId you) => switch (w) { Who.any || Who.that => true, Who.you => p == you, Who.opponent || Who.notYou => p != you };
 
   PlayerId? _defenderOf(ObjId attacker) {
     final a = state.obj(attacker).attacking;

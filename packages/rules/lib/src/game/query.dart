@@ -92,7 +92,10 @@ extension GameQuery on Game {
       if (c.hasName(k)) return false;
     }
     if (f.withCounter != null && (o.counters[f.withCounter!] ?? 0) <= 0) return false;
-    if (f.name != null && c.name.toLowerCase() != f.name!.toLowerCase()) return false;
+    if (f.name != null) {
+      final want = f.name == '~' ? (ctx.sourceLki?.name ?? (ctx.source != null && state.objOrNull(ctx.source) != null ? chars(ctx.source!).name : '')) : f.name!;
+      if (c.name.toLowerCase() != want.toLowerCase()) return false;
+    }
     if (f.notName != null && c.name.toLowerCase() == f.notName!.toLowerCase()) return false;
     if (f.permanent && o.zone != Zone.battlefield && !c.isPermanentCard) return false;
     if (f.putThereThisTurn && o.arrivedTurn != state.turn) return false;
@@ -115,6 +118,7 @@ extension GameQuery on Game {
         Who.you => p == ctx.controller,
         Who.opponent => p != ctx.controller,
         Who.notYou => p != ctx.controller,
+        Who.that => p == (ctx.thatPlayer ?? ctx.event?.player),
       };
 
   // -------------------------------------------------------------------------------------------

@@ -18,6 +18,14 @@ class BodyCtx {
   ObjSet? them;
   PlayerRef? thatPlayer;
 
+  /// The player subject of the previous clause ("each player discards their hand, then draws
+  /// seven cards": the second clause has the same subject).
+  PlayerRef? lastSubject;
+
+  /// The previous clause's verb, for references like "that creature's toughness" after a
+  /// sacrifice.
+  String? lastVerb;
+
   /// The trigger's subject, if not the source ("whenever another creature dies" → that creature).
   ObjRef? eventObj;
 
@@ -61,6 +69,8 @@ Amount? parseQuantity(String s, BodyCtx ctx) {
   if (t.startsWith('the ')) t = t.substring(4);
   final simple = parseAmount(t);
   if (simple != null) return simple;
+  final sac = rx(t, r"that creature's (power|toughness)");
+  if (sac != null && ctx.lastVerb == 'sacrifice') return ResultAmount(sac[1] == 'power' ? 'sacPower' : 'sacToughness');
   final m1 = rx(t, r"(?:its|~'s|that creature's) (power|toughness|mana value)");
   if (m1 != null) {
     final stat = Stat.values.firstWhere((s) => s.name == (m1[1] == 'mana value' ? 'manaValue' : m1[1]));

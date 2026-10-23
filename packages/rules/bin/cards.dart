@@ -19,10 +19,24 @@ void main(List<String> args) {
     stdout.writeln('${card.name} — ${card.typeLine}\n${card.oracleText}\n');
     for (final f in p.faces) {
       for (final a in f.abilities) {
-        stdout.writeln('  ${a.runtimeType}: ${a.text}');
+        stdout.writeln('  ${a.text.replaceAll('\n', ' / ')}\n    = ${describeAbility(a)}');
       }
     }
     stdout.writeln(p.supported ? 'SUPPORTED' : 'UNSUPPORTED:\n  ${p.unsupported.join('\n  ')}');
+    return;
+  }
+  if (args.contains('--dump')) {
+    for (final c in db.cards.where((c) => q.isEmpty || c.sets.contains(q))) {
+      final p = OracleParser.parse(c);
+      if (!p.supported) continue;
+      stdout.writeln('## ${c.name}');
+      for (final f in p.faces) {
+        for (final a in f.abilities) {
+          if (a is KeywordAbility || a is InfoAbility) continue;
+          stdout.writeln('  ${a.text.replaceAll('\n', ' / ')}\n    = ${describeAbility(a)}');
+        }
+      }
+    }
     return;
   }
   var ok = 0, n = 0;

@@ -173,7 +173,15 @@ class ActivePlayer extends PlayerRef {
 /// Which zone an object description talks about.
 enum ZoneKind { battlefield, hand, library, graveyard, exile, stack, command, anywhere }
 
-enum Who { any, you, opponent, notYou }
+enum Who {
+  any,
+  you,
+  opponent,
+  notYou,
+
+  /// "That player" (inside a for-each-player effect, or the trigger event's player).
+  that,
+}
 
 /// An object description (CR 109.2): "nontoken creature you control with power 2 or less".
 class Filter {
