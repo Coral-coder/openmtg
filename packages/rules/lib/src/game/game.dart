@@ -163,6 +163,7 @@ class Game {
         state.stepDone = true;
       case BlockTask():
         _declareBlockers();
+        _emitUnblocked();
         state.stepDone = true;
       case DamageTask():
         _combatDamage(t.firstStrike);
@@ -682,6 +683,7 @@ class Game {
     final o = state.obj(id);
     if (o.tapped) return;
     o.tapped = true;
+    _emit(TapEvent(id));
     _dirty();
   }
 

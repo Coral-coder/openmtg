@@ -62,6 +62,9 @@ extension GameCombat on Game {
     st.creaturesAttackedWith += chosen.length;
     _log('${state.player(p).name} attacks with ${chosen.keys.map(nameOf).join(', ')}.', player: p, kind: 'attack');
     _emit(AttackEvent(p, chosen.keys.toList()));
+    for (final a in chosen.keys) {
+      _emit(AttackerEvent(a, p, chosen.length));
+    }
     _dirty();
   }
 
@@ -89,6 +92,13 @@ extension GameCombat on Game {
       if (_qualityMatches(k.filter!, b)) return false;
     }
     return true;
+  }
+
+  /// "Attacks and isn't blocked" (CR 509.1h), once blockers are declared.
+  void _emitUnblocked() {
+    for (final a in _attackers()) {
+      if (!state.obj(a).blocked) _emit(UnblockedEvent(a));
+    }
   }
 
   void _declareBlockers() {

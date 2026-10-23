@@ -8,13 +8,63 @@ sealed class GameEvent {
 /// An object moved between zones. [oldId]/[oldZcc] name it before, [zcc] after; [lki] is its
 /// last known information before it left (CR 603.10).
 class ZoneEvent extends GameEvent {
-  const ZoneEvent(this.id, this.oldZcc, this.zcc, this.from, this.to, this.lki, {this.counters = const {}, this.sacrificed = false});
+  const ZoneEvent(this.id, this.oldZcc, this.zcc, this.from, this.to, this.lki, {this.counters = const {}, this.sacrificed = false, this.damagedBy = const []});
   final ObjId id;
   final int oldZcc, zcc;
   final Zone from, to;
   final Chars lki;
   final Map<String, int> counters;
   final bool sacrificed;
+
+  /// Sources that dealt it damage this turn, as it left.
+  final List<ObjId> damagedBy;
+}
+
+/// One creature attacks (after [AttackEvent] for the whole declaration); [count] is how many
+/// attacked.
+class AttackerEvent extends GameEvent {
+  const AttackerEvent(this.attacker, this.player, this.count);
+  final ObjId attacker;
+  final PlayerId player;
+  final int count;
+}
+
+/// An attacking creature wasn't blocked (once blockers are declared).
+class UnblockedEvent extends GameEvent {
+  const UnblockedEvent(this.attacker);
+  final ObjId attacker;
+}
+
+class TapEvent extends GameEvent {
+  const TapEvent(this.obj);
+  final ObjId obj;
+}
+
+/// A player cycled [card] (CR 702.29).
+class CycleEvent extends GameEvent {
+  const CycleEvent(this.player, this.card);
+  final PlayerId player;
+  final ObjId card;
+}
+
+/// A player committed a crime (CR 700.13).
+class CrimeEvent extends GameEvent {
+  const CrimeEvent(this.player);
+  final PlayerId player;
+}
+
+class ScryEvent extends GameEvent {
+  const ScryEvent(this.player, {required this.surveil});
+  final PlayerId player;
+  final bool surveil;
+}
+
+/// A spell was copied (the copy is [obj] on the stack as item [item]).
+class CopyEvent extends GameEvent {
+  const CopyEvent(this.item, this.obj, this.player);
+  final int item;
+  final ObjId obj;
+  final PlayerId player;
 }
 
 /// A permanent transformed (CR 701.28).
@@ -129,6 +179,14 @@ extension GameEvents on Game {
         _checkAbilities(abs, id, o.zcc, o.owner, c, e, ZoneKind.graveyard);
       }
     }
+    // "When you cast ~": the spell's own triggered ability, from the stack.
+    if (e is CastEvent) {
+      final o = state.objOrNull(e.obj);
+      if (o != null && o.zone == Zone.stack) {
+        final c = chars(e.obj);
+        _checkAbilities(c.abilities, e.obj, o.zcc, e.player, c, e, ZoneKind.stack);
+      }
+    }
     for (final em in state.emblems) {
       _checkAbilities(em.abilities, -em.id, 0, em.owner, null, e, ZoneKind.command);
     }
@@ -190,9 +248,10 @@ extension GameEvents on Game {
         final ch = chars(e.id);
         if (!inSet(set, e.id, ch)) return null;
         return objInfo(e.id, e.zcc, ch);
-      case DiesTrigger(:final set):
+      case DiesTrigger(:final set, :final damagedBySelf):
         if (e is! ZoneEvent || e.from != Zone.battlefield || e.to != Zone.graveyard || !e.lki.isCreature) return null;
         if (!_inSetLki(set, e.id, e.lki, srcId, ctx)) return null;
+        if (damagedBySelf && !e.damagedBy.contains(srcId)) return null;
         return objInfo(e.id, e.zcc, e.lki, counters: e.counters);
       case LeavesTrigger(:final set):
         if (e is! ZoneEvent || e.from != Zone.battlefield) return null;
@@ -207,32 +266,62 @@ extension GameEvents on Game {
         if (e is! ZoneEvent || !e.sacrificed) return null;
         if (!_inSetLki(set, e.id, e.lki, srcId, ctx)) return null;
         return objInfo(e.id, e.zcc, e.lki);
-      case AttacksTrigger(:final set, :final condition):
-        if (e is! AttackEvent) return null;
-        for (final a in e.attackers) {
-          if (inSet(set, a, chars(a))) {
-            if (condition != null && !evalCondition(condition, ctx)) return null;
-            return objInfo(a, state.obj(a).zcc, chars(a), player: _defenderOf(a));
-          }
-        }
-        return null;
+      case AttacksTrigger(:final set, :final condition, :final alone, :final minAttackers, :final attacksYou):
+        // Once for each attacking creature in the set (CR 508.3a).
+        if (e is! AttackerEvent) return null;
+        final a = e.attacker;
+        if (!inSet(set, a, chars(a))) return null;
+        if (alone && e.count != 1) return null;
+        if (e.count < minAttackers) return null;
+        if (attacksYou && _defenderOf(a) != you) return null;
+        if (condition != null && !evalCondition(condition, ctx)) return null;
+        return objInfo(a, state.obj(a).zcc, chars(a), player: _defenderOf(a));
+      case UnblockedTrigger(:final set):
+        if (e is! UnblockedEvent || !inSet(set, e.attacker, chars(e.attacker))) return null;
+        return objInfo(e.attacker, state.obj(e.attacker).zcc, chars(e.attacker), player: _defenderOf(e.attacker));
+      case TappedTrigger(:final set):
+        if (e is! TapEvent || !inSet(set, e.obj, chars(e.obj))) return null;
+        return objInfo(e.obj, state.obj(e.obj).zcc, chars(e.obj));
+      case CycleTrigger(:final who, :final self):
+        if (e is! CycleEvent) return null;
+        if (self ? e.card != srcId : !_whoOk(who, e.player, you)) return null;
+        return EventInfo(player: e.player, obj: e.card, objZcc: state.obj(e.card).zcc);
+      case CrimeTrigger():
+        if (e is! CrimeEvent || e.player != you) return null;
+        return EventInfo(player: you);
+      case ScryTrigger(:final who, :final scry, :final surveil):
+        if (e is! ScryEvent || (e.surveil ? !surveil : !scry) || !_whoOk(who, e.player, you)) return null;
+        return EventInfo(player: e.player);
+      case TransformedTrigger(:final set):
+        if (e is! TransformEvent || !inSet(set, e.id, chars(e.id))) return null;
+        return objInfo(e.id, state.obj(e.id).zcc, chars(e.id));
       case YouAttackTrigger(:final min):
         if (e is! AttackEvent || e.player != you || e.attackers.length < min) return null;
         return EventInfo(player: you, amount: e.attackers.length);
-      case BlocksTrigger(:final set):
+      case BlocksTrigger(:final set, :final other):
         if (e is! BlockEvent || !inSet(set, e.blocker, chars(e.blocker))) return null;
+        if (other != null) {
+          // "Blocks a creature": that creature is the event's object.
+          if (!matchesFilter(other.copyWith(zone: ZoneKind.anywhere), e.attacker, ctx)) return null;
+          return objInfo(e.attacker, state.obj(e.attacker).zcc, chars(e.attacker));
+        }
         return objInfo(e.blocker, state.obj(e.blocker).zcc, chars(e.blocker), amount: 0);
-      case BecomesBlockedTrigger(:final set):
+      case BecomesBlockedTrigger(:final set, :final other):
         if (e is! BlockEvent || !inSet(set, e.attacker, chars(e.attacker))) return null;
+        if (other != null) {
+          // "Becomes blocked by a creature": once for each blocker, which is that creature.
+          if (!matchesFilter(other.copyWith(zone: ZoneKind.anywhere), e.blocker, ctx)) return null;
+          return objInfo(e.blocker, state.obj(e.blocker).zcc, chars(e.blocker));
+        }
         // Once per combat: only for the first blocker.
         if (state.obj(e.attacker).blockedBy.length > 1) return null;
         return objInfo(e.attacker, state.obj(e.attacker).zcc, chars(e.attacker));
-      case DealsDamageTrigger(:final set, :final toPlayer, :final toOpponent, :final toCreature, :final combat, :final duringYourTurn):
+      case DealsDamageTrigger(:final set, :final toPlayer, :final toOpponent, :final toCreature, :final combat, :final duringYourTurn, :final orTypes):
         if (e is! DamageEvent) return null;
         if (combat != null && e.combat != combat) return null;
         if (duringYourTurn && state.active != you) return null;
         final toP = isPlayerEntity(e.target);
-        if (toPlayer && !toP) return null;
+        if (toPlayer && !toP && !(orTypes.isNotEmpty && state.objOrNull(e.target) != null && chars(e.target).types.any(orTypes.contains))) return null;
         if (toOpponent && (!toP || entityPlayer(e.target) == you)) return null;
         if (toCreature && (toP || !chars(e.target).isCreature)) return null;
         final srcObj = state.objOrNull(e.source);
@@ -251,16 +340,45 @@ extension GameEvents on Game {
         if (e is! DamageEvent || isPlayerEntity(e.target)) return null;
         if (!inSet(set, e.target, chars(e.target))) return null;
         return objInfo(e.target, state.obj(e.target).zcc, chars(e.target), amount: e.amount);
-      case CastTrigger(:final who, :final filter, :final duringOpponentsTurn):
-        if (e is! CastEvent) return null;
-        if (!_whoOk(who, e.player, you)) return null;
+      case CastTrigger(:final who, :final filter, :final duringOpponentsTurn, :final self, :final nth, :final orCopy, :final targets, :final kicked):
+        final (int item, ObjId obj, PlayerId player) = switch (e) {
+          CastEvent() => (e.item, e.obj, e.player),
+          CopyEvent() when orCopy => (e.item, e.obj, e.player),
+          _ => (-1, -1, -1),
+        };
+        if (item < 0) return null;
+        if (self) {
+          if (obj != srcId) return null;
+        } else {
+          if (!_whoOk(who, player, you)) return null;
+          if (!matchesFilter(filter.copyWith(zone: ZoneKind.stack, controller: Who.any), obj, ctx)) return null;
+        }
         if (duringOpponentsTurn && state.active == you) return null;
-        if (!matchesFilter(filter.copyWith(zone: ZoneKind.stack, controller: Who.any), e.obj, ctx)) return null;
-        final ch = chars(e.obj);
-        return EventInfo(obj: e.obj, objZcc: state.obj(e.obj).zcc, player: e.player, amount: ch.manaValue, objName: ch.name, other: e.item);
-      case StepTrigger(:final step, :final whose):
+        if (nth > 0 && (e is! CastEvent || state.player(player).stats.spellsCast != nth)) return null;
+        final si = state.stack.where((s) => s.id == item).firstOrNull;
+        if (kicked && !(si?.kicked ?? false)) return null;
+        if (targets != null) {
+          if (si == null) return null;
+          var hit = false;
+          for (final list in si.targets) {
+            for (final t in list) {
+              if (!isPlayerEntity(t) && state.objOrNull(t) != null && inSet(targets, t, chars(t))) hit = true;
+            }
+          }
+          if (!hit) return null;
+        }
+        final ch = chars(obj);
+        return EventInfo(obj: obj, objZcc: state.obj(obj).zcc, player: player, amount: ch.manaValue, objName: ch.name, other: item);
+      case StepTrigger(:final step, :final whose, :final ofAttached):
         if (e is! StepEvent || e.step != step) return null;
-        if (!_whoOk(whose, e.active, you)) return null;
+        if (ofAttached) {
+          final at = state.objOrNull(srcId)?.attachedTo;
+          if (at == null) return null;
+          final whom = isPlayerEntity(at) ? entityPlayer(at) : state.objOrNull(at)?.controller;
+          if (whom != e.active) return null;
+        } else if (!_whoOk(whose, e.active, you)) {
+          return null;
+        }
         return EventInfo(player: e.active);
       case GainLifeTrigger(:final who, :final firstTimeEachTurn, :final onlyYourTurn):
         if (e is! LifeEvent || !e.gain || !_whoOk(who, e.player, you)) return null;
@@ -320,6 +438,21 @@ extension GameEvents on Game {
 
   /// Ward and other "becomes the target" triggers.
   void _targetedEvents(StackItem item) {
+    // Crime (CR 700.13): targeting an opponent, something they control, or a card in their
+    // graveyard.
+    var crime = false;
+    for (final list in item.targets) {
+      for (final t in list) {
+        if (isPlayerEntity(t)) {
+          if (entityPlayer(t) != item.controller) crime = true;
+          continue;
+        }
+        final o = state.objOrNull(t);
+        if (o == null) continue;
+        if (o.zone == Zone.graveyard ? o.owner != item.controller : ((o.zone == Zone.battlefield || o.zone == Zone.stack) && chars(t).controller != item.controller)) crime = true;
+      }
+    }
+    if (crime) _emit(CrimeEvent(item.controller));
     final seen = <ObjId>{};
     for (final list in item.targets) {
       for (final e in list) {

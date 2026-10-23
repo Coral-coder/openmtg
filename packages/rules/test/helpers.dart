@@ -14,6 +14,9 @@ CardDatabase? _extra;
 /// full database by tools/make_fixture.py).
 CardDatabase extra() => _extra ??= CardDatabase.fromJson(jsonDecode(File('test/fixtures/extra.json').readAsStringSync()) as Map<String, dynamic>);
 
+/// A fixture cut by tools/make_fixture.py.
+CardDatabase loadFixture(String path) => CardDatabase.fromJson(jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>);
+
 /// Starts a two-player game with [a] and [b] as decks (padded with basic lands to 40).
 Game newGame(List<String> a, List<String> b, {int seed = 1, RulesOptions rules = RulesOptions.standard}) {
   final g = Game(fdn(), players: ['Alice', 'Bob'], seed: seed);

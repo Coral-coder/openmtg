@@ -74,7 +74,9 @@ class OracleParser {
   static Ability? parseGranted(String text, {bool creature = true}) {
     final f = Face(name: '~', typeLine: creature ? 'Creature' : 'Artifact', oracleText: text);
     final p = _FaceParser(f);
-    final r = p.paragraph(text.trim());
+    // Inside the quotes, "this creature" is the object that gets the ability.
+    final t = text.trim().replaceAll(RegExp(r"\bthis (creature|artifact|enchantment|land|permanent|equipment|vehicle|token)\b"), '~');
+    final r = p.paragraph(t);
     if (r == null || r.length != 1) return null;
     return r.first;
   }
@@ -443,6 +445,10 @@ class _FaceParser {
 
   /// Dies/"return this card from your graveyard" triggers work from the graveyard.
   ZoneKind _triggerZone((Trigger, Condition?) t, String rest) {
+    // "When you cast ~" triggers from the stack; "when you cycle ~" from the graveyard (the card
+    // is discarded as the cost).
+    if (t.$1 case CastTrigger(self: true)) return ZoneKind.stack;
+    if (t.$1 case CycleTrigger(self: true)) return ZoneKind.graveyard;
     if (rest.contains('return this card from your graveyard') || rest.contains('return ~ from your graveyard')) return ZoneKind.graveyard;
     return ZoneKind.battlefield;
   }
@@ -450,17 +456,30 @@ class _FaceParser {
   /// "When ~ enters" → one or more triggers (with an event condition when needed).
   List<(Trigger, Condition?)>? _trigger(String head, BodyCtx ctx) {
     final h = head.trim();
-    // "When ~ enters or dies" / "Whenever ~ enters or attacks"
-    final both = rx(h, r'(when|whenever) ~ (enters|dies|attacks) or (enters|dies|attacks|blocks)');
+    // "When you cycle ~ and when ~ dies", "when ~ enters and at the beginning of your upkeep".
+    for (final sep in const [' and when ', ' and whenever ', ' and at ']) {
+      final i = h.indexOf(sep);
+      if (i > 0) {
+        final a = _trigger(h.substring(0, i), ctx);
+        final b = _trigger(h.substring(i + 5), ctx);
+        if (a != null && b != null) return [...a, ...b];
+      }
+    }
+    // "When ~ enters or dies", "when ~ enters or leaves the battlefield", "when ~ enters or is put
+    // into a graveyard from the battlefield".
+    final both = rx(h, r'(when|whenever) ~ (enters|dies|attacks) or (enters|dies|attacks|blocks|leaves the battlefield|is put into a graveyard from the battlefield)');
     if (both != null) {
       final a = _trigger('${both[1]} ~ ${both[2]}', ctx);
       final b = _trigger('${both[1]} ~ ${both[3]}', ctx);
       if (a == null || b == null) return null;
       return [...a, ...b];
     }
+    final more = _moreTriggers(h, ctx);
+    if (more != null) return more;
     final st = _stepTrigger(h);
     if (st != null) return [(st, null)];
 
+    if (h == 'when ~ enter' || h == 'whenever ~ enter') return [(const EntersTrigger(One(SelfRef())), null)];
     var m = rx(h, r'(?:when|whenever) (.+?) enters(?: the battlefield)?(?: under your control)?');
     if (m != null) {
       final set = _triggerSubject(m[1], ctx);
@@ -516,17 +535,25 @@ class _FaceParser {
       if (set == null) return null;
       return [(BecomesBlockedTrigger(set), null)];
     }
-    m = rx(h, r'(?:when|whenever) (.+?) deals (combat |noncombat |)damage to (a player|an opponent|a creature|you)(?: during your turn)?');
+    m = rx(h, r'(?:when|whenever) (.+?) deals (combat |noncombat |)damage to (a player|an opponent|a creature|you)( or (?:a )?(planeswalker|battle))?(?: during your turn)?');
     if (m != null) {
       final set = _triggerSubject(m[1], ctx);
       if (set == null) return null;
       ctx.thatPlayer = const EventPlayer();
+      final orTypes = switch (m[5]) { 'planeswalker' => const {CardType.planeswalker}, 'battle' => const {CardType.battle}, _ => const <CardType>{} };
       return [
         (
-          DealsDamageTrigger(set, toPlayer: m[3] != 'a creature', toOpponent: m[3] == 'an opponent', toCreature: m[3] == 'a creature', combat: m[2] == 'combat ' ? true : (m[2] == 'noncombat ' ? false : null)),
+          DealsDamageTrigger(set, toPlayer: m[3] != 'a creature', toOpponent: m[3] == 'an opponent', toCreature: m[3] == 'a creature', combat: m[2] == 'combat ' ? true : (m[2] == 'noncombat ' ? false : null), orTypes: orTypes),
           null
         )
       ];
+    }
+    // "Whenever ~ deals damage" / "whenever equipped creature deals combat damage".
+    m = rx(h, r'(?:when|whenever) (.+?) deals (combat |)damage');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      if (set == null) return null;
+      return [(DealsDamageTrigger(set, combat: m[2].isEmpty ? null : true), null)];
     }
     m = rx(h, r'(?:when|whenever) (.+?) deals combat damage during your turn');
     if (m != null) {
@@ -539,10 +566,10 @@ class _FaceParser {
       ctx.thatPlayer = const EventPlayer();
       return [(DealsDamageTrigger(const All(Filter(controller: Who.you)), toPlayer: true, toOpponent: true, combat: m[1].isEmpty ? null : m[1] == 'combat '), null)];
     }
-    m = rx(h, r'whenever (you|an opponent|a player) casts? (?:a|an) (.+?)(?: during an opponent\x27s turn)?');
+    m = rx(h, r'(?:when|whenever) (you|an opponent|a player) casts? (?:a|an) (.+?)(?: during an opponent\x27s turn)?');
     if (m != null) {
       final who = switch (m[1]) { 'you' => Who.you, 'an opponent' => Who.opponent, _ => Who.any };
-      final f = m[2] == 'spell' ? const Filter(spell: true, zone: ZoneKind.stack) : parseFilterCore(m[2]);
+      final f = m[2] == 'spell' ? const Filter(spell: true, zone: ZoneKind.stack) : (parseFilterCore(m[2]) ?? _spellSubtypes(m[2]));
       if (f == null) return null;
       if (who != Who.you) ctx.thatPlayer = const EventPlayer();
       return [(CastTrigger(who, f, duringOpponentsTurn: h.endsWith("during an opponent's turn")), null)];
@@ -592,6 +619,12 @@ class _FaceParser {
       if (set == null) return null;
       return [(BecomesTargetTrigger(set), null)];
     }
+    m = rx(h, r'(?:when|whenever) (.+?) becomes the target of a spell or ability');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      if (set == null) return null;
+      return [(BecomesTargetTrigger(set, byOpponent: false), null)];
+    }
     m = rx(h, r'whenever (.+?) is dealt damage');
     if (m != null) {
       final set = _triggerSubject(m[1], ctx);
@@ -601,8 +634,174 @@ class _FaceParser {
     return null;
   }
 
+  /// Trigger heads added for the second coverage round; null when none matches.
+  List<(Trigger, Condition?)>? _moreTriggers(String h, BodyCtx ctx) {
+    List<(Trigger, Condition?)>? one(Trigger? t) => t == null ? null : [(t, null)];
+
+    // Spells being cast or copied.
+    if (h == 'when you cast ~' || h == 'whenever you cast ~') return one(const CastTrigger(Who.you, Filter(spell: true), self: true));
+    if (h == 'whenever you cast your second spell each turn') return one(const CastTrigger(Who.you, Filter(spell: true), nth: 2));
+    if (h == 'whenever you cast your first spell each turn') return one(const CastTrigger(Who.you, Filter(spell: true), nth: 1));
+    if (h == 'whenever you cast your first spell during each opponent\'s turn') return one(const CastTrigger(Who.you, Filter(spell: true), nth: 1, duringOpponentsTurn: true));
+    if (h == 'whenever you cast a kicked spell') return one(const CastTrigger(Who.you, Filter(spell: true), kicked: true));
+    var m = rx(h, r'whenever you cast or copy (?:a|an) (.+)');
+    if (m != null) {
+      final f = m[1] == 'spell' ? const Filter(spell: true) : (parseFilterCore(m[1]) ?? _spellSubtypes(m[1]));
+      if (f == null) return null;
+      return one(CastTrigger(Who.you, f, orCopy: true));
+    }
+    m = rx(h, r'whenever you cast (?:a|an) (.*?)spell that targets (.+)');
+    if (m != null) {
+      final sub = BodyCtx(trigger: true);
+      final set = _triggerSubject(m[2], sub);
+      if (set == null) return null;
+      final f = m[1].isEmpty ? const Filter(spell: true) : (parseFilterCore('${m[1]}spell') ?? _spellSubtypes('${m[1]}spell'));
+      if (f == null) return null;
+      if (set case One(ref: SelfRef())) ctx.it = const SelfRef();
+      return one(CastTrigger(Who.you, f, targets: set));
+    }
+
+    // Combat.
+    m = rx(h, r'(?:when|whenever) (.+?) attacks and isn\x27t blocked');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      if (set == null) return null;
+      ctx.thatPlayer = const EventPlayer();
+      return one(UnblockedTrigger(set));
+    }
+    m = rx(h, r'whenever ~ and at least (one|two|three|four) other creatures? attack');
+    if (m != null) {
+      ctx.it = const SelfRef();
+      return one(AttacksTrigger(const One(SelfRef()), minAttackers: numberWord(m[1])! + 1));
+    }
+    m = rx(h, r'whenever (?:a|an) (.+?) attacks you(?: or a planeswalker you control)?');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      if (set == null) return null;
+      return one(AttacksTrigger(set, attacksYou: true));
+    }
+    m = rx(h, r'(?:when|whenever) (.+?) blocks or becomes blocked by (?:a|an) (.+)');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      final other = parseFilterCore(m[2]);
+      if (set == null || other == null) return null;
+      ctx.it = const EventObj();
+      ctx.eventObj = const EventObj();
+      return [(BlocksTrigger(set, other: other), null), (BecomesBlockedTrigger(set, other: other), null)];
+    }
+    m = rx(h, r'(?:when|whenever) (.+?) becomes blocked by (?:a|an) (.+)');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      final other = parseFilterCore(m[2]);
+      if (set == null || other == null) return null;
+      ctx.it = const EventObj();
+      ctx.eventObj = const EventObj();
+      return one(BecomesBlockedTrigger(set, other: other));
+    }
+    m = rx(h, r'(?:when|whenever) (.+?) blocks (?:a|an) (.+)');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      final other = parseFilterCore(m[2]);
+      if (set == null || other == null) return null;
+      ctx.it = const EventObj();
+      ctx.eventObj = const EventObj();
+      return one(BlocksTrigger(set, other: other));
+    }
+
+    // Dying, graveyards, sacrifice.
+    m = rx(h, r'whenever (?:a|an) (.+?) dealt damage by ~ this turn dies');
+    if (m != null) {
+      final f = parseFilterCore(m[1]);
+      if (f == null) return null;
+      ctx.it = const EventObj();
+      ctx.eventObj = const EventObj();
+      return one(DiesTrigger(All(f), damagedBySelf: true));
+    }
+    m = rx(h, r'(?:when|whenever) (.+?) (?:is|are) put into (?:a|your|an opponent\x27s) graveyard from (the battlefield|anywhere)');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      if (set == null) return null;
+      return one(PutIntoGraveyardTrigger(set, fromBattlefield: m[2] == 'the battlefield'));
+    }
+    m = rx(h, r'whenever you sacrifice (a|an|another) (.+)');
+    if (m != null) {
+      final f = parseFilterCore(m[2]);
+      if (f == null) return null;
+      ctx.it = const EventObj();
+      ctx.eventObj = const EventObj();
+      return one(SacrificedTrigger(All(f.copyWith(controller: Who.you, other: m[1] == 'another'))));
+    }
+
+    // Tapping, transforming, targeting.
+    m = rx(h, r'(?:when|whenever) (.+?) becomes tapped');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      if (set == null) return null;
+      return one(TappedTrigger(set));
+    }
+    m = rx(h, r'(?:when|whenever) ~ transforms(?: into ~)?');
+    if (m != null) {
+      ctx.it = const SelfRef();
+      return one(const TransformedTrigger(One(SelfRef())));
+    }
+
+    // Cycling, scrying, crimes.
+    if (h == 'when you cycle ~' || h == 'whenever you cycle ~') return one(const CycleTrigger(Who.you, self: true));
+    m = rx(h, r'whenever (you|a player|an opponent) cycles? (?:a|another) card');
+    if (m != null) {
+      if (m[1] != 'you') ctx.thatPlayer = const EventPlayer();
+      return one(CycleTrigger(m[1] == 'you' ? Who.you : (m[1] == 'an opponent' ? Who.opponent : Who.any)));
+    }
+    // Cycling discards, so "cycle or discard" is one discard trigger (CR 702.29).
+    if (h == 'whenever you cycle or discard a card') {
+      ctx.eventObj = const EventObj();
+      ctx.it = const EventObj();
+      return one(const DiscardTrigger(Who.you));
+    }
+    if (h == 'whenever you scry') return one(const ScryTrigger(Who.you));
+    if (h == 'whenever you surveil') return one(const ScryTrigger(Who.you, scry: false, surveil: true));
+    if (h == 'whenever you scry or surveil' || h == 'whenever you surveil or scry') return one(const ScryTrigger(Who.you, surveil: true));
+    if (h == 'whenever you gain life during your turn') return one(const GainLifeTrigger(Who.you, onlyYourTurn: true));
+    if (h == 'whenever you lose life during your turn') {
+      ctx.thatPlayer = const EventPlayer();
+      return [(const LoseLifeTrigger(Who.you), const YourTurn())];
+    }
+    if (h == 'whenever one or more creatures you control attack') return one(const YouAttackTrigger());
+    if (h == 'whenever ~ attack' || h == 'when ~ attack') {
+      ctx.it = const SelfRef();
+      return one(const AttacksTrigger(One(SelfRef())));
+    }
+    if (h == 'whenever a source deals damage to ~') {
+      ctx.it = const SelfRef();
+      return one(const IsDealtDamageTrigger(One(SelfRef())));
+    }
+    if (h == 'whenever you commit a crime') return one(const CrimeTrigger());
+    return null;
+  }
+
+  /// "Spirit or arcane spell": spell subtypes the filter grammar doesn't know as card words.
+  Filter? _spellSubtypes(String s) {
+    final m = rx(s, r'([a-z]+(?: or [a-z]+)*) spell');
+    if (m == null) return null;
+    final subs = <String>{};
+    for (final w in m[1].split(' or ')) {
+      final st = w == 'arcane' ? 'Arcane' : subtypeWords[w];
+      if (st == null) return null;
+      subs.add(st);
+    }
+    return Filter(spell: true, subtypes: subs);
+  }
+
   Trigger? _stepTrigger(String h) {
-    final m = rx(h, r'at the beginning of (your|each|each opponent\x27s|each player\x27s|the next|each of your) (upkeep|end step|draw step|precombat main phase|first main phase|postcombat main phase|combat|second main phase)(?: on your turn)?');
+    if (h == 'at the beginning of the upkeep of enchanted creature\'s controller' || h == 'at the beginning of enchanted player\'s upkeep' || h == 'at the beginning of the upkeep of enchanted permanent\'s controller') {
+      return const StepTrigger(TurnStep.upkeep, Who.any, ofAttached: true);
+    }
+    if (h == 'at the beginning of the end step of enchanted creature\'s controller' || h == 'at the beginning of enchanted player\'s end step') {
+      return const StepTrigger(TurnStep.end, Who.any, ofAttached: true);
+    }
+    if (h == 'at end of combat' || h == 'at the end of combat') return const StepTrigger(TurnStep.endCombat, Who.any);
+    if (h == 'at end of combat on your turn') return const StepTrigger(TurnStep.endCombat, Who.you);
+    final m = rx(h, r'at the beginning of (your|each|each opponent\x27s|each player\x27s|the next|each of your) (upkeep|end step|draw step|precombat main phase|first main phase|postcombat main phase|combat|second main phase)s?(?: on your turn)?');
     if (m == null) {
       if (h == 'at the beginning of combat on your turn') return const StepTrigger(TurnStep.beginCombat, Who.you);
       if (h == 'at the beginning of each combat') return const StepTrigger(TurnStep.beginCombat, Who.any);
@@ -629,7 +828,7 @@ class _FaceParser {
       ctx.it = const SelfRef();
       return const One(SelfRef());
     }
-    if (t == 'equipped creature' || t == 'enchanted creature') {
+    if (t == 'equipped creature' || t == 'enchanted creature' || t == 'enchanted land' || t == 'enchanted permanent' || t == 'enchanted artifact' || t == 'fortified land') {
       ctx.it = const AttachedTo();
       ctx.eventObj = const EventObj();
       return const One(AttachedTo());
