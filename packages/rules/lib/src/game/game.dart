@@ -59,6 +59,10 @@ class Game {
   bool _computing = false;
   Map<ObjId, Chars> _passChars = {};
 
+  /// Set while a resolving effect casts a spell (cascade, rebound: CR 608.2g), which ignores
+  /// the usual timing.
+  bool _castDuringResolution = false;
+
   /// Fingerprint of the state, for lockstep comparison.
   String get fingerprint => sha256.convert(utf8.encode(state.digest())).toString().substring(0, 24);
 
@@ -104,7 +108,8 @@ class Game {
         _pass(a.player);
       case PlayLandAction():
         _requirePriority(a.player);
-        _playLand(a.player, a.id, a.face);
+        // A task, so a land can ask as it enters (shocklands, "choose a color").
+        _run(PlayLandTask(a.player, a.id, a.face));
       case CastAction():
         _requirePriority(a.player);
         _run(CastTask(a.player, a.id, face: a.face, option: a.option));
@@ -155,6 +160,8 @@ class Game {
       case ActivateTask():
         _activate(t.player, t.obj, t.ability);
         _afterPlayerAction(t.player);
+      case PlayLandTask():
+        _playLand(t.player, t.obj, t.face);
       case ResolveTask():
         _resolveTop();
       case TriggersTask():

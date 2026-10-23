@@ -18,6 +18,7 @@ void main(List<String> args) {
   var verbose = false;
   var players = 2;
   var randomDecks = false;
+  int? only;
   for (var i = 0; i < args.length; i++) {
     switch (args[i]) {
       case '--db':
@@ -32,6 +33,8 @@ void main(List<String> args) {
         verbose = true;
       case '--random-decks':
         randomDecks = true;
+      case '--only':
+        only = int.parse(args[++i]);
     }
   }
   final db = CardDatabase.fromJson(jsonDecode(File(dbPath).readAsStringSync()) as Map<String, dynamic>);
@@ -52,11 +55,29 @@ void main(List<String> args) {
     final gameSeed = rng.nextInt(1 << 30);
     final picks = [for (var p = 0; p < players; p++) names[rng.nextInt(names.length)]];
     final lists = [for (final p in picks) randomDecks ? _randomDeck(pool, colorPairs[p]!, rng) : decks[p]!];
+    if (only != null && n != only) continue;
     final g = Game(db, players: [for (var p = 0; p < players; p++) 'P$p ${picks[p]}'], seed: gameSeed);
+    if (only != null) {
+      // Debugging one game: print each action as it's taken.
+      g.apply(StartAction(lists));
+      final bots = [for (var p = 0; p < players; p++) Bot(p, seed: gameSeed + p)];
+      for (var i = 0; i < 6000 && !g.state.over; i++) {
+        final before = g.actions.length;
+        for (final b in bots) {
+          if (b.step(g)) break;
+        }
+        for (final a in g.actions.skip(before)) {
+          stdout.writeln('$i ${jsonEncode(a.toJson())} | ${g.state.log.isEmpty ? '' : g.state.log.last.text}');
+        }
+      }
+      continue;
+    }
     final bots = [for (var p = 0; p < players; p++) Bot(p, seed: gameSeed + p)];
     try {
       g.apply(StartAction(lists));
-      final done = runBots(g, bots, maxActions: 6000);
+      // Self-copying creatures (Troubling Tribbles) double every turn: a board that big is left
+      // unfinished rather than played out at a crawl.
+      final done = runBots(g, bots, maxActions: 6000, stop: (g) => g.state.battlefield.length > 250);
       final fp = g.fingerprint;
       final r = Game(db, players: [for (final p in g.state.players) p.name], seed: gameSeed);
       for (final a in g.actions) {

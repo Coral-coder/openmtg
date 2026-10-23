@@ -219,7 +219,10 @@ class Bot {
       case DecisionKind.number:
         return [d.max];
       case DecisionKind.yesNo:
-        if (d.prompt.startsWith('Pay kicker')) return [_canKick(g, d) ? 1 : 0];
+        if (d.prompt.startsWith('Pay kicker')) return [_canKick(g, d, CastKind.kicker) ? 1 : 0];
+        if (d.prompt.startsWith('Pay buyback')) return [_canKick(g, d, CastKind.buyback) ? 1 : 0];
+        // Shocklands: pay life to enter untapped while life is comfortable.
+        if (d.prompt.contains('enters untapped')) return [g.state.player(player).life > 10 ? 1 : 0];
         return const [1];
       case DecisionKind.option:
         if (d.prompt.contains('pay to avoid')) return [d.labels.length > 1 ? 1 : 0];
@@ -242,11 +245,11 @@ class Bot {
     }
   }
 
-  bool _canKick(Game g, Decision d) {
+  bool _canKick(Game g, Decision d, CastKind kind) {
     final src = d.source;
     if (src == null) return false;
     final c = g.chars(src);
-    final kicker = c.abilities.whereType<CastOptionAbility>().where((a) => a.option.kind == CastKind.kicker).firstOrNull;
+    final kicker = c.abilities.whereType<CastOptionAbility>().where((a) => a.option.kind == kind).firstOrNull;
     if (kicker == null || c.manaCost == null) return false;
     return g.canAfford(player, c.manaCost! + kicker.option.cost!);
   }
@@ -413,9 +416,10 @@ class Bot {
 }
 
 /// Plays a game to the end with bots in every seat. Returns false if it hit [maxActions].
-bool runBots(Game g, List<Bot> bots, {int maxActions = 5000}) {
+bool runBots(Game g, List<Bot> bots, {int maxActions = 5000, bool Function(Game g)? stop}) {
   for (var i = 0; i < maxActions; i++) {
     if (g.state.over) return true;
+    if (stop != null && stop(g)) return false;
     var acted = false;
     for (final b in bots) {
       if (b.step(g)) {

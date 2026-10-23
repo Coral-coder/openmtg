@@ -1,0 +1,35 @@
+# Cards for test/statics_test.dart (tools/make_fixture.py builds statics.json).
+Plains
+Island
+Swamp
+Mountain
+Forest
+Grizzly Bears
+Hill Giant
+Suntail Hawk
+Ornithopter
+Bonds of Quicksilver
+Battlefield Percher
+Abduction
+Armored Galleon
+Bristling Boar
+Blood Crypt
+Deathcap Glade
+Vivid Crag
+Alaborn Veteran
+Arboretum Elemental
+Gurmag Angler
+Astral Steel
+Annoyed Altisaur
+Artful Maneuver
+Allay
+Benalish Cavalry
+Avalanche Riders
+Ancient Hydra
+Calciderm
+Arctic Wolves
+Bonded Construct
+Blood Petal Celebrant
+Lightning Bolt
+Shock
+Llanowar Elves

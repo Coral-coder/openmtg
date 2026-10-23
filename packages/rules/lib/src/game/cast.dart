@@ -94,7 +94,7 @@ extension GameCast on Game {
   }
 
   bool _canCastNow(PlayerId p, Chars c) {
-    if (c.isInstant || c.has(Kw.flash)) return true;
+    if (_castDuringResolution || c.isInstant || c.has(Kw.flash)) return true;
     for (final r in _rules<CastAsThoughFlash>(p)) {
       if (identical(r.filter, Filter.any) || r.filter.types.isEmpty || r.filter.types.any(c.types.contains)) return true;
     }
@@ -133,6 +133,12 @@ extension GameCast on Game {
       final k = ask(Decision(kind: DecisionKind.yesNo, player: p, prompt: 'Pay kicker ${kicker.first.cost?.text ?? ''}?', labels: const ['No', 'Kick it'], source: id, cancellable: true));
       kicked = k.first == 1;
     }
+    final buyback = optList.where((x) => x.kind == CastKind.buyback).toList();
+    var bought = false;
+    if (buyback.isNotEmpty && !free) {
+      final k = ask(Decision(kind: DecisionKind.yesNo, player: p, prompt: 'Pay buyback ${buyback.first.cost?.text ?? ''}?', labels: const ['No', 'Pay buyback'], source: id, cancellable: true));
+      bought = k.first == 1;
+    }
 
     // 601.2a: the card moves to the stack.
     _moveTo(id, Zone.stack, controller: p);
@@ -145,6 +151,9 @@ extension GameCast on Game {
     final item = StackItem(id: state.nextId++, kind: StackKind.spell, controller: p, sourceId: id, sourceZcc: o.zcc, ability: spellAb, objId: id, sourceName: c0.name, kicked: kicked);
     state.stack.add(item);
     o.kicked = kicked;
+    o.buyback = bought;
+    // Rebound only works for a spell cast from its owner's hand (CR 702.88a).
+    o.rebound = fromZone == Zone.hand && c0.hasName('rebound');
     if (chosen?.kind == CastKind.flashback) o.exileOnResolve = true;
     if (fromZone == Zone.graveyard && !wasPlayable && chosen == null) state.player(p).stats.graveyardPlays.addAll([for (final t in c0.types) if (t.isPermanentType) t.name]);
 
@@ -176,6 +185,7 @@ extension GameCast on Game {
     // Total cost (601.2f) and payment (601.2g–h).
     var cost = baseCost.withX(item.x);
     if (kicked) cost = cost + kicker.first.cost!;
+    if (bought) cost = cost + buyback.first.cost!;
     if (addChoice?.cost != null) cost = cost + addChoice!.cost!;
     cost = _applyCostChanges(p, id, c0, cost, item, ctx);
     for (final part in addChoice?.extra ?? const <CostPart>[]) {
@@ -184,6 +194,7 @@ extension GameCast on Game {
     for (final part in chosen?.extra ?? const <CostPart>[]) {
       _payCostPart(p, part, id, item, ctx);
     }
+    cost = _helpPay(p, id, c0, cost);
     _payMana(p, cost, forSpell: id, prompt: 'Pay for ${c0.name}');
 
     // 601.2i: the spell becomes cast.
@@ -195,8 +206,25 @@ extension GameCast on Game {
     if (c0.isInstant || c0.isSorcery) pl.stats.instantSorceryCast++;
     _log('${pl.name} casts ${c0.name}${kicked ? ' (kicked)' : ''}${item.x > 0 ? ' (X=${item.x})' : ''}.', player: p, obj: id, kind: 'cast');
     _emit(CastEvent(item.id, id, p));
+    _castKeywordTriggers(p, id, o, c0);
     _targetedEvents(item);
     _dirty();
+  }
+
+  /// Storm (CR 702.40) and cascade (CR 702.85): abilities of the spell that trigger as it's cast.
+  void _castKeywordTriggers(PlayerId p, ObjId id, GameObject o, Chars c) {
+    final info = EventInfo(obj: id, objZcc: o.zcc, player: p);
+    if (c.hasName('storm')) {
+      final before = state.players.fold<int>(0, (a, pl) => a + pl.stats.spellsCast) - 1;
+      if (before > 0) {
+        state.pendingTriggers.add(PendingTrigger(
+            controller: p, sourceId: id, sourceZcc: o.zcc, ability: TriggeredAbility('storm', const CastTrigger(Who.you, Filter.any), Body(effect: CopySpell(const SelfRef(), amount: Fixed(before)))), event: info, sourceName: c.name));
+      }
+    }
+    for (final _ in c.kws('cascade')) {
+      state.pendingTriggers.add(PendingTrigger(
+          controller: p, sourceId: id, sourceZcc: o.zcc, ability: TriggeredAbility('cascade', const CastTrigger(Who.you, Filter.any), Body(effect: CascadeEffect(c.manaValue))), event: info, sourceName: c.name));
+    }
   }
 
   /// Chooses modes (601.2b) and targets (601.2c) for a spell or ability on the stack.
@@ -848,6 +876,102 @@ extension GameCast on Game {
       plan.add((sources[i].id, sources[i].ability, (assign[i] ?? sources[i].types.first).index));
     }
     return plan;
+  }
+
+  /// Convoke (CR 702.51), improvise (CR 702.126) and delve (CR 702.66): tapping creatures or
+  /// artifacts, or exiling cards from the graveyard, pays part of [cost]. The player picks
+  /// which; no pick means "only what's needed", chosen automatically (creatures and artifacts
+  /// that make no mana first, then the lowest ids, so it's the same on every device).
+  ManaCost _helpPay(PlayerId p, ObjId spell, Chars c, ManaCost cost) {
+    var left = cost.normalized();
+    for (final (kw, verb) in const [('convoke', 'Tap creatures to convoke'), ('improvise', 'Tap artifacts to improvise'), ('delve', 'Exile cards from your graveyard to delve')]) {
+      if (!c.hasName(kw)) continue;
+      final delve = kw == 'delve';
+      final options = delve
+          ? [for (final id in state.player(p).graveyard) if (id != spell) id]
+          : [
+              for (final id in state.battlefield)
+                if (id != spell && chars(id).controller == p && !state.obj(id).tapped && (kw == 'convoke' ? chars(id).isCreature : chars(id).isArtifact)) id,
+            ];
+      if (options.isEmpty || _genericOf(left) == 0 && (kw != 'convoke' || !left.symbols.any((s) => s is ColoredSymbol || s is HybridSymbol))) continue;
+      final pick = ask(Decision(kind: DecisionKind.cards, player: p, prompt: '$verb (none: only as many as needed)', options: options, min: 0, max: options.length, source: spell, cancellable: true));
+      List<ObjId> use;
+      if (pick.isNotEmpty) {
+        if (pick.any((x) => !options.contains(x)) || pick.toSet().length != pick.length) throw GameError('Illegal choice');
+        use = pick;
+      } else {
+        use = [];
+        final ordered = List.of(options);
+        if (!delve) ordered.sortStable((a, b) => _makesMana(a) - _makesMana(b));
+        var trial = left;
+        if (!canAfford(p, trial)) {
+          for (final id in ordered) {
+            final next = _reduceBy(trial, delve || kw == 'improvise' ? null : chars(id).colors);
+            if (next == null) continue;
+            use.add(id);
+            trial = next;
+            // What's tapped to help can't also make mana.
+            if (delve ? canAfford(p, trial) : _affordWithout(p, trial, use)) break;
+          }
+        }
+      }
+      for (final id in use) {
+        final next = _reduceBy(left, delve || kw == 'improvise' ? null : chars(id).colors);
+        if (next == null) throw GameError('${nameOf(id)} would pay nothing');
+        left = next;
+        if (delve) {
+          _moveTo(id, Zone.exile);
+        } else {
+          _tap(id);
+        }
+      }
+      if (use.isNotEmpty) _log('${state.player(p).name} ${delve ? 'exiles ${use.length} cards to delve' : 'taps ${use.map(nameOf).join(', ')} to $kw'}.', player: p);
+    }
+    return left;
+  }
+
+  int _genericOf(ManaCost c) => c.symbols.whereType<GenericSymbol>().fold(0, (a, s) => a + s.amount);
+
+  /// 1 if [id] has a mana ability, else 0 (for ordering).
+  int _makesMana(ObjId id) => chars(id).abilities.any((a) => a is ManaAbility) ? 1 : 0;
+
+  /// Could [cost] be paid if [tapped] were tapped (so not making mana)?
+  bool _affordWithout(PlayerId p, ManaCost cost, List<ObjId> tapped) {
+    final was = [for (final id in tapped) state.obj(id).tapped];
+    for (final id in tapped) {
+      state.obj(id).tapped = true;
+    }
+    _dirty();
+    final ok = canAfford(p, cost);
+    for (var i = 0; i < tapped.length; i++) {
+      state.obj(tapped[i]).tapped = was[i];
+    }
+    _dirty();
+    return ok;
+  }
+
+  /// [cost] with one mana paid by a helper of [colors] (null: generic only): a colored or
+  /// hybrid symbol of one of those colors first, else one generic. Null if it pays nothing.
+  ManaCost? _reduceBy(ManaCost cost, Set<ManaColor>? colors) {
+    final syms = List.of(cost.normalized().symbols);
+    if (colors != null) {
+      for (var i = 0; i < syms.length; i++) {
+        final s = syms[i];
+        final t = switch (s) { ColoredSymbol(:final type) => [type], HybridSymbol(:final a, :final b) => [b, ?a], _ => const <ManaType>[] };
+        if (t.any((m) => m.color != null && colors.contains(m.color))) {
+          syms.removeAt(i);
+          return ManaCost(syms).normalized();
+        }
+      }
+    }
+    for (var i = 0; i < syms.length; i++) {
+      final s = syms[i];
+      if (s is GenericSymbol && s.amount > 0) {
+        syms[i] = GenericSymbol(s.amount - 1);
+        return ManaCost(syms).normalized();
+      }
+    }
+    return null;
   }
 
   /// Can [p] pay [cost] now (for the table's hints)?

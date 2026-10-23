@@ -347,6 +347,10 @@ class _FaceParser {
         ('. activate only once', 3),
         ('. activate only during your turn.', 4),
         ('. activate only during your turn', 4),
+        ('. activate only during your turn, before attackers are declared.', 5),
+        ('. activate only during your turn, before attackers are declared', 5),
+        ('. activate only during your upkeep.', 6),
+        ('. activate only during your upkeep', 6),
       ]) {
         if (r.endsWith(suffix)) {
           r = r.substring(0, r.length - suffix.length);
@@ -359,6 +363,12 @@ class _FaceParser {
               onlyOnce = true;
             case 4:
               yourTurn = true;
+            case 5:
+              yourTurn = true;
+              cond = allOf([cond, const DuringSteps({TurnStep.untap, TurnStep.upkeep, TurnStep.draw, TurnStep.main1, TurnStep.beginCombat})]);
+            case 6:
+              yourTurn = true;
+              cond = allOf([cond, const DuringSteps({TurnStep.upkeep})]);
           }
           changed = true;
         }
@@ -367,7 +377,7 @@ class _FaceParser {
       if (cm != null) {
         final c = condition(cm.group(2)!, BodyCtx());
         if (c != null) {
-          cond = c;
+          cond = allOf([cond, c]);
           r = cm.group(1)!;
           changed = true;
         }
@@ -376,6 +386,8 @@ class _FaceParser {
     // Mana abilities: "Add {G}.", "Add {R} or {G}.", "Add one mana of any color."
     final mana = _manaEffect(r.endsWith('.') ? r.substring(0, r.length - 1) : r);
     if (mana != null && !cost.parts.any((p) => p is TapCost && p.n > 0) && cost.loyalty == null) {
+      // Mana abilities carry no timing restrictions here; such cards aren't supported yet.
+      if (sorcery || once || onlyOnce || yourTurn || cond != null) return null;
       return [ManaAbility(raw, cost, mana)];
     }
     final ctx = BodyCtx();
@@ -927,14 +939,23 @@ class _FaceParser {
     }
     var m = rx(t, r'there are (seven|\w+) or more cards in your graveyard');
     if (m != null) return CountCondition(const CardsIn(ZoneKind.graveyard, You(), Filter(card: true, zone: ZoneKind.graveyard)), Cmp.ge, numberWord(m[1])!);
-    m = rx(t, r'you control (a|an|another|two or more|three or more|four or more|five or more|seven or more|no) (.+)');
+    m = rx(t, r'(you|your opponents) controls? (a|an|another|no|\w+ or more|\w+ or fewer) (other )?(.+)');
     if (m != null) {
-      var f = parseFilterCore(m[2]);
+      // "a Plains or an Island" (check lands).
+      var f = parseFilterCore(m[4].replaceAll(' or an ', ' or ').replaceAll(' or a ', ' or '));
       if (f == null) return null;
-      if (m[1] == 'another') f = f.copyWith(other: true);
-      final n = switch (m[1]) { 'a' || 'an' || 'another' => 1, 'no' => 0, _ => numberWord(m[1].split(' ').first)! };
-      return CountCondition(CountOf(All(f.copyWith(controller: Who.you))), m[1] == 'no' ? Cmp.eq : Cmp.ge, n);
+      if (m[2] == 'another' || m[3].isNotEmpty) f = f.copyWith(other: true);
+      final words = m[2].split(' ');
+      final n = switch (m[2]) { 'a' || 'an' || 'another' => 1, 'no' => 0, _ => numberWord(words.first) };
+      if (n == null) return null;
+      final cmp = m[2] == 'no' ? Cmp.eq : (words.last == 'fewer' ? Cmp.le : Cmp.ge);
+      return CountCondition(CountOf(All(f.copyWith(controller: m[1] == 'you' ? Who.you : Who.opponent))), cmp, n);
     }
+    m = rx(t, r'you have (\w+) or more opponents');
+    if (m != null && numberWord(m[1]) != null) return AmountCompare(PlayerCount(const EachOpponent()), Cmp.ge, Fixed(numberWord(m[1])!));
+    if (t == 'you have no cards in hand') return const CountCondition(CardsIn(ZoneKind.hand, You(), Filter(card: true, zone: ZoneKind.hand)), Cmp.eq, 0);
+    if (t == "it's attacking" || t == '~ is attacking' || t == 'it is attacking') return const ObjMatches(SelfRef(), Filter(attacking: true));
+    if (t == "it's blocking" || t == '~ is blocking') return const ObjMatches(SelfRef(), Filter(blocking: true));
     m = rx(t, r"it (was|is) (?:a|an) (.+)");
     if (m != null && ctx.lastRemembered != null) {
       final f = parseFilterCore(m[2]);
@@ -1048,7 +1069,26 @@ class _FaceParser {
 
     // Replacement: enters tapped / with counters.
     if (t == '~ enters tapped') return [ReplacementAbility(raw, const EntersTapped(One(SelfRef())))];
-    var m = rx(t, r'(.+) enter tapped');
+    var m = rx(t, r'~ enters tapped unless (.+)');
+    if (m != null) {
+      final c = condition(m[1], ctx);
+      if (c == null) return null;
+      return [ReplacementAbility(raw, EntersTapped(const One(SelfRef()), unless: c))];
+    }
+    // Shocklands.
+    m = rx(t, r"as ~ enters, you may pay (\d+) life\. if you don't, it enters tapped");
+    if (m != null) return [ReplacementAbility(raw, EntersTapped(const One(SelfRef()), payLife: int.parse(m[1])))];
+    // "~ enters tapped with two charge counters on it."
+    m = rx(t, r'~ enters tapped with (.+)');
+    if (m != null) {
+      final rest = _static('~ enters with ${m[1]}', raw);
+      if (rest == null) return null;
+      return [ReplacementAbility(raw, const EntersTapped(One(SelfRef()))), ...rest];
+    }
+    // Control-changing Auras (CR 303.4e, layer 2).
+    m = rx(t, r'you control enchanted (creature|permanent|artifact|land|planeswalker)');
+    if (m != null) return [StaticAbility(raw, const One(AttachedTo()), const [ControlBy(You())])];
+    m = rx(t, r'(.+) enter tapped');
     if (m != null) {
       final g = parseGroup(m[1], ctx);
       if (g != null) return [ReplacementAbility(raw, EntersTapped(g))];
@@ -1115,6 +1155,7 @@ class _FaceParser {
       case '~ attacks each combat if able':
         return [KeywordAbility(raw, Kw.attacksEachCombat)];
     }
+    if (t == "~ can't be blocked by more than one creature") return [KeywordAbility(raw, Kw.maxOneBlocker)];
     m = rx(t, r"~ can't be blocked by (.+)");
     if (m != null) {
       final f = parseFilterCore(m[1]);
@@ -1202,7 +1243,7 @@ class _FaceParser {
 
   /// "<group> get(s) +N/+N [and has/have <kws>]", "<group> has/have <kws>", "~ is a <type>".
   (ObjSet, List<Mod>)? _continuous(String t, BodyCtx ctx) {
-    final m = RegExp(r'^(.+?) (gets|get|has|have|is|are|loses|lose) (.+)$').firstMatch(t);
+    final m = RegExp(r"^(.+?) (gets|get|has|have|is|are|loses|lose|can't|can|doesn't|don't|must) (.+)$").firstMatch(t);
     if (m == null) return null;
     final subj = m.group(1)!;
     final set = parseObjects(subj, ctx);
@@ -1290,7 +1331,32 @@ class _FaceParser {
     }
     if (p == "can't block" || p == "can't block this turn") return [const AddKw(Kw.cantBlock)];
     if (p == "can't be blocked" || p == "can't be blocked this turn") return [const AddKw(Kw.unblockable)];
-    if (p == "can't attack or block") return [const AddKw(Kw.cantAttackOrBlock)];
+    if (p == "can't attack or block" || p == "can't attack or block this turn") return [const AddKw(Kw.cantAttackOrBlock)];
+    // Restrictions (CR 508.1c, 509.1b–c) and "doesn't untap" (CR 502.3).
+    if (static) {
+      switch (p) {
+        case "can't attack":
+          return [const AddKw(Kw.cantAttack)];
+        case "can't attack alone":
+          return [const AddKw(Kw.cantAttackAlone)];
+        case "can't block alone":
+          return [const AddKw(Kw.cantBlockAlone)];
+        case "can't attack or block alone":
+          return [const AddKw(Kw.cantAttackAlone), const AddKw(Kw.cantBlockAlone)];
+        case 'can block only creatures with flying':
+          return [const AddKw(Kw.blocksOnlyFlying)];
+        case "can't be blocked by more than one creature":
+          return [const AddKw(Kw.maxOneBlocker)];
+        case "doesn't untap during its controller's untap step" || "don't untap during their controllers' untap steps" || "doesn't untap during your untap step" || "don't untap during your untap step":
+          return [const AddKw(Kw.doesntUntap)];
+      }
+      final unless = rx(p, r"can't attack unless defending player controls (?:a|an) (.+)");
+      if (unless != null) {
+        final f = parseFilterCore(unless[1]);
+        if (f == null) return null;
+        return [AddKw(Kw.attacksOnlyIfDefenderControls(f))];
+      }
+    }
     if (p == 'loses all abilities') return [const LoseAllAbilities()];
     m = rx(p, r'is a colorless land with "\{t\}: add \{c\}" and loses all other card types and abilities');
     if (m != null) {
