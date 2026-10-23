@@ -261,7 +261,7 @@ extension GameLayers on Game {
         effects.add(_LayerEffect(e.mods[i], e.timestamp, order++, (t, c) => affected.contains(t), ctx, locked: e.amounts[i]));
       }
     }
-    effects.sort((a, b) {
+    effects.sortStable((a, b) {
       if (a.layer != b.layer) return a.layer - b.layer;
       if (a.cda != b.cda) return a.cda ? -1 : 1;
       if (a.timestamp != b.timestamp) return a.timestamp - b.timestamp;

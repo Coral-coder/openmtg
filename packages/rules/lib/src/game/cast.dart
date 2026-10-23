@@ -511,7 +511,7 @@ extension GameCast on Game {
         final options = [
           for (final id in state.battlefield)
             if (id != source && !state.obj(id).tapped && chars(id).controller == p && matchesFilter(filter.copyWith(controller: Who.you, tapped: false), id, ctx)) id,
-        ]..sort((a, b) {
+        ]..sortStable((a, b) {
             final d = (chars(b).power ?? 0) - (chars(a).power ?? 0);
             return d != 0 ? d : a - b;
           });
@@ -571,7 +571,7 @@ extension GameCast on Game {
         break; // one mana ability per permanent for automatic payment
       }
     }
-    out.sort((a, b) => a.priority != b.priority ? a.priority - b.priority : a.id - b.id);
+    out.sortStable((a, b) => a.priority != b.priority ? a.priority - b.priority : a.id - b.id);
     return out;
   }
 
@@ -731,7 +731,7 @@ extension GameCast on Game {
     }
     final genericAfterPool = (generic - poolLeft.length).clamp(0, 1 << 30);
     // Sort requirements: most constrained first.
-    remaining.sort((a, b) => a.length - b.length);
+    remaining.sortStable((a, b) => a.length - b.length);
     final used = <int>{};
     final assign = <int, ManaType>{};
     // Multi-mana sources (Elvish Archdruid) give several units of their type.

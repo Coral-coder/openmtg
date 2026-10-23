@@ -6,6 +6,7 @@ library;
 
 import '../cards/card.dart';
 import '../cards/mana.dart';
+import '../ir/describe.dart';
 import '../ir/ir.dart';
 import '../util/rng.dart';
 import 'chars.dart';
@@ -417,7 +418,7 @@ class StackItem {
         ..targetZcc = [for (final t in targetZcc) List.of(t)]
         ..sourceLki = sourceLki;
 
-  String digest() => '$id|${kind.index}|$controller|$sourceId.$sourceZcc|${ability?.text.hashCode ?? 0}|$objId|${modes.join(',')}|${targets.map((t) => t.join(',')).join(';')}|${targetZcc.map((t) => t.join(',')).join(';')}|$x|$kicked|${event?.digest() ?? ''}|$isCopy';
+  String digest() => '$id|${kind.index}|$controller|$sourceId.$sourceZcc|${_stable(ability?.text)}|$objId|${modes.join(',')}|${targets.map((t) => t.join(',')).join(';')}|${targetZcc.map((t) => t.join(',')).join(';')}|$x|$kicked|${event?.digest() ?? ''}|$isCopy';
 }
 
 /// What a trigger event was about, kept with the triggered ability (CR 603.10 look-back data).
@@ -450,7 +451,7 @@ class PendingTrigger {
   final String sourceName;
   final bool delayed;
 
-  String digest() => '$controller|$sourceId.$sourceZcc|${ability.text.hashCode}|${event.digest()}|$delayed';
+  String digest() => '$controller|$sourceId.$sourceZcc|${_stable(ability.text)}|${event.digest()}|$delayed';
 }
 
 /// A continuous effect from a resolved spell or ability (CR 611.2).
@@ -473,7 +474,7 @@ class ActiveEffect {
   /// Amounts locked in at resolution (CR 608.2h), by mod index.
   final Map<int, (int, int)> amounts;
 
-  String digest() => '$timestamp|$sourceId|$controller|${affected.map((a) => '${a.$1}.${a.$2}').join(',')}|${mods.length}|${mods.map((m) => m.runtimeType).join(',')}|${duration.index}|$turn|${rule?.runtimeType}|${amounts.entries.map((e) => '${e.key}:${e.value.$1}/${e.value.$2}').join(',')}';
+  String digest() => '$timestamp|$sourceId|$controller|${affected.map((a) => '${a.$1}.${a.$2}').join(',')}|${mods.length}|${mods.map(describeMod).join(',')}|${duration.index}|$turn|${rule == null ? '-' : describeRuleMod(rule!)}|${amounts.entries.map((e) => '${e.key}:${e.value.$1}/${e.value.$2}').join(',')}';
 }
 
 /// A delayed triggered ability created by a resolving effect (CR 603.7).
@@ -488,7 +489,33 @@ class DelayedTrigger {
   final int createdTurn;
   final bool oneShot;
 
-  String digest() => '$controller|$sourceId|${ability.text.hashCode}|${objects.map((o) => '${o.$1}.${o.$2}').join(',')}|$createdTurn|$oneShot';
+  String digest() => '$controller|$sourceId|${_stable(ability.text)}|${objects.map((o) => '${o.$1}.${o.$2}').join(',')}|$createdTurn|$oneShot';
+}
+
+/// A one-turn shield (immutable; using part of it replaces the entry): a regeneration shield on
+/// an object (CR 701.15), or a prevention shield (CR 615.7) for an entity (a player or an
+/// object), for everything ([entity] null), or against damage dealt by an object ([by]).
+class Shield {
+  const Shield.regen(int obj, this.zcc)
+      : regen = true,
+        entity = obj,
+        amount = 1,
+        by = false,
+        combatOnly = false;
+  const Shield.prevent(this.entity, this.zcc, this.amount, {this.by = false, this.combatOnly = false}) : regen = false;
+  final bool regen;
+  final int? entity;
+
+  /// The object's zone-change count when the shield was made (0 for players and everything).
+  final int zcc;
+
+  /// Damage still to prevent; -1 for all of it.
+  final int amount;
+  final bool by, combatOnly;
+
+  Shield withAmount(int n) => Shield.prevent(entity, zcc, n, by: by, combatOnly: combatOnly);
+
+  String digest() => '${regen ? 'R' : 'P'}|$entity.$zcc|$amount|$by|$combatOnly';
 }
 
 class EmblemObj {
@@ -497,7 +524,7 @@ class EmblemObj {
   final List<Ability> abilities;
   final String text;
   final int id;
-  String digest() => '$owner|$id|${text.hashCode}';
+  String digest() => '$owner|$id|${_stable(text)}';
 }
 
 enum DecisionKind {
@@ -724,6 +751,9 @@ class GameState {
   List<ActiveEffect> effects = [];
   List<DelayedTrigger> delayed = [];
   List<EmblemObj> emblems = [];
+
+  /// Regeneration and prevention shields; they all end at cleanup.
+  List<Shield> shields = [];
   Pending? pending;
   bool over = false;
   PlayerId? winner;
@@ -785,6 +815,7 @@ class GameState {
     s.effects = List.of(effects);
     s.delayed = List.of(delayed);
     s.emblems = List.of(emblems);
+    s.shields = List.of(shields);
     s.pending = pending;
     s.over = over;
     s.winner = winner;
@@ -824,6 +855,9 @@ class GameState {
     for (final e in emblems) {
       b.writeln('em:${e.digest()}');
     }
+    for (final s in shields) {
+      b.writeln('sh:${s.digest()}');
+    }
     if (pending != null) b.writeln('pd:${pending!.digest()}');
     return b.toString();
   }
@@ -846,3 +880,7 @@ class NeedDecision implements Exception {
 extension RngClone on SeededRng {
   SeededRng clone() => SeededRng.fromState(state);
 }
+
+/// Text in a digest, the same on every platform (String.hashCode differs between the Dart VM
+/// and JavaScript, which would split browser and phone players in lockstep).
+String _stable(String? s) => s == null ? '-' : '${s.length}:$s';

@@ -5,6 +5,7 @@ import '../cards/card.dart';
 import '../cards/card_db.dart';
 import '../cards/mana.dart';
 import '../oracle/parser.dart';
+import '../util/sort.dart';
 
 enum DeckFormat {
   standard('Standard', Format.standard, 60),
@@ -89,7 +90,7 @@ List<String> starterDeck(CardDatabase db, Set<ManaColor> colors, {String set = '
     return v - (c.manaValue - 3).abs();
   }
 
-  pool.sort((a, b) {
+  pool.sortStable((a, b) {
     final r = rank(b) - rank(a);
     return r != 0 ? r : a.name.compareTo(b.name);
   });
@@ -119,7 +120,7 @@ List<String> starterDeck(CardDatabase db, Set<ManaColor> colors, {String set = '
     }
   }
   final total = weight.values.fold<int>(0, (a, b) => a + b);
-  final order = colors.toList()..sort((a, b) => a.index - b.index);
+  final order = colors.toList()..sortStable((a, b) => a.index - b.index);
   var left = lands;
   for (var i = 0; i < order.length; i++) {
     final c = order[i];

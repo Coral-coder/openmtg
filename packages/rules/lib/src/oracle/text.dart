@@ -2,6 +2,7 @@
 library;
 
 import 'subtypes.dart';
+import '../util/sort.dart';
 
 const numberWords = {
   'a': 1,
@@ -96,7 +97,7 @@ String normalizeOracle(String text, String name, {bool legendary = false}) {
     final first = name.split(RegExp(r'[ ,]')).first;
     if (first.length > 2 && !const {'The', 'A', 'An', 'Lord', 'Lady', 'King', 'Queen', 'General', 'Captain', 'Sir'}.contains(first)) names.add(first);
   }
-  final sorted = names.toList()..sort((a, b) => b.length - a.length);
+  final sorted = names.toList()..sortStable((a, b) => b.length - a.length);
   for (final n in sorted) {
     t = t.replaceAll(n, '~');
   }

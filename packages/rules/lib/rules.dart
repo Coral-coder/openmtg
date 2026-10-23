@@ -2,6 +2,7 @@
 library;
 
 export 'src/cards/card.dart';
+export 'src/util/sort.dart';
 export 'src/cards/card_db.dart';
 export 'src/cards/mana.dart';
 export 'src/ir/ir.dart';

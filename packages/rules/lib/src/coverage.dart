@@ -4,6 +4,7 @@ library;
 
 import 'cards/card.dart';
 import 'cards/card_db.dart';
+import 'util/sort.dart';
 
 class Coverage {
   int total = 0;
@@ -36,7 +37,7 @@ class Coverage {
   }
 
   Map<String, dynamic> toJson(List<SetInfo> sets) {
-    final top = missing.entries.toList()..sort((a, b) => b.value != a.value ? b.value - a.value : a.key.compareTo(b.key));
+    final top = missing.entries.toList()..sortStable((a, b) => b.value != a.value ? b.value - a.value : a.key.compareTo(b.key));
     return {
       'total': total,
       'supported': supported,

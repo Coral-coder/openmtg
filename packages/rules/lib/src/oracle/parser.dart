@@ -8,9 +8,11 @@ import '../ir/ir.dart';
 import 'phrases.dart';
 import 'text.dart';
 
+part 'library_hand.dart';
+
 /// Bump when the parser or engine changes what it supports: the database's stored coverage is
 /// recomputed when it was made by another version.
-const engineVersion = 1;
+const engineVersion = 2;
 
 class ParsedFace {
   ParsedFace(this.face, this.abilities, this.unsupported);
@@ -206,7 +208,7 @@ class _FaceParser {
       return _triggered(para, p);
     }
 
-    final st = _spellStatic(p, para) ?? _static(p, para);
+    final st = libraryHandStatic(p, para) ?? _spellStatic(p, para) ?? _static(p, para);
     if (st == null) OracleParser.diag?.add('static: $p');
     return st;
   }
@@ -664,6 +666,8 @@ class _FaceParser {
     // Persist and undying: "it had no -1/-1 counters on it" (last known information).
     final hadNo = rx(t, r'(?:it|~) had no ([a-z+/0-9-]+) counters on it');
     if (hadNo != null) return Not(ObjMatches(const EventObj(), Filter(withCounter: hadNo[1])));
+    final lh = libraryHandCondition(t);
+    if (lh != null) return lh;
     switch (t) {
       case 'an opponent was dealt damage this turn' || 'an opponent has been dealt damage this turn':
         return const TurnStatCondition(TurnStat.damageTaken, EachOpponent(), Cmp.gt, 0);
@@ -1152,6 +1156,20 @@ class _FaceParser {
     final steps = <Effect>[];
     for (var i = 0; i < ss.length; i++) {
       var s = ss[i];
+      // Effects spanning sentences ("look at the top four cards …. put the rest …").
+      final multi = libraryHandMulti(ss, i, ctx);
+      if (multi != null) {
+        steps.add(multi.$1);
+        i += multi.$2 - 1;
+        continue;
+      }
+      // "Destroy target creature. It can't be regenerated."
+      if (isCantRegenerate(s) && steps.isNotEmpty) {
+        final e = noRegen(steps.last);
+        if (e == null) return null;
+        steps[steps.length - 1] = e;
+        continue;
+      }
       // "If you do, X."
       var m = RegExp(r'^if you do, (.+)$').firstMatch(s);
       if (m != null && steps.isNotEmpty) {
@@ -1370,6 +1388,8 @@ class _FaceParser {
 
   Effect? _clause2(String t, BodyCtx ctx, EffectDuration? duration) {
     List<String>? m;
+    final lh = libraryHandClause(t, ctx);
+    if (lh != null) return lh;
 
     // --- Damage -------------------------------------------------------------------------------
     m = rx(t, r'(~|it|that creature|target creature you control|(?:another )?target creature) deals (\w+|damage equal to .+?) damage to (.+)');

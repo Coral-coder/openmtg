@@ -86,6 +86,7 @@ String _cond(Condition c) => switch (c) {
       RememberedAny(:final slot, :final filter) => '$slot has ${_filter(filter)}',
       DidIt() => 'didIt',
       AmountCompare(:final a, :final cmp, :final b) => '${_amt(a)} ${cmp.name} ${_amt(b)}',
+      WonFlip(:final won) => won ? 'wonFlip' : 'lostFlip',
     };
 
 String _repl(Replacement r) => switch (r) {
@@ -103,8 +104,23 @@ String _repl(Replacement r) => switch (r) {
 String _rule(RuleMod r) => switch (r) {
       CostChange(:final filter, :final delta, :final amount, :final selfOnly, :final condition, :final targetsFilter) =>
         'cost${selfOnly ? '(self)' : ' ${_filter(filter)}'} ${amount == null ? delta : '-${_amt(amount)}'}${condition == null ? '' : ' if ${_cond(condition)}'}${targetsFilter == null ? '' : ' if targets ${_filter(targetsFilter)}'}',
-      _ => r.runtimeType.toString(),
+      NoMaxHandSize() => 'noMaxHandSize',
+      ExtraLandPerTurn(:final n) => 'extraLand $n',
+      CastAsThoughFlash(:final filter) => 'flash ${_filter(filter)}',
+      CantLoseGame() => 'cantLose',
+      OpponentsCantWin() => 'opponentsCantWin',
+      PlayerHexproof() => 'playerHexproof',
+      CastWithoutPaying(:final filter) => 'free ${_filter(filter)}',
+      PlayFromGraveyard(:final filter, :final oncePerTypeEachTurn) => 'fromGraveyard ${_filter(filter)}${oncePerTypeEachTurn ? ' oncePerType' : ''}',
+      LookAtTopAnyTime() => 'lookAtTop',
     };
+
+/// Stable text for a continuous effect's modification (also used in game digests, where class
+/// names can't be: release JavaScript minifies them).
+String describeMod(Mod m) => _mod(m);
+
+/// Stable text for a rule change (see [describeMod]).
+String describeRuleMod(RuleMod r) => _rule(r);
 
 String _mod(Mod m) => switch (m) {
       ModPT(:final power, :final toughness) => '+${_amt(power)}/+${_amt(toughness)}',
@@ -146,6 +162,7 @@ String _pl(PlayerRef p) => switch (p) {
 String _amt(Amount a) => switch (a) {
       Fixed(:final n) => '$n',
       XValue() => 'X',
+      RollResult() => 'roll',
       CountOf(:final set) => '#(${_set(set)})',
       PlayerCount(:final players) => '#${_pl(players)}',
       StatOf(:final stat, :final obj) => '${stat.name}(${_ref(obj)})',
@@ -226,7 +243,7 @@ String eff(Effect e) => switch (e) {
       Mill(:final amount, :final who) => 'mill ${_amt(amount)} ${_pl(who)}',
       Scry(:final amount) => 'scry ${_amt(amount)}',
       Surveil(:final amount) => 'surveil ${_amt(amount)}',
-      Destroy(:final set) => 'destroy ${_set(set)}',
+      Destroy(:final set, :final noRegen) => 'destroy ${_set(set)}${noRegen ? ' (no regen)' : ''}',
       MoveTo(:final set, :final zone, :final tapped, :final underYourControl, :final counters) => 'move ${_set(set)} → ${zone.name}${tapped ? ' tapped' : ''}${underYourControl ? ' yours' : ''}${counters.isEmpty ? '' : ' $counters'}${e.untilSourceLeaves ? ' untilLeaves' : ''}${e.ownerChoosesTopOrBottom ? ' top/bottom' : ''}',
       Sacrifice(:final who, :final filter, :final amount, :final self) => self ? 'sac self' : 'sac ${_pl(who)} ${_amt(amount)} ${_filter(filter)}',
       Tap(:final set) => 'tap ${_set(set)}',
@@ -262,4 +279,12 @@ String eff(Effect e) => switch (e) {
       ChooseFromRemembered(:final slot, :final then) => 'choose from $slot → ${eff(then)}',
       ChooseEffect(:final options) => 'choose(${options.map(eff).join(' | ')})',
       KeepOneOfEachType(:final who) => 'keepOneOfEach ${_pl(who)}',
+      Regenerate(:final set) => 'regenerate ${_set(set)}',
+      PreventNext(:final amount, :final target, :final set, :final toYou, :final by, :final combatOnly) =>
+        'prevent${combatOnly ? ' combat' : ''} ${amount == null ? 'all' : _amt(amount)}${target != null ? ' to T$target' : ''}${set != null ? ' to ${_set(set)}' : ''}${toYou ? ' to you' : ''}${by != null ? ' by ${_set(by)}' : ''}',
+      RevealHand(:final who, :final filter, :final exile, :final optional) =>
+        'revealHand ${_pl(who)}${filter == null ? '' : ' → ${optional ? 'may ' : ''}${exile ? 'exile' : 'discard'} ${_filter(filter)}'}',
+      FlipCoin() => 'flipCoin',
+      Explore(:final set) => 'explore ${_set(set)}',
+      RollDie(:final sides, :final count) => 'roll ${count}d$sides',
     };

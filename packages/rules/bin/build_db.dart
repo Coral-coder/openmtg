@@ -11,7 +11,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:rules/rules.dart';
-import 'package:rules/src/coverage.dart';
 
 /// Layouts that aren't cards you put in a deck.
 const _skipLayouts = {'art_series', 'vanguard', 'scheme', 'planar', 'emblem', 'token', 'double_faced_token', 'reversible_card'};

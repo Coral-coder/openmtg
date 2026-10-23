@@ -9,6 +9,7 @@ import '../game/chars.dart';
 import '../game/game.dart';
 import '../game/state.dart';
 import '../util/rng.dart';
+import '../util/sort.dart';
 
 class Bot {
   Bot(this.player, {int seed = 1}) : _rng = SeededRng(seed);
@@ -86,7 +87,7 @@ class Bot {
     if (myTurn && main && s.stack.isEmpty) {
       final lands = legal.whereType<PlayLandAction>().toList();
       if (lands.isNotEmpty) return _bestLand(g, lands);
-      final casts = legal.whereType<CastAction>().toList()..sort((a, b) => _castValue(g, b) - _castValue(g, a));
+      final casts = legal.whereType<CastAction>().toList()..sortStable((a, b) => _castValue(g, b) - _castValue(g, a));
       for (final c in casts) {
         if (_worthCasting(g, c)) return c;
       }
@@ -144,7 +145,7 @@ class Bot {
       return v;
     }
 
-    lands.sort((a, b) => score(b) - score(a));
+    lands.sortStable((a, b) => score(b) - score(a));
     return lands.first;
   }
 
@@ -265,15 +266,20 @@ class Bot {
     final p = d.prompt.toLowerCase();
     // Things we lose: least valuable first. Things we get: most valuable first.
     final losing = p.contains('discard') || p.contains('sacrifice') || p.contains('bottom') || p.contains('exile') || p.contains('graveyard') || p.contains('tap ') || p.contains('remove');
-    int v(int id) {
+    // Scored once, before sorting: a comparator must not look at the list it's sorting (mid-sort
+    // the list is in a different state on the VM and in JavaScript).
+    final landCount = d.options.where((x) => g.chars(x).isLand).length;
+    final scores = <int, int>{};
+    for (final id in opts) {
       if (p.contains('bottom of your library') && !p.contains('scry')) {
         // Opening hand: keep lands we need.
         final c = g.chars(id);
-        final lands = opts.where((x) => g.chars(x).isLand).length;
-        return c.isLand ? (lands > 3 ? 1 : 50) : 30 - c.manaValue;
+        scores[id] = c.isLand ? (landCount > 3 ? 1 : 50) : 30 - c.manaValue;
+      } else {
+        scores[id] = value(g, id);
       }
-      return value(g, id);
     }
+    int v(int id) => scores[id]!;
 
     if (p.startsWith('scry') || p.startsWith('surveil')) {
       // Bottom/bin lands when we have enough, keep spells.
@@ -281,11 +287,11 @@ class Bot {
       return [for (final id in opts) if (g.chars(id).isLand == (lands >= 5)) id].take(d.max).toList();
     }
     if (p.contains('legend rule')) {
-      opts.sort((a, b) => v(b) - v(a));
+      opts.sortStable((a, b) => v(b) - v(a));
       return opts.take(1).toList();
     }
     if (p.contains('face-down pile')) return opts.take(opts.length ~/ 2).toList();
-    opts.sort((a, b) => losing ? v(a) - v(b) : v(b) - v(a));
+    opts.sortStable((a, b) => losing ? v(a) - v(b) : v(b) - v(a));
     final n = losing ? d.min : d.max;
     return opts.take(n.clamp(d.min, d.max)).toList();
   }
@@ -317,7 +323,7 @@ class Bot {
       return harmful ? (mine ? -v - 50 : v) : (mine ? v : -v - 50);
     }
 
-    opts.sort((a, b) => score(b) - score(a));
+    opts.sortStable((a, b) => score(b) - score(a));
     final good = opts.where((e) => score(e) > -50).toList();
     final n = d.max == 1 ? 1 : (good.length.clamp(d.min, d.max));
     final pick = (good.length >= d.min ? good : opts).take(n.clamp(d.min, d.max)).toList();
@@ -371,7 +377,7 @@ class Bot {
       incoming += g.chars(a).power ?? 0;
     }
     final life = s.player(player).life;
-    attackers.sort((a, b) => (g.chars(b).power ?? 0) - (g.chars(a).power ?? 0));
+    attackers.sortStable((a, b) => (g.chars(b).power ?? 0) - (g.chars(a).power ?? 0));
     for (final a in attackers) {
       final ac = g.chars(a);
       final can = [for (final b in d.options) if (!used.contains(b) && (d.extra['$b'] as List).contains(a)) b];
@@ -390,7 +396,7 @@ class Bot {
       }
       // Chump when the damage would be lethal.
       if (best == null && incoming >= life) {
-        can.sort((x, y) => value(g, x) - value(g, y));
+        can.sortStable((x, y) => value(g, x) - value(g, y));
         best = can.first;
       }
       if (best != null) {
