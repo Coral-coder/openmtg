@@ -79,14 +79,18 @@ jobs:
           channel: stable
           cache: true
       - name: Scryfall bulk data
+        # The game bundles its card pool, so it still publishes if the full database can't be made.
+        continue-on-error: true
         run: tools/fetch_scryfall.sh .scryfall-cache
       - name: Card database and coverage
+        continue-on-error: true
         working-directory: packages/rules
         run: |
           dart pub get
           dart run bin/build_db.dart --oracle ../../.scryfall-cache/oracle-cards.jsonl.gz --default ../../.scryfall-cache/default-cards.jsonl.gz --out ../../_site/data
           ls -la ../../_site/data
       - name: Coverage summary
+        continue-on-error: true
         run: |
           python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
