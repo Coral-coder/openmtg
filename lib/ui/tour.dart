@@ -158,7 +158,7 @@ class TourKeys {
 /// The optional guided tour of the table, shown once (and from the help button).
 void showTableTour(BuildContext context, TourKeys keys) {
   final steps = [
-    const TourStep('Welcome to the table', 'This is a game of Magic against the computer. The tour shows where things are; you can skip it and take it again from the ? button.'),
+    const TourStep('Welcome to the table', 'This is the game table. The tour shows where things are; skip it now and take it again any time from the ? button.'),
     TourStep('Your hand', 'Your cards. Lit cards can be played now. Tap any card to see it large, with what it can do and why not.', target: keys.hand),
     TourStep('Your side', 'Your permanents: creatures in front, lands behind. Tap a creature to see its abilities. Lands can show as cards or grouped labels (Settings).', target: keys.battlefield),
     TourStep('Life and zones', 'Your life total, cards in hand and library, graveyard and exile. Tap the graveyard to look through it.', target: keys.life),

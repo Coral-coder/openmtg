@@ -42,6 +42,7 @@ class GameTheme {
     required this.mana,
     this.brightness = Brightness.dark,
     this.font = 'sans-serif',
+    this.titleFont,
     this.fallback = const ['Roboto', 'Arial'],
     this.uppercase = false,
     this.letterSpacing = 0,
@@ -63,6 +64,9 @@ class GameTheme {
   /// Pip colors for W U B R G C.
   final Map<String, Color> mana;
   final String font;
+
+  /// Font for titles, headings and buttons (defaults to [font]).
+  final String? titleFont;
   final List<String> fallback;
   final bool uppercase;
   final double letterSpacing;
@@ -80,8 +84,12 @@ class GameTheme {
   TextStyle style(double size, {FontWeight weight = FontWeight.w600, Color? color, double? height}) =>
       TextStyle(fontSize: size, fontWeight: weight, color: color ?? text, fontFamily: font, fontFamilyFallback: fallback, letterSpacing: letterSpacing, height: height ?? 1.15);
 
-  TextStyle get title => style(26, weight: FontWeight.w800, color: accent);
-  TextStyle get heading => style(18, weight: FontWeight.w700);
+  /// A style in the title font (headings, buttons).
+  TextStyle display(double size, {FontWeight weight = FontWeight.w700, Color? color}) =>
+      TextStyle(fontSize: size, fontWeight: weight, color: color ?? text, fontFamily: titleFont ?? font, fontFamilyFallback: fallback, letterSpacing: titleFont == 'Bangers' ? 1.0 : letterSpacing, height: 1.12);
+
+  TextStyle get title => display(26, weight: FontWeight.w800, color: accent);
+  TextStyle get heading => display(18, weight: FontWeight.w700);
   TextStyle get body => style(15, weight: FontWeight.w500);
   TextStyle get small => style(12, weight: FontWeight.w500, color: muted);
 
@@ -137,8 +145,8 @@ class Themes {
     buttonText: Colors.black,
     decor: [Color(0xFFFF9900), Color(0xFFFFCC99), Color(0xFFCC99CC), Color(0xFF9999FF), Color(0xFFFF9966), Color(0xFFFFCC66), Color(0xFF6688CC), Color(0xFF9966CC)],
     mana: {'W': Color(0xFFFFCC99), 'U': Color(0xFF9999FF), 'B': Color(0xFF9966CC), 'R': Color(0xFFFF9966), 'G': Color(0xFF66CC99), 'C': Color(0xFF888899)},
-    font: 'sans-serif-condensed',
-    fallback: ['Arial Narrow', 'HelveticaNeue-CondensedBold', 'Roboto Condensed', 'Roboto'],
+    font: 'Antonio',
+    fallback: ['Arial Narrow', 'Roboto'],
     uppercase: true,
     letterSpacing: 0.6,
     radius: 22,
@@ -167,8 +175,8 @@ class Themes {
     buttonText: Color(0xFF1B140E),
     decor: [Color(0xFFD9A441), Color(0xFF8C6239), Color(0xFF5E4027)],
     mana: {'W': Color(0xFFF8F1D8), 'U': Color(0xFF6FA8DC), 'B': Color(0xFF8E7F86), 'R': Color(0xFFE0674F), 'G': Color(0xFF5FA35C), 'C': Color(0xFFBDB3A3)},
-    font: 'serif',
-    fallback: ['Georgia', 'Palatino', 'Times New Roman'],
+    font: 'Alegreya',
+    fallback: ['Georgia', 'serif'],
     radius: 8,
     sound: SoundStyle(wave: 'bell', base: 660, decay: 0.2),
   );
@@ -193,8 +201,8 @@ class Themes {
     buttonText: Color(0xFF071034),
     decor: [Color(0xFF8FD3FF), Color(0xFFC59BFF), Color(0xFFE6C979)],
     mana: {'W': Color(0xFFFFF6D9), 'U': Color(0xFF7FC4FF), 'B': Color(0xFFA493C8), 'R': Color(0xFFFF8A73), 'G': Color(0xFF86E3A1), 'C': Color(0xFFC9D2F2)},
-    font: 'sans-serif',
-    fallback: ['Verdana', 'Tahoma', 'Roboto'],
+    font: 'Philosopher',
+    fallback: ['Verdana', 'Roboto'],
     radius: 6,
     sound: SoundStyle(wave: 'triangle', base: 988, decay: 0.15),
     sets: ['fin', 'fic', 'fca'],
@@ -222,8 +230,8 @@ class Themes {
     buttonText: Color(0xFFFBF5E6),
     decor: [Color(0xFF2F6E9E), Color(0xFF4F7A3A), Color(0xFFB8442C), Color(0xFFC9B26B)],
     mana: {'W': Color(0xFFFFFBEA), 'U': Color(0xFF2F6E9E), 'B': Color(0xFF3C3530), 'R': Color(0xFFB8442C), 'G': Color(0xFF4F7A3A), 'C': Color(0xFFA89E8C)},
-    font: 'serif',
-    fallback: ['Georgia', 'Times New Roman'],
+    font: 'Alegreya',
+    fallback: ['Georgia', 'serif'],
     radius: 4,
     sound: SoundStyle(wave: 'bell', base: 523, decay: 0.3),
     sets: ['tla', 'tle'],
@@ -251,8 +259,9 @@ class Themes {
     decor: [Color(0xFFE23636), Color(0xFF1F5BD6), Color(0xFFFFD23F)],
     mana: {'W': Color(0xFFFFFDF0), 'U': Color(0xFF1F5BD6), 'B': Color(0xFF333344), 'R': Color(0xFFE23636), 'G': Color(0xFF2DBE6C), 'C': Color(0xFFBBBBBB)},
     brightness: Brightness.light,
-    font: 'sans-serif',
-    fallback: ['Impact', 'Arial Black', 'Roboto'],
+    font: 'Roboto',
+    titleFont: 'Bangers',
+    fallback: ['Arial', 'sans-serif'],
     uppercase: true,
     letterSpacing: 0.4,
     radius: 2,
@@ -325,7 +334,7 @@ class _TitleBar extends StatelessWidget {
     final backBtn = onBack == null
         ? const SizedBox(width: 8)
         : IconButton(onPressed: onBack, icon: Icon(Icons.arrow_back, color: t.chrome == ChromeStyle.lcars ? Colors.black : t.accent), tooltip: 'Back');
-    final titleText = Text(t.label(title), style: t.style(22, weight: FontWeight.w800, color: t.chrome == ChromeStyle.lcars ? t.accent : (t.chrome == ChromeStyle.comic ? Colors.white : t.accent)), maxLines: 1, overflow: TextOverflow.ellipsis);
+    final titleText = Text(t.label(title), style: t.display(22, weight: FontWeight.w800, color: t.chrome == ChromeStyle.lcars ? t.accent : (t.chrome == ChromeStyle.comic ? Colors.white : t.accent)), maxLines: 1, overflow: TextOverflow.ellipsis);
     final sub = subtitle.isEmpty ? null : Text(t.label(subtitle), style: t.style(12, color: t.chrome == ChromeStyle.comic ? Colors.white70 : t.muted), maxLines: 1, overflow: TextOverflow.ellipsis);
     switch (t.chrome) {
       case ChromeStyle.lcars:
@@ -444,7 +453,7 @@ class ThemedButton extends StatelessWidget {
       if (icon != null) ...[Icon(icon, color: fg, size: tall ? 22 : 18), const SizedBox(width: 8)],
       Flexible(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          FittedBox(fit: BoxFit.scaleDown, child: Text(t.label(label), style: t.style(tall ? 17 : 15, weight: FontWeight.w800, color: fg), maxLines: 1)),
+          FittedBox(fit: BoxFit.scaleDown, child: Text(t.label(label), style: t.display(tall ? 17 : 15, weight: FontWeight.w800, color: fg), maxLines: 1)),
           if (subtitle != null) FittedBox(fit: BoxFit.scaleDown, child: Text(subtitle!, style: t.style(11, weight: FontWeight.w500, color: fg.withValues(alpha: 0.8)), maxLines: 1)),
         ]),
       ),
@@ -525,7 +534,7 @@ class ThemedHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = GameTheme.of(context);
     final c = color ?? t.accent;
-    final text = Text(t.label(title), style: t.style(17, weight: FontWeight.w800, color: t.chrome == ChromeStyle.comic ? Colors.black : c), maxLines: 1, overflow: TextOverflow.ellipsis);
+    final text = Text(t.label(title), style: t.display(17, weight: FontWeight.w800, color: t.chrome == ChromeStyle.comic ? Colors.black : c), maxLines: 1, overflow: TextOverflow.ellipsis);
     if (t.chrome == ChromeStyle.lcars) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),

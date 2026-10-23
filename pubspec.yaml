@@ -33,3 +33,19 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/
+  # Open Font License fonts for the themes (licenses in assets/fonts/).
+  fonts:
+    - family: Antonio
+      fonts:
+        - asset: assets/fonts/Antonio.ttf
+    - family: Alegreya
+      fonts:
+        - asset: assets/fonts/Alegreya.ttf
+    - family: Bangers
+      fonts:
+        - asset: assets/fonts/Bangers.ttf
+    - family: Philosopher
+      fonts:
+        - asset: assets/fonts/Philosopher.ttf
+        - asset: assets/fonts/Philosopher-Bold.ttf
+          weight: 700
