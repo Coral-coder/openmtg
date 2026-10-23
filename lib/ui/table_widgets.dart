@@ -5,6 +5,7 @@ import 'package:rules/rules.dart';
 
 import '../theme/theme.dart';
 import 'card_view.dart';
+import 'fx.dart';
 import 'table_controller.dart';
 
 /// A card on the table: image or frame, rotated when tapped, with counters, damage, current P/T
@@ -66,8 +67,27 @@ class TableCard extends StatelessWidget {
           Positioned(right: width * 0.04, top: h * 0.2, child: Icon(Icons.hourglass_bottom, size: width * 0.16, color: Colors.white70, shadows: const [Shadow(blurRadius: 3)])),
       ]),
     );
-    if (o.tapped) {
-      card = SizedBox(width: h, height: width, child: Center(child: Transform.rotate(angle: math.pi / 2, child: card)));
+    // Turning sideways and lunging toward the other side are animated; the box grows with the
+    // turn so neighbours make room smoothly.
+    final inner = card;
+    card = TweenAnimationBuilder<double>(
+      tween: Tween(end: o.tapped ? 1 : 0),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      builder: (context, v, _) => SizedBox(
+        width: width + (h - width) * v,
+        height: h + (width - h) * v,
+        child: Center(child: OverflowBox(maxWidth: width, maxHeight: h, child: Transform.rotate(angle: math.pi / 2 * v, child: inner))),
+      ),
+    );
+    if (o.zone == Zone.battlefield) {
+      final up = c.controller == ctl.me ? -1.0 : 1.0;
+      card = AnimatedSlide(
+        offset: Offset(0, attacking ? 0.14 * up : (blocking ? 0.06 * up : 0)),
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutBack,
+        child: card,
+      );
     }
     return Semantics(
       button: true,
@@ -139,7 +159,8 @@ class PlayerBar extends StatelessWidget {
           Semantics(
             label: 'Life ${p.life}',
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 420),
+              transitionBuilder: (child, a) => FadeTransition(opacity: a, child: ScaleTransition(scale: a.drive(Tween(begin: 1.9, end: 1.0).chain(CurveTween(curve: Curves.easeOutBack))), child: child)),
               child: Text('${p.life}', key: ValueKey(p.life), style: t.style(compact ? 20 : 24, weight: FontWeight.w900, color: p.life <= 5 ? t.danger : t.accent)),
             ),
           ),
@@ -232,10 +253,10 @@ class StackStrip extends StatelessWidget {
                   child: item.objId != null && s.objOrNull(item.objId!) != null
                       ? GestureDetector(
                           onTap: ctl.isChoosable(item.objId!) ? () => ctl.tap(item.objId!) : () => onCard(item.objId!),
-                          child: Container(
+                          child: Tracked(id: item.objId!, child: Container(
                             decoration: BoxDecoration(border: Border.all(color: ctl.isSelected(item.objId!) ? t.highlight : (ctl.isChoosable(item.objId!) ? t.ok : Colors.transparent), width: 3), borderRadius: BorderRadius.circular(6)),
                             child: SizedBox(width: 62, height: 86, child: CardPicture(def: ctl.game.db[s.obj(item.objId!).cardName], chars: ctl.game.chars(item.objId!), size: 'small')),
-                          ),
+                          )),
                         )
                       : Container(
                           width: 150,

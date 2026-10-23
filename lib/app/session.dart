@@ -164,15 +164,8 @@ class GameSession extends ChangeNotifier {
   }
 
   void _sound(LogEntry e) {
+    // The table's effects layer (ui/fx.dart) plays the sounds for what happens on the table.
     switch (e.kind) {
-      case 'cast':
-        Console.shared.play(Fx.chirp);
-      case 'attack':
-        Console.shared.play(Fx.attack);
-      case 'leave':
-        Console.shared.play(Fx.damage);
-      case 'land':
-        Console.shared.play(Fx.tap);
       case 'lose':
         Console.shared.play(e.player == localSeat ? Fx.defeat : Fx.victory);
     }

@@ -8,6 +8,7 @@ import '../app/store.dart';
 import '../theme/theme.dart';
 import 'card_detail.dart';
 import 'decisions.dart';
+import 'fx.dart';
 import 'table_controller.dart';
 import 'table_widgets.dart';
 import 'tour.dart';
@@ -73,11 +74,16 @@ class _GameScreenState extends State<GameScreen> {
             backgroundColor: t.bg,
             body: Stack(children: [
               Positioned.fill(child: TableBackdrop(theme: t)),
-              SafeArea(
-                child: LayoutBuilder(builder: (context, box) {
-                  final wide = box.maxWidth >= 860 && box.maxWidth > box.maxHeight * 1.05;
-                  return wide ? _wide(context, ctl, box) : _narrow(context, ctl, box);
-                }),
+              Positioned.fill(
+                child: TableFx(
+                  ctl: ctl,
+                  child: SafeArea(
+                    child: LayoutBuilder(builder: (context, box) {
+                      final wide = box.maxWidth >= 860 && box.maxWidth > box.maxHeight * 1.05;
+                      return wide ? _wide(context, ctl, box) : _narrow(context, ctl, box);
+                    }),
+                  ),
+                ),
               ),
               if (s.state.over) _GameOver(session: s),
             ]),
@@ -97,12 +103,12 @@ class _GameScreenState extends State<GameScreen> {
     final short = box.maxHeight < 640;
     return Column(children: [
       _topBar(context, ctl),
-      Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: PlayerBar(ctl: ctl, player: opp, compact: short, onZone: (z) => _zone(context, ctl, opp, z))),
+      Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: RectProbe(onRect: (fx, r) => fx.bars[opp] = r, child: PlayerBar(ctl: ctl, player: opp, compact: short, onZone: (z) => _zone(context, ctl, opp, z)))),
       Expanded(flex: 5, child: _Battlefield(ctl: ctl, player: opp, mirrored: true, onCard: (id) => _cardTapped(context, ctl, id))),
       Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), child: StackStrip(ctl: ctl, onCard: (id) => _detail(context, ctl, id))),
       Padding(key: _keys.steps, padding: const EdgeInsets.symmetric(horizontal: 6), child: StepStrip(state: ctl.state, me: me)),
       Expanded(flex: 5, child: _Battlefield(key: _keys.battlefield, ctl: ctl, player: me, onCard: (id) => _cardTapped(context, ctl, id))),
-      Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: PlayerBar(key: _keys.life, ctl: ctl, player: me, compact: short, onZone: (z) => _zone(context, ctl, me, z))),
+      Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: RectProbe(onRect: (fx, r) => fx.bars[me] = r, child: PlayerBar(key: _keys.life, ctl: ctl, player: me, compact: short, onZone: (z) => _zone(context, ctl, me, z)))),
       _Hand(key: _keys.hand, ctl: ctl, height: short ? 112 : (box.maxHeight * 0.2).clamp(112, 190), onCard: (id) => _cardTapped(context, ctl, id)),
       _PromptBar(key: _keys.prompt, ctl: ctl, onOpenChoice: () => _openChoice(context, ctl)),
     ]);
@@ -117,11 +123,11 @@ class _GameScreenState extends State<GameScreen> {
         child: Row(children: [
           Expanded(
             child: Column(children: [
-              Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: PlayerBar(ctl: ctl, player: opp, onZone: (z) => _zone(context, ctl, opp, z))),
+              Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: RectProbe(onRect: (fx, r) => fx.bars[opp] = r, child: PlayerBar(ctl: ctl, player: opp, onZone: (z) => _zone(context, ctl, opp, z)))),
               Expanded(child: _Battlefield(ctl: ctl, player: opp, mirrored: true, onCard: (id) => _cardTapped(context, ctl, id))),
               Padding(key: _keys.steps, padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), child: StepStrip(state: ctl.state, me: me)),
               Expanded(child: _Battlefield(key: _keys.battlefield, ctl: ctl, player: me, onCard: (id) => _cardTapped(context, ctl, id))),
-              Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: PlayerBar(key: _keys.life, ctl: ctl, player: me, onZone: (z) => _zone(context, ctl, me, z))),
+              Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: RectProbe(onRect: (fx, r) => fx.bars[me] = r, child: PlayerBar(key: _keys.life, ctl: ctl, player: me, onZone: (z) => _zone(context, ctl, me, z)))),
               _Hand(key: _keys.hand, ctl: ctl, height: (box.maxHeight * 0.24).clamp(130, 230), onCard: (id) => _cardTapped(context, ctl, id)),
             ]),
           ),
@@ -342,10 +348,10 @@ class _Battlefield extends StatelessWidget {
       final w = math.min(math.min((box.maxWidth - 8) / math.min(count, perRow) - 6, (avail / rows - 6) * 63 / 88), 150.0).clamp(44.0, 150.0);
       Widget cardWith(int id, double width) {
         final under = attached[id] ?? const [];
-        final card = TableCard(ctl: ctl, id: id, width: width, onTap: () => onCard(id), highlight: legal.contains(id) ? t.accent : null);
+        final card = Tracked(id: id, child: TableCard(ctl: ctl, id: id, width: width, onTap: () => onCard(id), highlight: legal.contains(id) ? t.accent : null));
         if (under.isEmpty) return card;
-        return Stack(clipBehavior: Clip.none, children: [
-          for (var i = 0; i < under.length; i++) Padding(padding: EdgeInsets.only(left: (i + 1) * width * 0.18, top: (i + 1) * 4), child: TableCard(ctl: ctl, id: under[i], width: width * 0.9, onTap: () => onCard(under[i]))),
+        return Stack(key: ValueKey('host$id'), clipBehavior: Clip.none, children: [
+          for (var i = 0; i < under.length; i++) Padding(key: ValueKey(under[i]), padding: EdgeInsets.only(left: (i + 1) * width * 0.18, top: (i + 1) * 4), child: Tracked(id: under[i], child: TableCard(ctl: ctl, id: under[i], width: width * 0.9, onTap: () => onCard(under[i])))),
           card,
         ]);
       }
@@ -354,9 +360,9 @@ class _Battlefield extends StatelessWidget {
       Widget landRow;
       if (landsAsCards) {
         final lw = (landH - 8) * 63 / 88;
-        landRow = SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [for (final id in lands) Padding(padding: const EdgeInsets.only(right: 4), child: TableCard(ctl: ctl, id: id, width: lw.clamp(36, 110), onTap: () => onCard(id), highlight: legal.contains(id) ? t.accent : null))]));
+        landRow = SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [for (final id in lands) Padding(key: ValueKey(id), padding: const EdgeInsets.only(right: 4), child: Tracked(id: id, child: TableCard(ctl: ctl, id: id, width: lw.clamp(36, 110), onTap: () => onCard(id), highlight: legal.contains(id) ? t.accent : null)))]));
       } else {
-        landRow = _GroupedLands(ctl: ctl, lands: lands, onCard: onCard);
+        landRow = _GroupedLands(ctl: ctl, player: player, lands: lands, onCard: onCard);
       }
       final children = <Widget>[
         Expanded(child: Center(child: SingleChildScrollView(child: creatures))),
@@ -369,8 +375,9 @@ class _Battlefield extends StatelessWidget {
 
 /// Lands grouped into labels by name ("Forest ×3, 1 tapped") — Settings → lands as cards.
 class _GroupedLands extends StatelessWidget {
-  const _GroupedLands({required this.ctl, required this.lands, required this.onCard});
+  const _GroupedLands({required this.ctl, required this.player, required this.lands, required this.onCard});
   final TableController ctl;
+  final int player;
   final List<int> lands;
   final void Function(int id) onCard;
 
@@ -398,7 +405,10 @@ class _GroupedLands extends StatelessWidget {
                 }
               }
             }
-            return GestureDetector(
+            return RectProbe(
+              key: ValueKey(e.key),
+              onRect: (fx, r) => fx.landGroups['$player|${e.key}'] = r,
+              child: GestureDetector(
               onTap: () {
                 // Tap: the first untapped one that the current choice can use, else the first.
                 final pick = e.value.firstWhere((id) => ctl.isChoosable(id) && !ctl.isSelected(id), orElse: () => untapped.isNotEmpty ? untapped.first : e.value.first);
@@ -420,6 +430,7 @@ class _GroupedLands extends StatelessWidget {
                   if (selected > 0) Text('  −$selected', style: t.style(13, weight: FontWeight.w900, color: t.highlight)),
                 ]),
               ),
+            ),
             );
           }),
         ],
@@ -450,8 +461,9 @@ class _Hand extends StatelessWidget {
               children: [
                 for (final id in ids)
                   Padding(
+                    key: ValueKey(id),
                     padding: const EdgeInsets.only(right: 6),
-                    child: TableCard(ctl: ctl, id: id, width: w, onTap: () => onCard(id), highlight: legal.contains(id) ? t.ok : null),
+                    child: Tracked(id: id, child: TableCard(ctl: ctl, id: id, width: w, onTap: () => onCard(id), highlight: legal.contains(id) ? t.ok : null)),
                   ),
               ],
             ),

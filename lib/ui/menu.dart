@@ -26,7 +26,7 @@ class MainMenuScreen extends StatelessWidget {
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: ListView(children: [
+          child: ListView(children: _staggered([
             if (saved != null) ...[
               ThemedButton('Resume game', subtitle: 'Turn ${saved['turn'] ?? '?'} · ${(saved['names'] as List).join(' vs ')}', tall: true, icon: Icons.play_circle, color: t.highlight, onPressed: () {
                 if (store.resumeLocalGame() != null) Navigator.pushNamed(context, '/game');
@@ -63,12 +63,24 @@ class MainMenuScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(fanContentNotice, style: t.style(11, weight: FontWeight.w400, color: t.muted)),
-          ]),
+          ])),
         ),
       ),
     );
   }
 }
+
+/// The menu's entries slide in one after another.
+List<Widget> _staggered(List<Widget> items) => [
+      for (var i = 0; i < items.length; i++)
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: Duration(milliseconds: 260 + 45 * i),
+          curve: Interval((45 * i) / (260 + 45 * i), 1, curve: Curves.easeOutCubic),
+          child: items[i],
+          builder: (context, v, child) => Opacity(opacity: v, child: Transform.translate(offset: Offset(0, 24 * (1 - v)), child: child)),
+        ),
+    ];
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -103,6 +115,7 @@ class SettingsScreen extends StatelessWidget {
           toggle('tapToInspect', 'Tap a card to see it', 'Opens the card large with what it can do. Off: a tap plays it when there is only one thing to do.', store.tapToInspect),
           toggle('landsAsCards', 'Lands as cards', 'Off: lands are grouped into labels like "Forest 3/4".', store.landsAsCards),
           toggle('autoPay', 'Pay mana automatically', 'Off: choose which lands to tap.', store.autoPay),
+          toggle('animations', 'Animations', 'Cards fly to the table, damage numbers float, banners mark each turn.', store.animations),
           toggle('coachOn', 'Coach hints', 'A line on the table saying what you can do now.', store.coachOn),
           toggle('soundOn', 'Sounds', "Short sounds in the theme's style.", store.soundOn),
           toggle('hapticsOn', 'Vibration', 'On phones.', store.hapticsOn),

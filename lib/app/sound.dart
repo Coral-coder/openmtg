@@ -6,7 +6,27 @@ import 'package:flutter/services.dart';
 
 import '../theme/theme.dart';
 
-enum Fx { tap, confirm, deny, draw, attack, damage, alert, victory, defeat, chirp }
+enum Fx {
+  tap, confirm, deny, draw, attack, damage, alert, victory, defeat, chirp,
+  /// A spell flies to the stack.
+  cast,
+  /// A land is put down.
+  land,
+  /// A permanent arrives on the battlefield.
+  summon,
+  /// A creature dies or a permanent is put into a graveyard.
+  dies,
+  /// A player gains life.
+  heal,
+  /// A player loses life.
+  hit,
+  /// A new turn begins.
+  turn,
+  /// Blockers are declared.
+  block,
+  /// The title screen's opening chord.
+  title,
+}
 
 /// Haptics and short synthesized sounds in the current theme's style (so no audio files are
 /// needed): console beeps for the starship, bells for the classic table, chiptune squares for
@@ -37,7 +57,7 @@ class Console {
     for (final fx in Fx.values) {
       _waves[fx] = _wave(fx, _style);
     }
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < 6; i++) {
       try {
         final p = AudioPlayer();
         await p.setReleaseMode(ReleaseMode.stop);
@@ -47,6 +67,13 @@ class Console {
         break; // no audio on this platform (tests)
       }
     }
+  }
+
+  /// Plays [fx] after [ms] milliseconds (to spread out a burst of sounds).
+  void playAfter(Fx fx, int ms) {
+    if (_players.isEmpty || !soundOn) return;
+    if (ms <= 0) return play(fx);
+    Future.delayed(Duration(milliseconds: ms), () => play(fx));
   }
 
   void play(Fx fx) {
@@ -60,9 +87,18 @@ class Console {
       case Fx.tap:
       case Fx.draw:
       case Fx.chirp:
+      case Fx.cast:
+      case Fx.land:
+      case Fx.summon:
+      case Fx.heal:
+      case Fx.turn:
+      case Fx.title:
         HapticFeedback.lightImpact();
       case Fx.attack:
       case Fx.damage:
+      case Fx.hit:
+      case Fx.dies:
+      case Fx.block:
         HapticFeedback.heavyImpact();
       case Fx.confirm:
       case Fx.victory:
@@ -74,40 +110,68 @@ class Console {
     }
   }
 
-  /// A short tone sequence as 16-bit mono WAV.
+  /// A short sound as 16-bit mono WAV: tones that may slide in pitch, with optional noise
+  /// (impacts, whooshes) and a faint echo, shaped by the theme's [SoundStyle].
   static Uint8List _wave(Fx fx, SoundStyle style) {
     const rate = 22050.0;
     final k = style.base / 1320;
+    // (start Hz, end Hz, seconds, noise 0..1)
     final notes = switch (fx) {
-      Fx.tap => [(1400.0, 0.03)],
-      Fx.chirp => [(1800.0, 0.03), (2400.0, 0.04)],
-      Fx.confirm => [(900.0, 0.05), (1300.0, 0.07)],
-      Fx.deny => [(400.0, 0.08), (300.0, 0.1)],
-      Fx.draw => [(1100.0, 0.03), (1500.0, 0.03)],
-      Fx.attack => [(600.0, 0.05), (900.0, 0.05), (1200.0, 0.08)],
-      Fx.damage => [(200.0, 0.12)],
-      Fx.alert => [(880.0, 0.12), (660.0, 0.12), (880.0, 0.12)],
-      Fx.victory => [(660.0, 0.1), (880.0, 0.1), (1100.0, 0.1), (1320.0, 0.25)],
-      Fx.defeat => [(500.0, 0.15), (400.0, 0.15), (300.0, 0.3)],
+      Fx.tap => [(1400.0, 1400.0, 0.03, 0.0)],
+      Fx.chirp => [(1800.0, 1800.0, 0.03, 0.0), (2400.0, 2400.0, 0.04, 0.0)],
+      Fx.confirm => [(900.0, 900.0, 0.05, 0.0), (1300.0, 1300.0, 0.07, 0.0)],
+      Fx.deny => [(400.0, 400.0, 0.08, 0.0), (300.0, 300.0, 0.1, 0.0)],
+      Fx.draw => [(900.0, 1700.0, 0.07, 0.35)],
+      Fx.attack => [(500.0, 900.0, 0.06, 0.2), (900.0, 1300.0, 0.06, 0.2), (1300.0, 1700.0, 0.1, 0.1)],
+      Fx.damage => [(220.0, 90.0, 0.16, 0.5)],
+      Fx.alert => [(880.0, 880.0, 0.12, 0.0), (660.0, 660.0, 0.12, 0.0), (880.0, 880.0, 0.12, 0.0)],
+      Fx.victory => [(660.0, 660.0, 0.1, 0.0), (880.0, 880.0, 0.1, 0.0), (1100.0, 1100.0, 0.1, 0.0), (1320.0, 1320.0, 0.4, 0.0)],
+      Fx.defeat => [(500.0, 480.0, 0.15, 0.0), (400.0, 380.0, 0.15, 0.0), (300.0, 200.0, 0.45, 0.1)],
+      Fx.cast => [(600.0, 1800.0, 0.14, 0.45), (1500.0, 1500.0, 0.08, 0.0)],
+      Fx.land => [(160.0, 80.0, 0.12, 0.35)],
+      Fx.summon => [(660.0, 660.0, 0.06, 0.0), (990.0, 990.0, 0.06, 0.0), (1320.0, 1320.0, 0.16, 0.0)],
+      Fx.dies => [(700.0, 120.0, 0.28, 0.6)],
+      Fx.heal => [(880.0, 1320.0, 0.12, 0.0), (1320.0, 1760.0, 0.16, 0.0)],
+      Fx.hit => [(300.0, 110.0, 0.14, 0.55)],
+      Fx.turn => [(660.0, 660.0, 0.08, 0.0), (880.0, 880.0, 0.14, 0.0)],
+      Fx.block => [(400.0, 260.0, 0.1, 0.4), (260.0, 260.0, 0.06, 0.2)],
+      Fx.title => [(440.0, 440.0, 0.12, 0.0), (660.0, 660.0, 0.12, 0.0), (880.0, 880.0, 0.12, 0.0), (1320.0, 1320.0, 0.55, 0.0)],
     };
-    final samples = <int>[];
-    for (final (f0, d) in notes) {
-      final f = f0 * k;
+    var samples = <double>[];
+    var seed = 12345; // fixed noise, so every play of a sound is the same
+    double noise() {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x3fffffff - 1;
+    }
+
+    for (final (f0, f1, d, nz) in notes) {
       final n = (rate * d * (style.decay / 0.1).clamp(0.6, 2.5)).round();
+      var ph = 0.0;
       for (var i = 0; i < n; i++) {
-        final t = i / rate;
+        final u = i / n;
+        final f = (f0 + (f1 - f0) * u) * k;
+        ph += 2 * math.pi * f / rate;
         final env = math.min(1.0, i / 200) * math.min(1.0, (n - i) / 400);
-        final ph = 2 * math.pi * f * t;
-        final v = switch (style.wave) {
+        final tone = switch (style.wave) {
           'square' => math.sin(ph) >= 0 ? 0.6 : -0.6,
           'triangle' => 2 / math.pi * math.asin(math.sin(ph)),
-          'bell' => (math.sin(ph) + 0.4 * math.sin(2.76 * ph)) * math.exp(-4 * i / n),
-          _ => math.sin(ph),
+          'bell' => (math.sin(ph) + 0.4 * math.sin(2.76 * ph)) * math.exp(-4 * u),
+          _ => math.sin(ph) + 0.15 * math.sin(2 * ph),
         };
-        samples.add((v * 11000 * env).round().clamp(-32767, 32767));
+        samples.add(((1 - nz) * tone + nz * noise() * (1 - u)) * env);
       }
     }
-    final byteCount = samples.length * 2;
+    // A faint echo makes the short blips sound less dry.
+    const echo = (rate * 0.07) ~/ 1;
+    final wet = List<double>.filled(samples.length + echo * 2, 0);
+    for (var i = 0; i < samples.length; i++) {
+      wet[i] += samples[i];
+      wet[i + echo] += samples[i] * 0.28;
+      wet[i + echo * 2] += samples[i] * 0.1;
+    }
+    samples = wet;
+    final pcm = [for (final v in samples) (v * 10000).round().clamp(-32767, 32767)];
+    final byteCount = pcm.length * 2;
     final b = BytesBuilder();
     void put32(int v) => b.add([v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF, (v >> 24) & 0xFF]);
     void put16(int v) => b.add([v & 0xFF, (v >> 8) & 0xFF]);
@@ -124,7 +188,7 @@ class Console {
     put16(16);
     b.add('data'.codeUnits);
     put32(byteCount);
-    for (final s in samples) {
+    for (final s in pcm) {
       put16(s & 0xFFFF);
     }
     return b.toBytes();

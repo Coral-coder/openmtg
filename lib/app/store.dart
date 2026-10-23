@@ -69,6 +69,9 @@ class AppStore extends ChangeNotifier implements MatchArchive {
   /// Pay mana automatically (off: choose the lands to tap).
   bool autoPay = true;
 
+  /// Cards fly, numbers float and banners sweep across the table (off: changes show at once).
+  bool animations = true;
+
   /// The table tour has been shown or skipped.
   bool tourSeen = false;
 
@@ -97,6 +100,7 @@ class AppStore extends ChangeNotifier implements MatchArchive {
     landsAsCards = _prefs.getBool('landsAsCards') ?? false;
     autoPay = _prefs.getBool('autoPay') ?? true;
     tourSeen = _prefs.getBool('tourSeen') ?? false;
+    animations = _prefs.getBool('animations') ?? true;
     themeOverride = _prefs.getString('theme');
     botDelay = _prefs.getInt('botDelay') ?? 450;
     final rulesJson = _prefs.getString('rules');
@@ -179,6 +183,8 @@ class AppStore extends ChangeNotifier implements MatchArchive {
         autoPay = v;
       case 'tourSeen':
         tourSeen = v;
+      case 'animations':
+        animations = v;
     }
     await _prefs.setBool(key, v);
     notifyListeners();
