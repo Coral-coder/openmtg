@@ -275,9 +275,56 @@ extension GameCast on Game {
       }
       targets.add(chosen);
       zccs.add([for (final e in chosen) isPlayerEntity(e) ? 0 : state.obj(e).zcc]);
+      // Divided damage (CR 601.2d): the split is chosen now, at least 1 to each target.
+      final divided = body.isModal ? null : _dividedAmount(body.effect, i);
+      if (divided != null && chosen.isNotEmpty) {
+        final n = evalAmount(divided, ctx);
+        if (chosen.length > n) throw GameError('Choose at most $n targets: each must get at least 1 damage');
+        var left = n;
+        for (var j = 0; j < chosen.length; j++) {
+          final rest = chosen.length - j - 1;
+          int share;
+          if (rest == 0) {
+            share = left;
+          } else {
+            share = ask(Decision(
+              kind: DecisionKind.number,
+              player: p,
+              prompt: 'Damage to ${isPlayerEntity(chosen[j]) ? state.player(entityPlayer(chosen[j])).name : nameOf(chosen[j])} ($left left to divide)',
+              min: 1,
+              max: left - rest,
+              source: item.objId ?? item.sourceId,
+              cancellable: cancellable,
+            )).first;
+            if (share < 1 || share > left - rest) throw GameError('Assign between 1 and ${left - rest}');
+          }
+          item.paidCost['div$i.$j'] = share;
+          left -= share;
+        }
+      }
     }
     item.targets = targets;
     item.targetZcc = zccs;
+  }
+
+  /// The amount a divided-damage effect on target [index] splits, if [e] has one.
+  Amount? _dividedAmount(Effect e, int index) {
+    switch (e) {
+      case DamageTarget(:final amount, :final divided, index: final i) when divided && i == index:
+        return amount;
+      case Seq(:final steps):
+        for (final s in steps) {
+          final a = _dividedAmount(s, index);
+          if (a != null) return a;
+        }
+        return null;
+      case If(:final then, :final otherwise):
+        return _dividedAmount(then, index) ?? (otherwise == null ? null : _dividedAmount(otherwise, index));
+      case May(:final effect):
+        return _dividedAmount(effect, index);
+      default:
+        return null;
+    }
   }
 
   String _targetPrompt(TargetSpec s) {

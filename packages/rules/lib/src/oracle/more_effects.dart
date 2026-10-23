@@ -108,6 +108,27 @@ extension _MoreEffects on _FaceParser {
       final set = _subject(m[1], ctx);
       return set == null ? null : AtNextEndStep(set, sacrifice: true);
     }
+    m = rx(t, r'sacrifice (it|them|that creature|that token|those tokens|those creatures|~) at end of combat');
+    if (m != null) {
+      final set = _subject(m[1], ctx);
+      return set == null ? null : AtNextEndStep(set, sacrifice: true, step: TurnStep.endCombat);
+    }
+    // "At the beginning of the next end step, return that creature to its owner's hand."
+    m = rx(t, r"at the beginning of the next end step, (sacrifice|exile|return) (it|them|that creature|that card|that token|those tokens|those creatures|~)(?: to (?:its|their) owner'?s'? hands?| to the battlefield under (its owner's|their owners'|your) control)?");
+    if (m != null) {
+      final set = _subject(m[2], ctx);
+      if (set == null) return null;
+      return switch (m[1]) {
+        'sacrifice' => AtNextEndStep(set, sacrifice: true),
+        'exile' => AtNextEndStep(set, exile: true),
+        _ => t.contains('to the battlefield') ? AtNextEndStep(set, returnIt: true, underYourControl: m[3] == 'your') : (t.contains('hand') ? AtNextEndStep(set, toHand: true) : null),
+      };
+    }
+    m = rx(t, r"return (it|them|that creature|that card|~) to (?:its|their) owner'?s'? hands? at the beginning of the next end step");
+    if (m != null) {
+      final set = _subject(m[1], ctx);
+      return set == null ? null : AtNextEndStep(set, toHand: true);
+    }
     m = rx(t, r'exile (it|them|that creature|that token|those tokens|those creatures|~) at the beginning of the next end step');
     if (m != null) {
       final set = _subject(m[1], ctx);
@@ -161,16 +182,110 @@ extension _MoreEffects on _FaceParser {
       final a = parseAmount(m[1]);
       return a == null ? null : LoseLife(a, who: const You(), slot: 'lifeLost');
     }
-    // "~ deals 1 damage to any target and 1 damage to you."
-    m = rx(t, r'(.+? deals \w+ damage to .+?) and (\w+) damage to (you|each opponent|that player)');
+    // "Sacrifice ~ unless you pay {2}" / "… unless you discard a card" (upkeep costs).
+    m = rx(t, r'sacrifice (~|it) unless you (.+)');
+    if (m != null) {
+      final self = m[1] == '~' || ctx.it is SelfRef || (ctx.it == null && ctx.eventObj == null);
+      if (!self) return null;
+      const sac = Sacrifice(You(), Filter.any, Fixed(1), self: true);
+      final pay = rx(m[2], r'pay ((?:\{(?:\d+|[wubrgc]|[wubrg]/[wubrgp])\})+)');
+      if (pay != null) return Unless(sac, const You(), mana: ManaCost.parse(pay[1].toUpperCase()));
+      final life = rx(m[2], r'pay (\w+) life');
+      if (life != null) {
+        final n = numberWord(life[1]);
+        return n == null ? null : Unless(sac, const You(), life: n);
+      }
+      // Any other action: "discard a card", "return a land you control to its owner's hand",
+      // "sacrifice a forest".
+      final alt = _clause2(m[2].startsWith('sacrifice ') || m[2].startsWith('discard ') || m[2].startsWith('return ') ? m[2] : 'you ${m[2]}', ctx, null);
+      if (alt == null || !(alt is Discard || alt is Sacrifice || alt is ChooseAndMove)) return null;
+      return Unless(sac, const You(), alternative: alt);
+    }
+    // "… damage to each creature and each planeswalker", "… to each of up to two target creatures".
+    if (t.contains(' damage to each creature and each planeswalker')) return _clause2(t.replaceFirst('each creature and each planeswalker', 'each creature and planeswalker'), ctx, null);
+    m = rx(t, r'(.+? deals \w+ damage to) each of (up to \w+ target .+)');
+    if (m != null) return _clause2('${m[1]} ${m[2]}', ctx, null);
+    // Poison (CR 122.1f): "each opponent gets a poison counter", "target player gets two poison counters".
+    m = rx(t, r'(.+?) gets? (a|an|one|two|three|four|five|\d+) poison counters?');
+    if (m != null) {
+      final p = parsePlayer(m[1], ctx);
+      final n = parseAmount(m[2]);
+      if (p == null || n == null) return null;
+      return GetEnergy(n, who: p, poison: true);
+    }
+    // "You gain 2 life for each creature destroyed this way."
+    m = rx(t, r'(?:you )?gain (\w+) life for each (?:creature|permanent|artifact|enchantment|land|nonland permanent)s? destroyed this way');
+    if (m != null) {
+      final n = numberWord(m[1]);
+      if (n == null) return null;
+      return GainLife(n == 1 ? const ResultAmount('destroyed') : Times(const ResultAmount('destroyed'), n));
+    }
+    // "~ deals 1 damage to any target and 1 damage to you", "… 3 damage to target creature and 3
+    // damage to target player or planeswalker".
+    m = rx(t, r'(.+? deals \w+ damage to .+?) and (\w+) damage to (.+)');
     if (m != null) {
       final first = _clause2(m[1], ctx, null);
       final a = parseAmount(m[2]);
       if (first == null || a == null) return null;
       final src = first is DamageTarget ? first.source : (first is DealDamage ? first.source : null);
       if (src == null) return null;
-      final to = switch (m[3]) { 'you' => const You(), 'each opponent' => const EachOpponent(), _ => ctx.thatPlayer ?? const EventPlayer() };
-      return Seq([first, DealDamage(a, null, toPlayers: to, source: src)]);
+      final second = m[3] == 'you' ? DealDamage(a, null, toPlayers: const You(), source: src) : _damageTo(m[3], a, src, ctx);
+      if (second == null) return null;
+      return Seq([first, second]);
+    }
+    // "~ deals damage equal to the number of lands you control to target creature".
+    m = rx(t, r'(~|it|that creature|target creature you control|target creature) deals damage equal to (.+?) to (.+)');
+    m ??= rx(t, r'(~|it|that creature) deals damage to (.+?) equal to (.+)');
+    if (m != null) {
+      final swapped = t.contains(' deals damage to ');
+      final qText = swapped ? m[3] : m[2];
+      final toText = swapped ? m[2] : m[3];
+      final src = m[1] == '~' ? const SelfRef() : (m[1] == 'it' || m[1] == 'that creature' ? (ctx.it ?? const SelfRef()) : null);
+      ObjRef source;
+      if (src != null) {
+        source = src;
+      } else {
+        final s = parseObjects(m[1], ctx, allowGroup: false);
+        if (s is! One) return null;
+        source = s.ref;
+      }
+      final q = qText == 'its power' || qText == "~'s power" ? StatOf(Stat.power, source) : parseQuantity(qText, ctx);
+      if (q == null) return null;
+      return _damageTo(toText, q, source, ctx);
+    }
+    // "You may have ~ deal 2 damage to target player", "you may have target creature get -2/-2".
+    m = rx(t, r'have (.+?) (deal|get|gain|fight|explore|connive) (.+)');
+    if (m != null) {
+      final verb = switch (m[2]) { 'deal' => 'deals', 'get' => 'gets', 'gain' => 'gains', 'fight' => 'fights', 'explore' => 'explores', _ => 'connives' };
+      return _clause2('${m[1]} $verb ${m[3]}', ctx, null);
+    }
+    // "~ gets +2/+0 until end of turn and can't be blocked this turn": one duration for both.
+    if (t.contains(' until end of turn and ') && (t.endsWith(' this turn') || t.endsWith(' until end of turn'))) {
+      return _clause2(t.replaceFirst(' until end of turn and ', ' and '), ctx, null);
+    }
+    if (t == 'you may play an additional land this turn' || t == 'play an additional land this turn') return const RuleChange(ExtraLandPerTurn(1));
+    if (t == 'exile all graveyards' || t == 'exile all cards from all graveyards') return const ForEachPlayer(EachPlayer(), MoveTo(All(Filter(card: true, zone: ZoneKind.graveyard, owner: Who.that)), ZoneKind.exile));
+    m = rx(t, r'(target player|each player|you) shuffles? (?:their|your) graveyard into (?:their|your) library');
+    if (m != null) {
+      final p = parsePlayer(m[1], ctx);
+      if (p == null) return null;
+      return ForEachPlayer(p, const Seq([MoveTo(All(Filter(card: true, zone: ZoneKind.graveyard, owner: Who.that)), ZoneKind.library), Shuffle(who: EventPlayer())]));
+    }
+    // Divided damage (CR 601.2d): "~ deals 4 damage divided as you choose among one or two targets".
+    m = rx(t, r'(~|it) deals (\w+) damage divided as you choose among (one or two|one, two, or three|any number of|up to (?:two|three|four|five)) (targets|target creatures|target creatures and/or planeswalkers|target creatures and/or players|target creatures your opponents control|target creatures an opponent controls)');
+    if (m != null) {
+      final a = parseAmount(m[2]);
+      if (a == null) return null;
+      final max = switch (m[3]) { 'one or two' => 2, 'one, two, or three' => 3, 'up to two' => 2, 'up to three' => 3, 'up to four' => 4, 'up to five' => 5, _ => a is Fixed ? a.n : 20 };
+      final TargetSpec spec = switch (m[4]) {
+        'targets' => TargetSpec(TargetKind.any, max: max),
+        'target creatures and/or planeswalkers' => TargetSpec(TargetKind.object, filter: const Filter(types: {CardType.creature, CardType.planeswalker}), max: max),
+        'target creatures and/or players' => TargetSpec(TargetKind.any, filter: const Filter(types: {CardType.creature}), max: max),
+        'target creatures your opponents control' || 'target creatures an opponent controls' => TargetSpec(TargetKind.object, filter: const Filter(types: {CardType.creature}, controller: Who.opponent), max: max),
+        _ => TargetSpec(TargetKind.object, filter: const Filter(types: {CardType.creature}), max: max),
+      };
+      final i = ctx.addTarget(spec);
+      return DamageTarget(a, i, source: m[1] == '~' ? const SelfRef() : (ctx.it ?? const SelfRef()), divided: true);
     }
     // "Target creature deals damage to itself equal to its power."
     m = rx(t, r'(target creature|it|that creature) deals damage to itself equal to its power');

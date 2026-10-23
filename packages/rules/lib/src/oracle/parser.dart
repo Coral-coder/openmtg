@@ -1038,6 +1038,12 @@ class _FaceParser {
   }
 
   List<Mod>? _mod(String p, BodyCtx ctx, {bool static = false}) {
+    // "Loses flying", "loses flying and first strike".
+    final lose = rx(p, r'loses? ((?:[a-z ]+)(?:, [a-z ]+)*(?:,? and [a-z ]+)?)');
+    if (lose != null && !p.startsWith('loses all') && !p.startsWith('lose all')) {
+      final kws = _kwList(lose[1]);
+      if (kws != null) return [for (final k in kws) LoseKw(k)];
+    }
     var m = rx(p, r'(?:gets?|has|have) (?:an additional )?([+-]\d+|[+-]x)/([+-]\d+|[+-]x)(?: for each (.+))?(?:, where x is (.+))?');
     if (m != null) {
       Amount pa = _signed(m[1]), ta = _signed(m[2]);
@@ -1453,6 +1459,7 @@ class _FaceParser {
         EachPlayer() => 'each player',
         EachOpponent() => 'each opponent',
         You() => 'you',
+        TargetPlayer() => 'that player',
         _ => null,
       };
 
@@ -1463,6 +1470,8 @@ class _FaceParser {
         break;
       }
     }
+    // "Target player draws two cards and loses 2 life": "that player" carries on.
+    if ((t.startsWith('target player ') || t.startsWith('target opponent ')) && ctx.thatPlayer is TargetPlayer) ctx.lastSubject = ctx.thatPlayer;
     final v = RegExp(r'\b(sacrifices?|destroy|exile|draw)\b').firstMatch(t);
     ctx.lastVerb = v == null ? null : (v.group(1)!.startsWith('sacrifice') ? 'sacrifice' : v.group(1));
   }
@@ -1579,7 +1588,7 @@ class _FaceParser {
       if (who == null || per is! Fixed || c == null) return null;
       return GainLife(per.n == 1 ? c : Times(c, per.n), who: who);
     }
-    m = rx(t, r'(.+?) loses? (\w+) life');
+    m = rx(t, r'(.+?) loses? (that much|\w+) life');
     if (m != null) {
       final who = parsePlayer(m[1], ctx);
       final a = parseAmount(m[2]);
@@ -2077,10 +2086,12 @@ class _FaceParser {
 
   Effect? _search(String t, BodyCtx ctx) {
     final m = rx(t,
-        r'search your library for (a|an|up to (?:one|two|three)|two) (.+?) cards?, (?:reveal (?:it|them), )?(put (?:it|them|that card) (?:into your hand|onto the battlefield(?: tapped)?)|then shuffle and put that card on top)(?:,? then shuffle)?');
+        r'search your library for (a|an|up to (?:one|two|three)|two) (.+?), (?:reveal (?:it|them|that card|those cards), )?(put (?:it|them|that card|those cards) (?:into your hand|onto the battlefield(?: tapped)?)|then shuffle and put that card on top)(?:,? then shuffle)?');
     if (m != null) {
       final n = m[1].startsWith('up to') ? numberWord(m[1].substring(6))! : numberWord(m[1])!;
-      final f = m[2] == 'a' || m[2].isEmpty ? Filter.any : parseFilterCore(m[2]);
+      // "basic land card", "mercenary permanent card with mana value 3 or less", "card named ~".
+      final what = m[2];
+      final f = what == 'card' || what == 'cards' ? const Filter(card: true) : parseFilterCore(what.contains(' card') || what.startsWith('card') ? what : '$what card');
       if (f == null) return null;
       final where = m[3];
       if (where.contains('put that card on top')) return Search(f, Fixed(n), ZoneKind.library, onTop: true, reveal: true);

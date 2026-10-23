@@ -457,13 +457,15 @@ extension GameEffects on Game {
             _dealDamage(sid, src, playerEntity(p), n);
           }
         }
-      case DamageTarget(:final amount, :final index, :final source):
-        final n = evalAmount(amount, ctx);
+      case DamageTarget(:final amount, :final index, :final source, :final divided):
+        final all = evalAmount(amount, ctx);
         final src = _sourceChars(ctx, source);
         final sid = _sourceId(ctx, source);
         if (index < ctx.targets.length) {
           for (var i = 0; i < ctx.targets[index].length; i++) {
             final t = ctx.targets[index][i];
+            // Divided damage uses the split chosen on casting; an illegal target's share is lost.
+            final n = divided ? (ctx.results['div$index.$i'] ?? all) : all;
             if (isPlayerEntity(t)) {
               if (!state.player(entityPlayer(t)).lost) _dealDamage(sid, src, t, n);
             } else if (state.objOrNull(t)?.zone == Zone.battlefield) {

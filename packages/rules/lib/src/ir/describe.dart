@@ -289,7 +289,7 @@ String eff(Effect e) => switch (e) {
       RevealHand(:final who, :final filter, :final exile, :final optional) =>
         'revealHand ${_pl(who)}${filter == null ? '' : ' → ${optional ? 'may ' : ''}${exile ? 'exile' : 'discard'} ${_filter(filter)}'}',
       FlipCoin() => 'flipCoin',
-      GetEnergy(:final amount, :final who) => 'energy +${_amt(amount)} ${_pl(who)}',
+      GetEnergy(:final amount, :final who, :final poison) => '${poison ? 'poison' : 'energy'} +${_amt(amount)} ${_pl(who)}',
       PayEffect(:final mana, :final life, :final energy) => 'pay${mana == null ? '' : ' ${mana.text}'}${life > 0 ? ' $life life' : ''}${energy > 0 ? ' $energy energy' : ''}',
       Clash() => 'clash',
       Amass(:final subtype, :final amount) => 'amass $subtype ${_amt(amount)}',

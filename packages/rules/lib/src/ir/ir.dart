@@ -1753,9 +1753,12 @@ class LookAtTopAnyTime extends RuleMod {
 
 /// "You get {E}{E}" (CR 122.1): energy counters on a player.
 class GetEnergy extends Effect {
-  const GetEnergy(this.amount, {this.who = const You()});
+  const GetEnergy(this.amount, {this.who = const You(), this.poison = false});
   final Amount amount;
   final PlayerRef who;
+
+  /// Poison counters instead (CR 122.1f; ten or more and a player loses, CR 704.5c).
+  final bool poison;
 }
 
 /// "Pay {E}{E}" as a cost.
@@ -1826,9 +1829,12 @@ class ChooseAndMove extends Effect {
 /// "Sacrifice it at the beginning of the next end step" ([sacrifice]) or "return it to the
 /// battlefield under its owner's control at the beginning of the next end step" ([returnIt]).
 class AtNextEndStep extends Effect {
-  const AtNextEndStep(this.set, {this.sacrifice = false, this.returnIt = false, this.exile = false, this.underYourControl = false});
+  const AtNextEndStep(this.set, {this.sacrifice = false, this.returnIt = false, this.exile = false, this.toHand = false, this.underYourControl = false, this.step = TurnStep.end});
   final ObjSet set;
-  final bool sacrifice, returnIt, exile, underYourControl;
+  final bool sacrifice, returnIt, exile, toHand, underYourControl;
+
+  /// The next end step, or end of combat ("sacrifice it at end of combat").
+  final TurnStep step;
 }
 
 /// "Choose a color" / "choose a creature type" while resolving: kept on the source, where "of

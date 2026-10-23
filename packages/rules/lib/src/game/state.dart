@@ -428,7 +428,7 @@ class StackItem {
         ..targetZcc = [for (final t in targetZcc) List.of(t)]
         ..sourceLki = sourceLki;
 
-  String digest() => '$id|${kind.index}|$controller|$sourceId.$sourceZcc|${_stable(ability?.text)}|$objId|${modes.join(',')}|${targets.map((t) => t.join(',')).join(';')}|${targetZcc.map((t) => t.join(',')).join(';')}|$x|$kicked|${event?.digest() ?? ''}|$isCopy';
+  String digest() => '$id|${kind.index}|$controller|$sourceId.$sourceZcc|${_stable(ability?.text)}|$objId|${modes.join(',')}|${targets.map((t) => t.join(',')).join(';')}|${targetZcc.map((t) => t.join(',')).join(';')}|$x|$kicked|${event?.digest() ?? ''}|$isCopy|${(paidCost.entries.map((e) => '${e.key}=${e.value}').toList()..sort()).join(',')}';
 }
 
 /// What a trigger event was about, kept with the triggered ability (CR 603.10 look-back data).

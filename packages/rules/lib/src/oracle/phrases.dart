@@ -540,7 +540,7 @@ PlayerRef? parsePlayer(String phrase, BodyCtx ctx) {
       return TargetPlayer(i);
     case 'that player' || 'they' || 'the player':
       return ctx.thatPlayer ?? const EventPlayer();
-    case 'its controller' || "that creature's controller" || "that permanent's controller" || "that spell's controller":
+    case 'its controller' || "that creature's controller" || "that permanent's controller" || "that spell's controller" || "that land's controller" || "that artifact's controller" || "that enchantment's controller" || "that planeswalker's controller":
       final r = ctx.it;
       if (r == null) return null;
       return ControllerOf(r);

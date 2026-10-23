@@ -6,12 +6,17 @@ part of 'game.dart';
 extension GameMoreEffects on Game {
   void _execMore(Effect e, EvalCtx ctx) {
     switch (e) {
-      case GetEnergy(:final amount, :final who):
+      case GetEnergy(:final amount, :final who, :final poison):
         final n = evalAmount(amount, ctx);
         if (n <= 0) return;
         for (final p in resolvePlayers(who, ctx)) {
-          state.player(p).energy += n;
-          _log('${state.player(p).name} gets $n energy.', player: p);
+          if (poison) {
+            state.player(p).poison += n;
+            _log('${state.player(p).name} gets $n poison counter${n == 1 ? '' : 's'}.', player: p);
+          } else {
+            state.player(p).energy += n;
+            _log('${state.player(p).name} gets $n energy.', player: p);
+          }
         }
       case PayEffect(:final mana, :final life, :final energy):
         final p = ctx.controller;
@@ -91,18 +96,20 @@ extension GameMoreEffects on Game {
         final pick = options.length == 1 ? options : ask(Decision(kind: DecisionKind.cards, player: p, prompt: 'Populate: choose a creature token to copy', options: options, min: 1, max: 1, source: ctx.source));
         ctx.remembered['populate'] = [(pick.first, state.obj(pick.first).zcc)];
         _exec(const CreateCopy(Remembered('populate')), ctx);
-      case AtNextEndStep(:final set, :final sacrifice, :final exile, :final underYourControl):
+      case AtNextEndStep(:final set, :final sacrifice, :final exile, :final toHand, :final underYourControl, :final step):
         for (final id in resolveObjs(set, ctx)) {
           final o = state.obj(id);
           // The delayed trigger follows this object (CR 603.7c), so it can name it as itself.
           final Effect effect = sacrifice
               ? const Sacrifice(You(), Filter.any, Fixed(1), self: true)
-              : (exile ? const MoveTo(One(EventObj()), ZoneKind.exile) : MoveTo(const One(EventObj()), ZoneKind.battlefield, underYourControl: underYourControl));
-          final text = sacrifice ? 'Sacrifice it' : (exile ? 'Exile it' : 'Return it to the battlefield');
+              : (exile
+                  ? const MoveTo(One(EventObj()), ZoneKind.exile)
+                  : (toHand ? const MoveTo(One(EventObj()), ZoneKind.hand) : MoveTo(const One(EventObj()), ZoneKind.battlefield, underYourControl: underYourControl)));
+          final text = sacrifice ? 'Sacrifice it' : (exile ? 'Exile it' : (toHand ? "Return it to its owner's hand" : 'Return it to the battlefield'));
           state.delayed.add(DelayedTrigger(
             controller: ctx.controller,
             sourceId: sacrifice ? id : (ctx.source ?? id),
-            ability: TriggeredAbility('$text at the beginning of the next end step.', const StepTrigger(TurnStep.end, Who.any), Body(effect: effect)),
+            ability: TriggeredAbility('$text ${step == TurnStep.end ? 'at the beginning of the next end step' : 'at end of combat'}.', StepTrigger(step, Who.any), Body(effect: effect)),
             objects: [(id, o.zcc)],
             createdTurn: state.turn,
           ));

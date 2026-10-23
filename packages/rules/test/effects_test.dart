@@ -407,6 +407,123 @@ void main() {
     });
   });
 
+  group('more grammar', () {
+    test('divided damage: the split is chosen on casting (CR 601.2d)', () {
+      final g = game();
+      lands(g, 0, 'Mountain', 3);
+      final bears = g.addCard('Grizzly Bears', 1, Zone.battlefield);
+      final giant = g.addCard('Hill Giant', 1, Zone.battlefield);
+      final arc = g.addCard('Arc Lightning', 0, Zone.hand);
+      g.apply(CastAction(0, arc));
+      answer(g, [bears, giant]);
+      final d = g.state.pending!.decision;
+      expect(d.kind, DecisionKind.number);
+      expect(d.max, 2, reason: 'one must be left for the Giant');
+      answer(g, [2]);
+      pay(g);
+      settle(g);
+      expect(zoneOf(g, bears), Zone.graveyard);
+      expect(g.state.obj(giant).damage, 1);
+    });
+
+    test('divided damage: three targets get one each', () {
+      final g = game();
+      lands(g, 0, 'Mountain', 3);
+      final arc = g.addCard('Arc Lightning', 0, Zone.hand);
+      final targets = [for (var i = 0; i < 3; i++) g.addCard('Grizzly Bears', 1, Zone.battlefield)];
+      g.apply(CastAction(0, arc));
+      answer(g, targets);
+      answer(g, [1]);
+      answer(g, [1]);
+      pay(g);
+      settle(g);
+      for (final t in targets) {
+        expect(g.state.obj(t).damage, 1);
+      }
+    });
+
+    test('"target player draws two cards and loses 2 life": the same player', () {
+      final g = game();
+      lands(g, 0, 'Swamp', 3);
+      final pact = g.addCard('Blood Pact', 0, Zone.hand);
+      final handBefore = g.state.player(1).hand.length;
+      g.apply(CastAction(0, pact));
+      answer(g, [playerEntity(1)]);
+      pay(g);
+      settle(g);
+      expect(g.state.player(1).hand.length, handBefore + 2);
+      expect(life(g, 1), 18);
+      expect(life(g, 0), 20);
+    });
+
+    test('"sacrifice ~ unless you pay {1}{U}": paying keeps it, declining sacrifices it', () {
+      for (final payIt in [true, false]) {
+        final g = game();
+        lands(g, 0, 'Island', 2);
+        final djinn = g.addCard('Drifting Djinn', 0, Zone.battlefield);
+        g.setStep(TurnStep.end);
+        advanceTo(g, TurnStep.draw, turn: 3);
+        // Turn 3 is Bob's; on Alice's next upkeep (turn 4) the trigger asks.
+        for (var i = 0; i < 300 && !(g.state.turn == 4 && g.state.step == TurnStep.draw); i++) {
+          final pd = g.state.pending;
+          if (pd != null) {
+            answer(g, pd.decision.kind == DecisionKind.option ? [payIt ? 1 : 0] : g.defaultAnswer(pd.decision));
+            continue;
+          }
+          g.apply(PassAction(g.state.priority!));
+        }
+        expect(zoneOf(g, djinn), payIt ? Zone.battlefield : Zone.graveyard);
+      }
+    });
+
+    test('"you may play an additional land this turn"', () {
+      final g = game();
+      lands(g, 0, 'Forest', 2);
+      final explore = g.addCard('Explore', 0, Zone.hand);
+      final a = g.addCard('Forest', 0, Zone.hand);
+      final b = g.addCard('Forest', 0, Zone.hand);
+      g.apply(PlayLandAction(0, a));
+      expect(g.whyNot(PlayLandAction(0, b)), isNotNull);
+      g.apply(CastAction(0, explore));
+      pay(g);
+      settle(g);
+      expect(g.whyNot(PlayLandAction(0, b)), isNull);
+    });
+
+    test('"target player shuffles their graveyard into their library"', () {
+      final g = game();
+      lands(g, 0, 'Island', 3);
+      final dead = g.addCard('Grizzly Bears', 1, Zone.graveyard);
+      final spell = g.addCard('Clear the Mind', 0, Zone.hand);
+      g.apply(CastAction(0, spell));
+      answer(g, [playerEntity(1)]);
+      pay(g);
+      settle(g);
+      expect(zoneOf(g, dead), Zone.library);
+    });
+
+    test('"you gain 1 life for each creature destroyed this way"', () {
+      final g = game();
+      lands(g, 0, 'Plains', 5);
+      g.addCard('Grizzly Bears', 1, Zone.battlefield);
+      g.addCard('Hill Giant', 1, Zone.battlefield);
+      g.addCard('Grizzly Bears', 0, Zone.battlefield);
+      final spell = g.addCard('Fumigate', 0, Zone.hand);
+      g.apply(CastAction(0, spell));
+      pay(g);
+      settle(g);
+      expect(life(g, 0), 23);
+    });
+
+    test('"target creature loses flying until end of turn"', () {
+      final g = game();
+      lands(g, 0, 'Island', 2);
+      final windform = g.addCard('Adarkar Windform', 0, Zone.battlefield);
+      final i = g.chars(windform).abilities.indexWhere((a) => a is ActivatedAbility);
+      expect(describeAbility(g.chars(windform).abilities[i]), contains('-flying'));
+    });
+  });
+
   test('a sliver grants its quoted ability ("This creature gets +0/+1")', () {
     final g = game();
     final sliver = g.addCard('Armor Sliver', 0, Zone.battlefield);
