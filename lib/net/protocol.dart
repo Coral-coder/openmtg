@@ -427,8 +427,10 @@ class LockstepMatch {
       }
       final action = GameAction.fromJson(m['a'] as Map<String, dynamic>);
       try {
-        // A peer may only move for its own seat.
-        if (action.player != (m['by'] as int? ?? remoteSeat) || action.player == localSeat) throw GameError('A move for the wrong seat');
+        // A move must be made by the seat it says made it. (A peer also relays this device's own
+        // earlier moves when it catches it up, so the local seat can appear here.)
+        final by = m['by'] as int?;
+        if (by != null && by >= 0 && action is! StartAction && action.player != by) throw GameError('A move for the wrong seat');
         g.apply(action);
       } catch (e) {
         _fail('Illegal move from the other player: $e');
