@@ -38,6 +38,10 @@ class OracleParser {
   /// Rethrow parser crashes instead of reporting the paragraph as unsupported (tests).
   static bool strict = false;
 
+  /// When set, collects what failed to parse ("sentence: …", "trigger: …", "static: …"), so
+  /// tools can rank the gaps by how many cards each one blocks (bin/gaps.dart).
+  static List<String>? diag;
+
   static ParsedCard parse(CardDef card) => _cache.putIfAbsent(card.name, () => _parse(card));
 
   static void clearCache() => _cache.clear();
@@ -201,6 +205,7 @@ class _FaceParser {
     }
 
     final st = _spellStatic(p, para) ?? _static(p, para);
+    if (st == null) OracleParser.diag?.add('static: $p');
     return st;
   }
 
@@ -364,6 +369,8 @@ class _FaceParser {
       }
       idx = indexOutsideQuotes(p, ', ', idx + 1);
     }
+    final c = indexOutsideQuotes(p, ', ');
+    OracleParser.diag?.add('trigger: ${c > 0 ? p.substring(0, c) : p}');
     return null;
   }
 
@@ -1116,7 +1123,10 @@ class _FaceParser {
       }
       if (s.startsWith('then ')) s = s.substring(5);
       final e = sentence(s, ctx);
-      if (e == null) return null;
+      if (e == null) {
+        OracleParser.diag?.add('sentence: $s');
+        return null;
+      }
       steps.add(e);
     }
     if (steps.isEmpty) return null;
