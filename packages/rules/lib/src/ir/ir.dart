@@ -466,6 +466,13 @@ class Kw {
   static const doesntUntap = Kw('doesn\'t untap');
   static const cantBeCountered = Kw('can\'t be countered');
   static const allCreatureTypes = Kw('all creature types');
+  static const blocksOnlyFlying = Kw('can block only creatures with flying');
+  static const maxOneBlocker = Kw("can't be blocked by more than one creature");
+  static const cantAttackAlone = Kw("can't attack alone");
+  static const cantBlockAlone = Kw("can't block alone");
+
+  /// "Can't attack unless defending player controls an Island" ([f]: what they must control).
+  static Kw attacksOnlyIfDefenderControls(Filter f) => Kw('attacks only if defender controls', filter: f);
 
   String get key {
     final b = StringBuffer(name);
@@ -552,6 +559,12 @@ class Kicked extends Condition {
 /// "During your turn".
 class YourTurn extends Condition {
   const YourTurn();
+}
+
+/// "Activate only during your upkeep", "… before attackers are declared": the current step.
+class DuringSteps extends Condition {
+  const DuringSteps(this.steps);
+  final Set<TurnStep> steps;
 }
 
 /// "If it was cast" / "if you cast it".
@@ -704,6 +717,9 @@ enum CastKind {
 
   /// Cast from the graveyard with an extra cost (Quilled Greatwurm).
   fromGraveyard,
+
+  /// Optional additional cost that returns the spell to its owner's hand (CR 702.27).
+  buyback,
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1191,6 +1207,28 @@ class Noop extends Effect {
 }
 
 /// Copy a spell on the stack (Thousand-Year Storm).
+/// Upkeep keywords run by the engine: echo (CR 702.30), fading (CR 702.32), vanishing
+/// (CR 702.63), cumulative upkeep (CR 702.24), for the source permanent.
+class UpkeepCost extends Effect {
+  const UpkeepCost(this.kind, {this.cost});
+  final String kind; // echo | fading | vanishing | cumulative
+  final ManaCost? cost;
+}
+
+/// "You may cast it without paying its mana cost" as part of resolving (CR 608.2g): rebound,
+/// cascade.
+class CastFreeNow extends Effect {
+  const CastFreeNow(this.set);
+  final ObjSet set;
+}
+
+/// Cascade (CR 702.85): exile from the top until a nonland card with mana value less than [mv];
+/// you may cast it free; the rest go to the bottom in a random order.
+class CascadeEffect extends Effect {
+  const CascadeEffect(this.mv);
+  final int mv;
+}
+
 class CopySpell extends Effect {
   const CopySpell(this.obj, {this.amount = const Fixed(1), this.newTargets = true});
   final ObjRef obj;
@@ -1438,9 +1476,12 @@ sealed class Replacement {
 
 /// "~ enters tapped", "creatures your opponents control enter tapped".
 class EntersTapped extends Replacement {
-  const EntersTapped(this.set, {this.unless});
+  const EntersTapped(this.set, {this.unless, this.payLife = 0});
   final ObjSet set;
   final Condition? unless;
+
+  /// Shocklands: "you may pay N life. If you don't, it enters tapped."
+  final int payLife;
 }
 
 /// "~ enters with N counters on it" (optionally "if ...").

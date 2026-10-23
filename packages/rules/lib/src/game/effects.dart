@@ -112,6 +112,20 @@ extension GameEffects on Game {
     }
     if (o.exileOnResolve) {
       _move(id, Zone.exile);
+    } else if (!countered && o.buyback) {
+      // Buyback (CR 702.27): back to its owner's hand.
+      _move(id, Zone.hand);
+    } else if (!countered && o.rebound) {
+      // Rebound (CR 702.88): exiled, and cast free at its owner's next upkeep.
+      if (_move(id, Zone.exile) == Zone.exile) {
+        state.delayed.add(DelayedTrigger(
+          controller: item.controller,
+          sourceId: id,
+          ability: const TriggeredAbility('Rebound', StepTrigger(TurnStep.upkeep, Who.you), Body(effect: CastFreeNow(One(EventObj())))),
+          objects: [(id, o.zcc)],
+          createdTurn: state.turn,
+        ));
+      }
     } else if (!countered && o.face == 1 && db[o.cardName]?.layout == Layout.adventure && chars(id).subtypes.contains('Omen')) {
       // A resolved Omen is shuffled into its owner's library instead.
       if (_move(id, Zone.library) == Zone.library) _shuffle(o.owner);
@@ -207,7 +221,15 @@ extension GameEffects on Game {
     for (final a in self.abilities) {
       if (a is! ReplacementAbility) continue;
       switch (a.replacement) {
-        case EntersTapped(:final set) when set is One:
+        case EntersTapped(:final set, :final unless, :final payLife) when set is One:
+          if (unless != null && evalCondition(unless, ctxSelf)) break;
+          if (payLife > 0) {
+            final pay = ask(Decision(kind: DecisionKind.yesNo, player: controller, prompt: 'Pay $payLife life so ${self.name} enters untapped?', source: id));
+            if (pay.isNotEmpty && pay.first == 1) {
+              _loseLife(controller, payLife);
+              break;
+            }
+          }
           entersTapped = true;
         case EntersWithCounters(:final set, :final kind, :final amount, :final condition) when set is One:
           if (condition == null || evalCondition(condition, ctxSelf)) extra[kind] = (extra[kind] ?? 0) + evalAmount(amount, ctxSelf);
@@ -242,6 +264,7 @@ extension GameEffects on Game {
     }
     _moveTo(id, Zone.battlefield, controller: controller);
     o.face = enterFace;
+    o.echoDue = self.hasName('echo');
     o.wasCast = wasCast;
     o.kicked = kicked;
     o.x = x;
@@ -386,6 +409,41 @@ extension GameEffects on Game {
   // -------------------------------------------------------------------------------------------
   // The interpreter
   // -------------------------------------------------------------------------------------------
+
+  /// "You may cast it without paying its mana cost" while resolving (CR 608.2g): the spell goes
+  /// on the stack above whatever is resolving. Skipped when it couldn't be cast (no targets).
+  void _castFreeNow(PlayerId p, ObjId id) {
+    final o = state.objOrNull(id);
+    if (o == null || o.zone == Zone.battlefield || o.zone == Zone.stack || chars(id).isLand) return;
+    final prevBy = o.playableBy, prevFree = o.playFree;
+    o.playableBy = p;
+    o.playFree = true;
+    _castDuringResolution = true;
+    try {
+      if (!_probe(() => _castSpell(p, id, 0, -1))) return;
+      final yes = ask(Decision(kind: DecisionKind.yesNo, player: p, prompt: 'Cast ${chars(id).name} without paying its mana cost?', labels: const ['No', 'Cast it'], source: id));
+      if (yes.isEmpty || yes.first != 1) return;
+      _castSpell(p, id, 0, -1);
+    } finally {
+      _castDuringResolution = false;
+      if (o.zone != Zone.stack) {
+        o.playableBy = prevBy;
+        o.playFree = prevFree;
+      }
+    }
+  }
+
+  /// "Sacrifice it unless you pay [cost]" for echo and cumulative upkeep.
+  void _payOrSacrifice(PlayerId p, ObjId id, ManaCost cost) {
+    if (canAfford(p, cost)) {
+      final yes = ask(Decision(kind: DecisionKind.yesNo, player: p, prompt: 'Pay ${cost.text} to keep ${chars(id).name}?', labels: const ['Sacrifice it', 'Pay'], source: id));
+      if (yes.isNotEmpty && yes.first == 1) {
+        _payMana(p, cost, prompt: 'Pay for ${chars(id).name}');
+        return;
+      }
+    }
+    _sacrifice(id);
+  }
 
   void _exec(Effect e, EvalCtx ctx) {
     _dirty();
@@ -773,6 +831,58 @@ extension GameEffects on Game {
         break;
       case Regenerate() || PreventNext() || RevealHand() || FlipCoin() || RollDie() || Explore():
         _execShieldsAndChance(e, ctx);
+      case UpkeepCost(:final kind, :final cost):
+        final ids = _ref(const SelfRef(), ctx);
+        if (ids.isEmpty) return;
+        final id = ids.first;
+        final o = state.obj(id);
+        if (o.zone != Zone.battlefield) return;
+        switch (kind) {
+          case 'fading':
+            if ((o.counters['fade'] ?? 0) > 0) {
+              _removeCounters(id, 'fade', 1);
+            } else {
+              _sacrifice(id);
+            }
+          case 'vanishing':
+            if ((o.counters['time'] ?? 0) > 0) {
+              _removeCounters(id, 'time', 1);
+              if ((o.counters['time'] ?? 0) == 0) _sacrifice(id);
+            }
+          case 'echo':
+            if (!o.echoDue) return;
+            o.echoDue = false;
+            _payOrSacrifice(ctx.controller, id, cost!);
+          case 'cumulative':
+            _addCounters(id, 'age', 1);
+            final age = o.counters['age'] ?? 1;
+            _payOrSacrifice(ctx.controller, id, ManaCost([for (var i = 0; i < age; i++) ...cost!.symbols]).normalized());
+        }
+      case CastFreeNow(:final set):
+        for (final id in resolveObjs(set, ctx)) {
+          _castFreeNow(ctx.controller, id);
+        }
+      case CascadeEffect(:final mv):
+        final pl = state.player(ctx.controller);
+        final exiled = <ObjId>[];
+        ObjId? hit;
+        while (pl.library.isNotEmpty) {
+          final top = pl.library.first;
+          _move(top, Zone.exile);
+          exiled.add(top);
+          final c = chars(top);
+          if (!c.isLand && c.manaValue < mv) {
+            hit = top;
+            break;
+          }
+        }
+        _log('${pl.name} cascades: ${exiled.length} cards exiled${hit == null ? '' : ', hitting ${nameOf(hit)}'}.', player: ctx.controller);
+        if (hit != null) _castFreeNow(ctx.controller, hit);
+        final rest = [for (final id in exiled) if (state.obj(id).zone == Zone.exile) id];
+        state.rng.shuffle(rest);
+        for (final id in rest) {
+          _move(id, Zone.library, bottom: true);
+        }
       case CopySpell(:final obj, :final amount):
         final ids = _ref(obj, ctx);
         if (ids.isEmpty) return;

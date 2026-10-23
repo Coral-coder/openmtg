@@ -109,6 +109,12 @@ class GameObject {
   /// Cast with flashback: exile it instead of anywhere else it would go from the stack.
   bool exileOnResolve = false;
 
+  /// Cast from hand with rebound (CR 702.88), or with buyback paid (CR 702.27), while on the stack.
+  bool rebound = false, buyback = false;
+
+  /// Echo not yet paid since it came under its controller's control (CR 702.30).
+  bool echoDue = false;
+
   /// Put into its current zone this turn (for "put there this turn").
   int arrivedTurn = 0;
 
@@ -166,6 +172,9 @@ class GameObject {
     ..sacrificeAtEnd = sacrificeAtEnd
     ..exileIfDies = exileIfDies
     ..exileOnResolve = exileOnResolve
+    ..rebound = rebound
+    ..buyback = buyback
+    ..echoDue = echoDue
     ..arrivedTurn = arrivedTurn
     ..attacking = attacking
     ..blocking = List.of(blocking)
@@ -203,6 +212,9 @@ class GameObject {
     sacrificeAtEnd = false;
     exileIfDies = false;
     exileOnResolve = false;
+    rebound = false;
+    buyback = false;
+    echoDue = false;
     attacking = null;
     blocking = [];
     blockedBy = [];
@@ -215,7 +227,7 @@ class GameObject {
   String digest() {
     final c = (counters.entries.where((e) => e.value != 0).map((e) => '${e.key}=${e.value}').toList()..sort()).join(',');
     final a = (activations.entries.map((e) => '${e.key}=${e.value}').toList()..sort()).join(';');
-    return '$id.$zcc|$cardName|${token?.key ?? ''}|${copyOfCard ?? ''}|${copyOfToken?.key ?? ''}|$owner|$controller|${zone.index}|$tapped|$faceDown|$phasedOut|$face|${adventureBy ?? ''}|$c|$damage|$deathtouched|$attachedTo|$timestamp|$controlSince|$enteredTurn|$wasCast|$kicked|$x|$chosenColor|$chosenType|$a|${(activatedEver.toList()..sort()).join(';')}|$playableBy|$playableUntil|$playFree|$sacrificeAtEnd|$exileIfDies|$exileOnResolve|$arrivedTurn|$attacking|${blocking.join(',')}|${blockedBy.join(',')}|$blocked|$dealtFirstStrikeDamage|${extraTypes.join(',')}|${exiledUntilLeaves.join(',')}|$tokenCopy|${copyExtra.length}|${damagedBy.join(',')}';
+    return '$id.$zcc|$cardName|${token?.key ?? ''}|${copyOfCard ?? ''}|${copyOfToken?.key ?? ''}|$owner|$controller|${zone.index}|$tapped|$faceDown|$phasedOut|$face|${adventureBy ?? ''}|$c|$damage|$deathtouched|$attachedTo|$timestamp|$controlSince|$enteredTurn|$wasCast|$kicked|$x|$chosenColor|$chosenType|$a|${(activatedEver.toList()..sort()).join(';')}|$playableBy|$playableUntil|$playFree|$sacrificeAtEnd|$exileIfDies|$exileOnResolve${rebound ? 'r' : ''}${buyback ? 'b' : ''}${echoDue ? 'e' : ''}|$arrivedTurn|$attacking|${blocking.join(',')}|${blockedBy.join(',')}|$blocked|$dealtFirstStrikeDamage|${extraTypes.join(',')}|${exiledUntilLeaves.join(',')}|$tokenCopy|${copyExtra.length}|${damagedBy.join(',')}';
   }
 }
 
@@ -627,6 +639,15 @@ class ActivateTask extends Task {
   final int ability;
   @override
   String digest() => 'act$player.$obj.$ability';
+}
+
+class PlayLandTask extends Task {
+  const PlayLandTask(this.player, this.obj, this.face);
+  final PlayerId player;
+  final ObjId obj;
+  final int face;
+  @override
+  String digest() => 'land$player.$obj.$face';
 }
 
 class ResolveTask extends Task {

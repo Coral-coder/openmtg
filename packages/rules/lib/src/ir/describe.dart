@@ -81,6 +81,7 @@ String _cond(Condition c) => switch (c) {
       CountCondition(:final amount, :final cmp, :final n) => '${_amt(amount)} ${cmp.name} $n',
       Kicked() => 'kicked',
       YourTurn() => 'yourTurn',
+      DuringSteps(:final steps) => 'during ${steps.map((s) => s.name).join('/')}',
       WasCast() => 'wasCast',
       ObjMatches(:final obj, :final filter) => '${_ref(obj)} is ${_filter(filter)}',
       RememberedAny(:final slot, :final filter) => '$slot has ${_filter(filter)}',
@@ -90,7 +91,8 @@ String _cond(Condition c) => switch (c) {
     };
 
 String _repl(Replacement r) => switch (r) {
-      EntersTapped(:final set) => 'entersTapped(${_set(set)})',
+      EntersTapped(:final set, :final unless, :final payLife) =>
+        'entersTapped(${_set(set)}${unless == null ? '' : ' unless ${_cond(unless)}'}${payLife > 0 ? ' or pay $payLife life' : ''})',
       EntersWithCounters(:final set, :final kind, :final amount, :final condition) => 'entersWith(${_set(set)} ${_amt(amount)} $kind${condition == null ? '' : ' if ${_cond(condition)}'})',
       ChooseOnEnter(:final what) => 'chooseOnEnter($what)',
       PreventDamage(:final set, :final combat, :final toYou) => 'prevent(${toYou ? 'you' : _set(set)}${combat == null ? '' : (combat ? ' combat' : ' noncombat')})',
@@ -271,7 +273,10 @@ String eff(Effect e) => switch (e) {
       Emblem(:final text) => 'emblem "$text"',
       EndTurn() => 'endTurn',
       Noop() => 'noop',
-      CopySpell(:final obj) => 'copySpell ${_ref(obj)}',
+      CopySpell(:final obj, :final amount) => 'copySpell ${_ref(obj)} x${_amt(amount)}',
+      CastFreeNow(:final set) => 'castFree ${_set(set)}',
+      UpkeepCost(:final kind, :final cost) => 'upkeep $kind${cost == null ? '' : ' ${cost.text}'}',
+      CascadeEffect(:final mv) => 'cascade <$mv',
       AllowPlay(:final set) => 'allowPlay ${_set(set)}',
       RuleChange(:final rule) => 'rule ${_rule(rule)}',
       RevealPutPermanents(:final n) => 'genesisWave ${_amt(n)}',

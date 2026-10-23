@@ -665,7 +665,20 @@ List<Ability>? parseKeyword(String raw, String text) {
     'prowess': Kw.prowess,
   };
   // Keywords the engine checks by name (combat, damage, characteristics).
-  const named = {'infect', 'wither', 'fear', 'intimidate', 'shadow', 'horsemanship', 'skulk', 'devoid'};
+  const named = {'infect', 'wither', 'fear', 'intimidate', 'shadow', 'horsemanship', 'skulk', 'devoid', 'convoke', 'improvise', 'delve', 'storm', 'cascade', 'rebound', 'flanking'};
+  // Upkeep costs the engine runs (UpkeepCost).
+  final echo = rx(t, r'echo (\{[^}]+\}(?:\{[^}]+\})*)');
+  final cumulative = rx(t, r'cumulative upkeep (\{[^}]+\}(?:\{[^}]+\})*)');
+  final fadeVanish = rx(t, r'(fading|vanishing) (\d+)');
+  if (echo != null || cumulative != null || fadeVanish != null) {
+    final kind = echo != null ? 'echo' : (cumulative != null ? 'cumulative' : fadeVanish![1]);
+    final cost = echo != null ? ManaCost.parse(echo[1].toUpperCase()) : (cumulative != null ? ManaCost.parse(cumulative[1].toUpperCase()) : null);
+    return [
+      if (fadeVanish != null) ReplacementAbility(text, EntersWithCounters(const One(SelfRef()), kind == 'fading' ? 'fade' : 'time', Fixed(int.parse(fadeVanish[2])))),
+      KeywordAbility(text, Kw(kind, cost: cost)),
+      TriggeredAbility(text, const StepTrigger(TurnStep.upkeep, Who.you), Body(effect: UpkeepCost(kind, cost: cost))),
+    ];
+  }
   if (named.contains(t)) return [KeywordAbility(text, Kw(t))];
   if (t == 'changeling') return [KeywordAbility(text, Kw.allCreatureTypes)];
   final toxic = rx(t, r'toxic (\d+)');
@@ -717,6 +730,10 @@ List<Ability>? parseKeyword(String raw, String text) {
   final kicker = rx(t, r'kicker (\{[^}]+\}(?:\{[^}]+\})*)');
   if (kicker != null) {
     return [CastOptionAbility(text, CastOption(CastKind.kicker, cost: ManaCost.parse(kicker[1].toUpperCase()), label: 'Kicker'))];
+  }
+  final buyback = rx(t, r'buyback (\{[^}]+\}(?:\{[^}]+\})*)');
+  if (buyback != null) {
+    return [CastOptionAbility(text, CastOption(CastKind.buyback, cost: ManaCost.parse(buyback[1].toUpperCase()), label: 'Buyback'))];
   }
   final fb = rx(t, r'flashback (\{[^}]+\}(?:\{[^}]+\})*)');
   if (fb != null) {

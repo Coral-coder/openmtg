@@ -33,24 +33,36 @@ extension GameCombat on Game {
     if (cands.isEmpty) return;
     final targets = attackableBy(p);
     if (targets.isEmpty) return;
-    final must = [for (final id in cands) if (chars(id).has(Kw.attacksEachCombat)) id];
+    // What each creature may attack ("can't attack unless defending player controls an Island").
+    final per = <ObjId, List<int>>{};
+    for (final id in cands) {
+      final only = chars(id).kws('attacks only if defender controls').toList();
+      per[id] = [
+        for (final t in targets)
+          if (only.every((k) => _defenderControls(t, k.filter!))) t,
+      ];
+    }
+    final able = [for (final id in cands) if (per[id]!.isNotEmpty) id];
+    if (able.isEmpty) return;
+    final must = [for (final id in able) if (chars(id).has(Kw.attacksEachCombat)) id];
     final answer = ask(Decision(
       kind: DecisionKind.attackers,
       player: p,
       prompt: 'Declare attackers',
-      options: cands,
-      max: cands.length,
-      extra: {for (final id in cands) '$id': targets, 'must': must},
+      options: able,
+      max: able.length,
+      extra: {for (final id in able) '$id': per[id]!, 'must': must},
     ));
     final chosen = <ObjId, int>{};
     for (var i = 0; i + 1 < answer.length; i += 2) {
       final a = answer[i], t = answer[i + 1];
-      if (!cands.contains(a) || !targets.contains(t) || chosen.containsKey(a)) throw GameError('Illegal attack');
+      if (!able.contains(a) || !per[a]!.contains(t) || chosen.containsKey(a)) throw GameError('Illegal attack');
       chosen[a] = t;
     }
     for (final m in must) {
       if (!chosen.containsKey(m)) throw GameError('${chars(m).name} attacks each combat if able');
     }
+    if (chosen.length == 1 && chars(chosen.keys.first).has(Kw.cantAttackAlone)) throw GameError("${chars(chosen.keys.first).name} can't attack alone");
     if (chosen.isEmpty) return;
     for (final e in chosen.entries) {
       final o = state.obj(e.key);
@@ -65,6 +77,14 @@ extension GameCombat on Game {
     _dirty();
   }
 
+  /// Does the player (or the controller of the planeswalker or battle) [entity] control a
+  /// permanent matching [f]?
+  bool _defenderControls(int entity, Filter f) {
+    final p = entity < 0 ? entityPlayer(entity) : chars(entity).controller;
+    final ctx = EvalCtx(this, controller: p);
+    return state.battlefield.any((id) => chars(id).controller == p && matchesFilter(f, id, ctx));
+  }
+
   /// Can [blocker] block [attacker] (CR 509.1b)?
   bool canBlock(ObjId blocker, ObjId attacker) {
     final b = chars(blocker), a = chars(attacker);
@@ -72,6 +92,7 @@ extension GameCombat on Game {
     if (b.has(Kw.cantBlock) || b.has(Kw.cantAttackOrBlock)) return false;
     if (a.has(Kw.unblockable)) return false;
     if (a.has(Kw.flying) && !b.has(Kw.flying) && !b.has(Kw.reach)) return false;
+    if (b.has(Kw.blocksOnlyFlying) && !a.has(Kw.flying)) return false;
     // Evasion keywords (CR 702.14, 702.28, 702.36, 702.13, 702.31, 702.118).
     if (b.hasName('shadow') != a.hasName('shadow')) return false;
     if (a.hasName('horsemanship') && !b.hasName('horsemanship')) return false;
@@ -123,7 +144,9 @@ extension GameCombat on Game {
       for (final a in mine) {
         final n = blocks.values.where((x) => x == a).length;
         if (n == 1 && chars(a).has(Kw.menace)) throw GameError('${chars(a).name} has menace: block it with two or more creatures');
+        if (n > 1 && chars(a).has(Kw.maxOneBlocker)) throw GameError("${chars(a).name} can't be blocked by more than one creature");
       }
+      if (blocks.length == 1 && chars(blocks.keys.first).has(Kw.cantBlockAlone)) throw GameError("${chars(blocks.keys.first).name} can't block alone");
       for (final e in blocks.entries) {
         final bo = state.obj(e.key), ao = state.obj(e.value);
         bo.blocking = [e.value];
@@ -131,6 +154,21 @@ extension GameCombat on Game {
         ao.blocked = true;
       }
       if (blocks.isNotEmpty) _log('${state.player(d).name} blocks: ${blocks.entries.map((e) => '${nameOf(e.key)} → ${nameOf(e.value)}').join(', ')}.', player: d, kind: 'block');
+      // Flanking (CR 702.25): each blocker without flanking gets -1/-1 until end of turn.
+      for (final e in blocks.entries) {
+        final a = chars(e.value), b = chars(e.key);
+        if (b.hasName('flanking')) continue;
+        for (final _ in a.kws('flanking')) {
+          state.pendingTriggers.add(PendingTrigger(
+            controller: a.controller,
+            sourceId: e.value,
+            sourceZcc: state.obj(e.value).zcc,
+            ability: const TriggeredAbility('flanking', BecomesBlockedTrigger(One(SelfRef())), Body(effect: Grant(One(EventObj()), [ModPT(Fixed(-1), Fixed(-1))]))),
+            event: EventInfo(obj: e.key, objZcc: state.obj(e.key).zcc, player: b.controller),
+            sourceName: a.name,
+          ));
+        }
+      }
       for (final e in blocks.entries) {
         _emit(BlockEvent(e.key, e.value));
       }

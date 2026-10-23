@@ -358,6 +358,8 @@ extension GameQuery on Game {
         return ctx.kicked;
       case YourTurn():
         return state.active == ctx.controller;
+      case DuringSteps(:final steps):
+        return steps.contains(state.step);
       case WasCast():
         return ctx.wasCast;
       case ObjMatches(:final obj, :final filter):
