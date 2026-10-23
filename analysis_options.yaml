@@ -15,6 +15,8 @@ analyzer:
     - android/**
     - ios/**
     - web/**
+    # The engine package is analyzed on its own (CI engine job), with its test dependencies.
+    - packages/**
 
 linter:
   # The lint rules applied to this project can be customized in the
