@@ -3,7 +3,6 @@
 /// lethal, blocks to trade well or survive, and aims removal at the biggest threat.
 library;
 
-import '../cards/card.dart';
 import '../ir/ir.dart';
 import '../game/actions.dart';
 import '../game/chars.dart';
@@ -74,7 +73,7 @@ class Bot {
     final s = g.state;
     final legal = g.legalActions(player).where((a) => !_failed.contains(a.toString())).toList();
     final myTurn = s.active == player;
-    final main = s.step == Step.main1 || s.step == Step.main2;
+    final main = s.step == TurnStep.main1 || s.step == TurnStep.main2;
 
     // Respond to an opponent's spell with a counterspell.
     if (s.stack.isNotEmpty && s.stack.last.controller != player) {
@@ -91,19 +90,19 @@ class Bot {
       for (final c in casts) {
         if (_worthCasting(g, c)) return c;
       }
-      for (final a in legal.whereType<ActivateAction>()) {
+      for (final a in legal.whereType<ActivateAbilityAction>()) {
         if (_worthActivating(g, a)) return a;
       }
     }
     // Combat tricks: pump a blocked or blocking creature of ours.
-    if (s.step == Step.declareBlockers && s.stack.isEmpty) {
+    if (s.step == TurnStep.declareBlockers && s.stack.isEmpty) {
       for (final c in legal.whereType<CastAction>()) {
         final t = _text(g, c.id);
         if (RegExp(r'target creature (you control )?gets \+').hasMatch(t) && _hasCombatCreature(g)) return c;
       }
     }
     // At the opponent's end step, use instant-speed card draw and removal.
-    if (!myTurn && s.step == Step.end && s.stack.isEmpty) {
+    if (!myTurn && s.step == TurnStep.end && s.stack.isEmpty) {
       for (final c in legal.whereType<CastAction>()) {
         final t = _text(g, c.id);
         if (g.chars(c.id).isInstant && !t.contains('counter target') && !t.contains('gets +')) return c;
@@ -173,7 +172,7 @@ class Bot {
     return true;
   }
 
-  bool _worthActivating(Game g, ActivateAction a) {
+  bool _worthActivating(Game g, ActivateAbilityAction a) {
     final c = g.chars(a.id);
     final ab = c.abilities[a.index];
     if (ab is! ActivatedAbility) return false;

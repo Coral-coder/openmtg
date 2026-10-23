@@ -33,7 +33,7 @@ extension GameCast on Game {
     for (final r in _rules<CastAsThoughFlash>(p)) {
       if (identical(r.filter, Filter.any) || r.filter.types.isEmpty || r.filter.types.any(c.types.contains)) return true;
     }
-    return state.active == p && (state.step == Step.main1 || state.step == Step.main2) && state.stack.isEmpty;
+    return state.active == p && (state.step == TurnStep.main1 || state.step == TurnStep.main2) && state.stack.isEmpty;
   }
 
   void _castSpell(PlayerId p, ObjId id, int face, int option) {
@@ -303,7 +303,7 @@ extension GameCast on Game {
     if (o.zone == Zone.battlefield ? c.controller != p : o.owner != p) throw GameError('Not yours');
     if (o.phasedOut) throw GameError('Phased out');
     final sorcery = a.sorcerySpeed || a.isLoyalty;
-    if (sorcery && !(state.active == p && (state.step == Step.main1 || state.step == Step.main2) && state.stack.isEmpty)) throw GameError('Only as a sorcery');
+    if (sorcery && !(state.active == p && (state.step == TurnStep.main1 || state.step == TurnStep.main2) && state.stack.isEmpty)) throw GameError('Only as a sorcery');
     if (a.yourTurnOnly && state.active != p) throw GameError('Only during your turn');
     final key = a.text;
     if (a.isLoyalty && (o.activations['loyalty'] ?? 0) > 0) throw GameError('One loyalty ability per turn');
@@ -483,7 +483,7 @@ extension GameCast on Game {
     final ctx = EvalCtx(this, controller: p, source: id, sourceZcc: o.zcc);
     if (a.cost.tap) _tap(id);
     final produce = a.produce;
-    final possible = produce.chosenColor && o.chosenColor != null ? [ManaType.of(Color.fromWord(o.chosenColor!)!)] : produce.possible;
+    final possible = produce.chosenColor && o.chosenColor != null ? [ManaType.of(ManaColor.fromWord(o.chosenColor!)!)] : produce.possible;
     final units = <ManaUnit>[];
     if (produce.fixed.isNotEmpty) {
       if (produce.fixed.length == 1) {

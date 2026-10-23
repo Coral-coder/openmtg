@@ -46,7 +46,7 @@ List<DeckProblem> validateDeck(CardDatabase db, List<String> deck, DeckFormat f,
     out.add(DeckProblem('${f.label} decks need at least ${f.minSize} cards (this one has $size).'));
   }
   final maxCopies = f == DeckFormat.commander ? 1 : (f == DeckFormat.limited ? 1 << 20 : 4);
-  Set<Color>? identity;
+  Set<ManaColor>? identity;
   if (commander != null) identity = db[commander]?.colorIdentity.toSet();
   for (final e in counts.entries) {
     final c = db[e.key];
@@ -68,11 +68,11 @@ List<DeckProblem> validateDeck(CardDatabase db, List<String> deck, DeckFormat f,
   return out;
 }
 
-const basicLandFor = {Color.white: 'Plains', Color.blue: 'Island', Color.black: 'Swamp', Color.red: 'Mountain', Color.green: 'Forest'};
+const basicLandFor = {ManaColor.white: 'Plains', ManaColor.blue: 'Island', ManaColor.black: 'Swamp', ManaColor.red: 'Mountain', ManaColor.green: 'Forest'};
 
 /// A 40-card two-color deck from the fully supported cards of [set]: about 16 creatures, 7 other
 /// spells and 17 basic lands split by the deck's color needs. Deterministic.
-List<String> starterDeck(CardDatabase db, Set<Color> colors, {String set = 'fdn', int spells = 23, int lands = 17}) {
+List<String> starterDeck(CardDatabase db, Set<ManaColor> colors, {String set = 'fdn', int spells = 23, int lands = 17}) {
   final pool = <CardDef>[];
   for (final c in db.cards) {
     if (!c.sets.contains(set) || c.isBasicLand) continue;
@@ -133,15 +133,15 @@ List<String> starterDeck(CardDatabase db, Set<Color> colors, {String set = 'fdn'
 }
 
 /// The ten two-color pairs, named.
-const colorPairs = <String, Set<Color>>{
-  'Azorius (WU)': {Color.white, Color.blue},
-  'Dimir (UB)': {Color.blue, Color.black},
-  'Rakdos (BR)': {Color.black, Color.red},
-  'Gruul (RG)': {Color.red, Color.green},
-  'Selesnya (GW)': {Color.green, Color.white},
-  'Orzhov (WB)': {Color.white, Color.black},
-  'Izzet (UR)': {Color.blue, Color.red},
-  'Golgari (BG)': {Color.black, Color.green},
-  'Boros (RW)': {Color.red, Color.white},
-  'Simic (GU)': {Color.green, Color.blue},
+const colorPairs = <String, Set<ManaColor>>{
+  'Azorius (WU)': {ManaColor.white, ManaColor.blue},
+  'Dimir (UB)': {ManaColor.blue, ManaColor.black},
+  'Rakdos (BR)': {ManaColor.black, ManaColor.red},
+  'Gruul (RG)': {ManaColor.red, ManaColor.green},
+  'Selesnya (GW)': {ManaColor.green, ManaColor.white},
+  'Orzhov (WB)': {ManaColor.white, ManaColor.black},
+  'Izzet (UR)': {ManaColor.blue, ManaColor.red},
+  'Golgari (BG)': {ManaColor.black, ManaColor.green},
+  'Boros (RW)': {ManaColor.red, ManaColor.white},
+  'Simic (GU)': {ManaColor.green, ManaColor.blue},
 };

@@ -105,7 +105,7 @@ class Game {
       case CastAction():
         _requirePriority(a.player);
         _run(CastTask(a.player, a.id, face: a.face, option: a.option));
-      case ActivateAction():
+      case ActivateAbilityAction():
         _requirePriority(a.player);
         _run(ActivateTask(a.player, a.id, a.index));
       case ManaAction():
@@ -352,7 +352,7 @@ class Game {
     throw StateError('The game loop did not settle');
   }
 
-  bool _stepHasPriority() => state.step != Step.untap && !(state.step == Step.cleanup && !state.cleanupPriority);
+  bool _stepHasPriority() => state.step != TurnStep.untap && !(state.step == TurnStep.cleanup && !state.cleanupPriority);
 
   void _givePriority(PlayerId p) {
     state.priority = p;
@@ -385,29 +385,29 @@ class Game {
 
   void _turnBasedActions() {
     switch (state.step) {
-      case Step.untap:
+      case TurnStep.untap:
         _untapStep();
         state.stepDone = true;
-      case Step.draw:
+      case TurnStep.draw:
         final skip = state.turn == 1 && state.active == state.firstPlayer && !state.rules.firstPlayerDraws;
         if (!skip) _drawN(state.active, 1);
         state.stepDone = true;
-      case Step.declareAttackers:
+      case TurnStep.declareAttackers:
         _run(const AttackTask());
-      case Step.declareBlockers:
+      case TurnStep.declareBlockers:
         _run(BlockTask(state.active));
-      case Step.firstStrikeDamage:
+      case TurnStep.firstStrikeDamage:
         _run(const DamageTask(true));
-      case Step.combatDamage:
+      case TurnStep.combatDamage:
         _run(const DamageTask(false));
-      case Step.cleanup:
+      case TurnStep.cleanup:
         _run(const CleanupTask());
       default:
         state.stepDone = true;
     }
   }
 
-  void _beginStep(Step s) {
+  void _beginStep(TurnStep s) {
     state.step = s;
     state.stepDone = false;
     state.priority = null;
@@ -422,43 +422,43 @@ class Game {
     }
     final s = state.step;
     switch (s) {
-      case Step.untap:
-        _beginStep(Step.upkeep);
-      case Step.upkeep:
-        _beginStep(Step.draw);
-      case Step.draw:
-        _beginStep(Step.main1);
-      case Step.main1:
-        _beginStep(Step.beginCombat);
-      case Step.beginCombat:
-        _beginStep(Step.declareAttackers);
-      case Step.declareAttackers:
+      case TurnStep.untap:
+        _beginStep(TurnStep.upkeep);
+      case TurnStep.upkeep:
+        _beginStep(TurnStep.draw);
+      case TurnStep.draw:
+        _beginStep(TurnStep.main1);
+      case TurnStep.main1:
+        _beginStep(TurnStep.beginCombat);
+      case TurnStep.beginCombat:
+        _beginStep(TurnStep.declareAttackers);
+      case TurnStep.declareAttackers:
         if (_attackers().isEmpty) {
-          _beginStep(Step.endCombat);
+          _beginStep(TurnStep.endCombat);
         } else {
-          _beginStep(Step.declareBlockers);
+          _beginStep(TurnStep.declareBlockers);
         }
-      case Step.declareBlockers:
+      case TurnStep.declareBlockers:
         state.combatHasFirstStrike = _combatants().any((id) {
           final c = chars(id);
           return c.has(Kw.firstStrike) || c.has(Kw.doubleStrike);
         });
-        _beginStep(state.combatHasFirstStrike ? Step.firstStrikeDamage : Step.combatDamage);
-      case Step.firstStrikeDamage:
-        _beginStep(Step.combatDamage);
-      case Step.combatDamage:
-        _beginStep(Step.endCombat);
-      case Step.endCombat:
+        _beginStep(state.combatHasFirstStrike ? TurnStep.firstStrikeDamage : TurnStep.combatDamage);
+      case TurnStep.firstStrikeDamage:
+        _beginStep(TurnStep.combatDamage);
+      case TurnStep.combatDamage:
+        _beginStep(TurnStep.endCombat);
+      case TurnStep.endCombat:
         _endCombat();
-        _beginStep(Step.main2);
-      case Step.main2:
-        _beginStep(Step.end);
-      case Step.end:
-        _beginStep(Step.cleanup);
-      case Step.cleanup:
+        _beginStep(TurnStep.main2);
+      case TurnStep.main2:
+        _beginStep(TurnStep.end);
+      case TurnStep.end:
+        _beginStep(TurnStep.cleanup);
+      case TurnStep.cleanup:
         if (state.cleanupPriority) {
           // Another cleanup step follows (CR 514.3a).
-          _beginStep(Step.cleanup);
+          _beginStep(TurnStep.cleanup);
           return;
         }
         _endTurn();
@@ -477,13 +477,13 @@ class Game {
       o.damagedBy = [];
     }
     // "Until your next turn" effects end (CR 611.2b).
-    state.effects.removeWhere((e) => e.duration == Duration.untilYourNextTurn && e.controller == p);
+    state.effects.removeWhere((e) => e.duration == EffectDuration.untilYourNextTurn && e.controller == p);
     for (final id in state.battlefield) {
       final o = state.obj(id);
       if (o.controller == p) o.controlSince = o.controlSince; // summoning sickness is checked against controlSince < turn
     }
     _log('Turn ${state.turn}: ${state.player(p).name}.', kind: 'turn');
-    _beginStep(Step.untap);
+    _beginStep(TurnStep.untap);
   }
 
   void _endTurn() {
@@ -532,7 +532,7 @@ class Game {
       o.damage = 0;
       o.deathtouched = false;
     }
-    state.effects.removeWhere((e) => e.duration == Duration.endOfTurn || e.duration == Duration.thisTurn);
+    state.effects.removeWhere((e) => e.duration == EffectDuration.endOfTurn || e.duration == EffectDuration.thisTurn);
     for (final o in state.objects.values) {
       if (o.playableBy != null && o.playableUntil <= state.turn && o.playableUntil >= 0) {
         o.playableBy = null;
@@ -796,7 +796,7 @@ class Game {
 
   bool canPlayLand(PlayerId p, ObjId id) {
     if (state.priority != p || state.pending != null) return false;
-    if (state.active != p || !(state.step == Step.main1 || state.step == Step.main2) || state.stack.isNotEmpty) return false;
+    if (state.active != p || !(state.step == TurnStep.main1 || state.step == TurnStep.main2) || state.stack.isNotEmpty) return false;
     if (state.player(p).stats.landsPlayed >= landsAllowed(p)) return false;
     final o = state.objOrNull(id);
     if (o == null) return false;

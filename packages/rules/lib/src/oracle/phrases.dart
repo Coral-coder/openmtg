@@ -134,7 +134,7 @@ const _typeWords = {
   'kindred': CardType.kindred,
 };
 
-const _colorWords = {'white': Color.white, 'blue': Color.blue, 'black': Color.black, 'red': Color.red, 'green': Color.green};
+const _colorWords = {'white': ManaColor.white, 'blue': ManaColor.blue, 'black': ManaColor.black, 'red': ManaColor.red, 'green': ManaColor.green};
 
 /// Parses the core of an object description: "nontoken creature you control with power 2 or
 /// less", "instant or sorcery card", "artifact, enchantment, or creature with flying".

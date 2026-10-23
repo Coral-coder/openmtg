@@ -226,7 +226,7 @@ class Filter {
   final Set<String> subtypes;
   final Set<String> notSubtypes;
   final Set<Supertype> supertypes, notSupertypes;
-  final Set<Color> colors, notColors;
+  final Set<ManaColor> colors, notColors;
   final bool? multicolored, colorless;
   final Who controller, owner;
 
@@ -263,8 +263,8 @@ class Filter {
     Set<String>? notSubtypes,
     Set<Supertype>? supertypes,
     Set<Supertype>? notSupertypes,
-    Set<Color>? colors,
-    Set<Color>? notColors,
+    Set<ManaColor>? colors,
+    Set<ManaColor>? notColors,
     bool? multicolored,
     bool? colorless,
     Who? controller,
@@ -699,7 +699,7 @@ enum CastKind {
 // Durations and continuous modifications (CR 611–613)
 // ---------------------------------------------------------------------------------------------
 
-enum Duration { endOfTurn, permanent, untilYourNextTurn, whileSourceOnBattlefield, whileControl, thisTurn }
+enum EffectDuration { endOfTurn, permanent, untilYourNextTurn, whileSourceOnBattlefield, whileControl, thisTurn }
 
 /// One modification a continuous effect makes. The layer it applies in follows from its type.
 sealed class Mod {
@@ -746,7 +746,7 @@ class TypeMod extends Mod {
 /// Layer 5.
 class ColorMod extends Mod {
   const ColorMod(this.colors, {this.add = false});
-  final Set<Color> colors;
+  final Set<ManaColor> colors;
   final bool add;
   @override
   int get layer => 5;
@@ -1022,7 +1022,7 @@ class TokenSpec {
   });
   final String name;
   final int? power, toughness;
-  final Set<Color> colors;
+  final Set<ManaColor> colors;
   final Set<CardType> types;
   final List<String> subtypes;
   final Set<Supertype> supertypes;
@@ -1056,10 +1056,10 @@ class CreateCopy extends Effect {
 /// A continuous effect from a resolving spell or ability (CR 611.2): [mods] apply to [set] for
 /// [duration]. For a filter set, the affected objects are locked in as it resolves (611.2c).
 class Grant extends Effect {
-  const Grant(this.set, this.mods, {this.duration = Duration.endOfTurn});
+  const Grant(this.set, this.mods, {this.duration = EffectDuration.endOfTurn});
   final ObjSet set;
   final List<Mod> mods;
-  final Duration duration;
+  final EffectDuration duration;
 }
 
 /// "Double target creature's power".
@@ -1080,9 +1080,9 @@ class CounterEventItem extends Effect {
 }
 
 class GainControl extends Effect {
-  const GainControl(this.set, {this.duration = Duration.permanent});
+  const GainControl(this.set, {this.duration = EffectDuration.permanent});
   final ObjSet set;
-  final Duration duration;
+  final EffectDuration duration;
 }
 
 /// "Search your library for up to N <filter> cards, put them <zone>, then shuffle."
@@ -1183,18 +1183,18 @@ class CopySpell extends Effect {
 
 /// "You may cast target card from your graveyard this turn" and similar permissions.
 class AllowPlay extends Effect {
-  const AllowPlay(this.set, {this.duration = Duration.endOfTurn, this.free = false});
+  const AllowPlay(this.set, {this.duration = EffectDuration.endOfTurn, this.free = false});
   final ObjSet set;
-  final Duration duration;
+  final EffectDuration duration;
   final bool free;
 }
 
 /// Rules-changing effects with a duration ("you can't lose the game" from a spell, "players can't
 /// gain life this turn"). Most come from statics instead.
 class RuleChange extends Effect {
-  const RuleChange(this.rule, {this.duration = Duration.endOfTurn});
+  const RuleChange(this.rule, {this.duration = EffectDuration.endOfTurn});
   final RuleMod rule;
-  final Duration duration;
+  final EffectDuration duration;
 }
 
 /// Reveal top X, put permanents with MV ≤ X onto battlefield, rest into graveyard (Genesis Wave).
@@ -1271,7 +1271,7 @@ class ManaProduce {
 // Triggers (CR 603)
 // ---------------------------------------------------------------------------------------------
 
-enum Step { untap, upkeep, draw, main1, beginCombat, declareAttackers, declareBlockers, firstStrikeDamage, combatDamage, endCombat, main2, end, cleanup }
+enum TurnStep { untap, upkeep, draw, main1, beginCombat, declareAttackers, declareBlockers, firstStrikeDamage, combatDamage, endCombat, main2, end, cleanup }
 
 sealed class Trigger {
   const Trigger();
@@ -1355,7 +1355,7 @@ class CastTrigger extends Trigger {
 /// The beginning of [step] of [whose] turn.
 class StepTrigger extends Trigger {
   const StepTrigger(this.step, this.whose);
-  final Step step;
+  final TurnStep step;
   final Who whose;
 }
 

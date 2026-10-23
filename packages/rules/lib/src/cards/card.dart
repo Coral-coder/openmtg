@@ -121,7 +121,7 @@ class Face {
     this.toughness,
     this.loyalty,
     this.defense,
-    List<Color>? colors,
+    List<ManaColor>? colors,
     this.colorIndicator,
   })  : type = TypeLine.parse(typeLine),
         colors = colors ?? manaCost?.colors.toList() ?? const [];
@@ -136,8 +136,8 @@ class Face {
 
   /// Printed P/T, loyalty and defense as text ("*", "1+*" are possible).
   final String? power, toughness, loyalty, defense;
-  final List<Color> colors;
-  final List<Color>? colorIndicator;
+  final List<ManaColor> colors;
+  final List<ManaColor>? colorIndicator;
 
   bool get isCreature => type.types.contains(CardType.creature);
   bool get isLand => type.types.contains(CardType.land);
@@ -233,7 +233,7 @@ class CardDef {
   final String name;
   final Layout layout;
   final List<Face> faces;
-  final List<Color> colorIdentity;
+  final List<ManaColor> colorIdentity;
   final List<String> keywords;
 
   /// One letter per [Format]: l legal, n not legal, b banned, r restricted.

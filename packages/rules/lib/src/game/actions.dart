@@ -27,7 +27,7 @@ sealed class GameAction {
       case 'cast':
         return CastAction(p, j['id'] as int, face: j['f'] as int? ?? 0, option: j['o'] as int? ?? -1);
       case 'activate':
-        return ActivateAction(p, j['id'] as int, j['i'] as int);
+        return ActivateAbilityAction(p, j['id'] as int, j['i'] as int);
       case 'mana':
         return ManaAction(p, j['id'] as int, j['i'] as int, j['m'] as int? ?? -1);
       case 'pass':
@@ -98,8 +98,8 @@ class CastAction extends GameAction {
 }
 
 /// Activates the [index]th ability of an object (index into its current abilities).
-class ActivateAction extends GameAction {
-  const ActivateAction(super.player, this.id, this.index);
+class ActivateAbilityAction extends GameAction {
+  const ActivateAbilityAction(super.player, this.id, this.index);
   final ObjId id;
   final int index;
   @override

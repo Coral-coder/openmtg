@@ -1,25 +1,25 @@
 /// Colors and mana symbols (CR 105, 106, 107.4).
 library;
 
-enum Color {
+enum ManaColor {
   white('W', 'white'),
   blue('U', 'blue'),
   black('B', 'black'),
   red('R', 'red'),
   green('G', 'green');
 
-  const Color(this.symbol, this.word);
+  const ManaColor(this.symbol, this.word);
   final String symbol;
   final String word;
 
-  static Color? fromSymbol(String s) {
+  static ManaColor? fromSymbol(String s) {
     for (final c in values) {
       if (c.symbol == s) return c;
     }
     return null;
   }
 
-  static Color? fromWord(String w) {
+  static ManaColor? fromWord(String w) {
     for (final c in values) {
       if (c.word == w) return c;
     }
@@ -38,8 +38,8 @@ enum ManaType {
     return null;
   }
 
-  Color? get color => this == C ? null : Color.fromSymbol(name);
-  static ManaType of(Color c) => fromSymbol(c.symbol)!;
+  ManaColor? get color => this == C ? null : ManaColor.fromSymbol(name);
+  static ManaType of(ManaColor c) => fromSymbol(c.symbol)!;
 }
 
 /// One symbol of a mana cost.
@@ -165,8 +165,8 @@ class ManaCost {
   bool get isEmpty => symbols.isEmpty;
   int get generic => symbols.whereType<GenericSymbol>().fold(0, (a, s) => a + s.amount);
 
-  Set<Color> get colors {
-    final out = <Color>{};
+  Set<ManaColor> get colors {
+    final out = <ManaColor>{};
     for (final s in symbols) {
       switch (s) {
         case ColoredSymbol(:final type):

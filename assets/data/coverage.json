@@ -1,0 +1,4118 @@
+{
+ "total": 34747,
+ "supported": 10110,
+ "formats": {
+  "legacy": [
+   9921,
+   31958
+  ],
+  "vintage": [
+   9943,
+   32028
+  ],
+  "commander": [
+   9927,
+   32116
+  ],
+  "oathbreaker": [
+   9928,
+   31988
+  ],
+  "historic": [
+   5079,
+   16005
+  ],
+  "brawl": [
+   5099,
+   16052
+  ],
+  "alchemy": [
+   1323,
+   4223
+  ],
+  "timeless": [
+   5104,
+   16089
+  ],
+  "premodern": [
+   1852,
+   5375
+  ],
+  "pioneer": [
+   5175,
+   15086
+  ],
+  "modern": [
+   7814,
+   22718
+  ],
+  "pauper": [
+   5313,
+   10881
+  ],
+  "standard": [
+   1510,
+   5164
+  ],
+  "oldschool": [
+   52,
+   325
+  ]
+ },
+ "sets": {
+  "lea": [
+   136,
+   290
+  ],
+  "leb": [
+   137,
+   292
+  ],
+  "2ed": [
+   137,
+   292
+  ],
+  "arn": [
+   22,
+   78
+  ],
+  "atq": [
+   24,
+   85
+  ],
+  "3ed": [
+   139,
+   296
+  ],
+  "fbb": [
+   139,
+   296
+  ],
+  "leg": [
+   84,
+   310
+  ],
+  "sum": [
+   139,
+   296
+  ],
+  "pdrc": [
+   0,
+   1
+  ],
+  "drk": [
+   36,
+   119
+  ],
+  "fem": [
+   33,
+   102
+  ],
+  "4ed": [
+   151,
+   368
+  ],
+  "4bb": [
+   151,
+   368
+  ],
+  "phpr": [
+   2,
+   5
+  ],
+  "ice": [
+   98,
+   373
+  ],
+  "bchr": [
+   30,
+   116
+  ],
+  "chr": [
+   30,
+   116
+  ],
+  "rin": [
+   12,
+   60
+  ],
+  "ren": [
+   38,
+   122
+  ],
+  "hml": [
+   41,
+   115
+  ],
+  "all": [
+   21,
+   144
+  ],
+  "plgm": [
+   1,
+   2
+  ],
+  "rqs": [
+   25,
+   56
+  ],
+  "parl": [
+   6,
+   7
+  ],
+  "pred": [
+   0,
+   1
+  ],
+  "mir": [
+   100,
+   335
+  ],
+  "mgb": [
+   4,
+   10
+  ],
+  "itp": [
+   26,
+   57
+  ],
+  "vis": [
+   45,
+   167
+  ],
+  "5ed": [
+   174,
+   434
+  ],
+  "past": [
+   0,
+   12
+  ],
+  "por": [
+   141,
+   200
+  ],
+  "wth": [
+   55,
+   167
+  ],
+  "ptmp": [
+   0,
+   1
+  ],
+  "tmp": [
+   128,
+   335
+  ],
+  "jgp": [
+   3,
+   3
+  ],
+  "psth": [
+   1,
+   1
+  ],
+  "sth": [
+   55,
+   143
+  ],
+  "pexo": [
+   0,
+   1
+  ],
+  "exo": [
+   52,
+   143
+  ],
+  "p02": [
+   105,
+   155
+  ],
+  "ugl": [
+   6,
+   88
+  ],
+  "palp": [
+   5,
+   5
+  ],
+  "pusg": [
+   0,
+   1
+  ],
+  "usg": [
+   130,
+   335
+  ],
+  "ath": [
+   54,
+   81
+  ],
+  "g99": [
+   0,
+   1
+  ],
+  "pal99": [
+   5,
+   9
+  ],
+  "psus": [
+   9,
+   18
+  ],
+  "pulg": [
+   1,
+   1
+  ],
+  "ulg": [
+   62,
+   143
+  ],
+  "6ed": [
+   187,
+   335
+  ],
+  "ptk": [
+   75,
+   170
+  ],
+  "puds": [
+   1,
+   1
+  ],
+  "uds": [
+   59,
+   143
+  ],
+  "s99": [
+   127,
+   158
+  ],
+  "pptk": [
+   0,
+   1
+  ],
+  "pgru": [
+   5,
+   5
+  ],
+  "pwos": [
+   1,
+   1
+  ],
+  "pmmq": [
+   1,
+   1
+  ],
+  "mmq": [
+   132,
+   335
+  ],
+  "brb": [
+   64,
+   105
+  ],
+  "pal00": [
+   8,
+   11
+  ],
+  "fnm": [
+   8,
+   11
+  ],
+  "g00": [
+   1,
+   2
+  ],
+  "pnem": [
+   0,
+   1
+  ],
+  "pelp": [
+   5,
+   5
+  ],
+  "nem": [
+   49,
+   143
+  ],
+  "s00": [
+   19,
+   20
+  ],
+  "ppcy": [
+   0,
+   1
+  ],
+  "pcy": [
+   44,
+   143
+  ],
+  "pinv": [
+   1,
+   1
+  ],
+  "btd": [
+   52,
+   82
+  ],
+  "inv": [
+   152,
+   335
+  ],
+  "f01": [
+   2,
+   7
+  ],
+  "pal01": [
+   9,
+   11
+  ],
+  "mpr": [
+   1,
+   1
+  ],
+  "g01": [
+   1,
+   2
+  ],
+  "ppls": [
+   0,
+   1
+  ],
+  "pls": [
+   34,
+   143
+  ],
+  "7ed": [
+   216,
+   335
+  ],
+  "papc": [
+   0,
+   1
+  ],
+  "apc": [
+   60,
+   143
+  ],
+  "psdg": [
+   0,
+   10
+  ],
+  "pody": [
+   0,
+   1
+  ],
+  "ody": [
+   170,
+   335
+  ],
+  "dkm": [
+   20,
+   44
+  ],
+  "pal02": [
+   3,
+   5
+  ],
+  "g02": [
+   1,
+   2
+  ],
+  "f02": [
+   6,
+   12
+  ],
+  "ptor": [
+   0,
+   1
+  ],
+  "tor": [
+   39,
+   143
+  ],
+  "pjud": [
+   0,
+   1
+  ],
+  "jud": [
+   39,
+   143
+  ],
+  "jp1": [
+   1,
+   5
+  ],
+  "pons": [
+   0,
+   1
+  ],
+  "ons": [
+   108,
+   335
+  ],
+  "pal03": [
+   6,
+   8
+  ],
+  "f03": [
+   8,
+   13
+  ],
+  "p03": [
+   0,
+   1
+  ],
+  "g03": [
+   1,
+   3
+  ],
+  "plgn": [
+   0,
+   1
+  ],
+  "lgn": [
+   41,
+   145
+  ],
+  "pscg": [
+   0,
+   1
+  ],
+  "scg": [
+   35,
+   143
+  ],
+  "p8ed": [
+   0,
+   1
+  ],
+  "8ed": [
+   210,
+   342
+  ],
+  "pmrd": [
+   1,
+   1
+  ],
+  "mrd": [
+   149,
+   291
+  ],
+  "f04": [
+   3,
+   12
+  ],
+  "g04": [
+   1,
+   6
+  ],
+  "pal04": [
+   7,
+   14
+  ],
+  "p04": [
+   0,
+   1
+  ],
+  "pdst": [
+   1,
+   1
+  ],
+  "dst": [
+   60,
+   165
+  ],
+  "p5dn": [
+   0,
+   1
+  ],
+  "5dn": [
+   79,
+   165
+  ],
+  "pchk": [
+   1,
+   1
+  ],
+  "chk": [
+   85,
+   291
+  ],
+  "unh": [
+   9,
+   141
+  ],
+  "punh": [
+   0,
+   1
+  ],
+  "pal05": [
+   6,
+   8
+  ],
+  "f05": [
+   6,
+   12
+  ],
+  "p05": [
+   2,
+   6
+  ],
+  "g05": [
+   2,
+   4
+  ],
+  "bok": [
+   31,
+   165
+  ],
+  "pbok": [
+   0,
+   2
+  ],
+  "sok": [
+   25,
+   165
+  ],
+  "psok": [
+   0,
+   2
+  ],
+  "9ed": [
+   219,
+   344
+  ],
+  "p9ed": [
+   1,
+   2
+  ],
+  "psal": [
+   120,
+   285
+  ],
+  "prav": [
+   1,
+   2
+  ],
+  "pmps": [
+   5,
+   5
+  ],
+  "rav": [
+   109,
+   291
+  ],
+  "p2hg": [
+   1,
+   1
+  ],
+  "p06": [
+   5,
+   7
+  ],
+  "pal06": [
+   6,
+   9
+  ],
+  "pmps06": [
+   5,
+   5
+  ],
+  "phuk": [
+   6,
+   23
+  ],
+  "g06": [
+   2,
+   4
+  ],
+  "pjas": [
+   2,
+   6
+  ],
+  "f06": [
+   3,
+   12
+  ],
+  "pgpt": [
+   1,
+   2
+  ],
+  "gpt": [
+   58,
+   165
+  ],
+  "pcmp": [
+   5,
+   12
+  ],
+  "pdis": [
+   0,
+   2
+  ],
+  "dis": [
+   47,
+   180
+  ],
+  "pcsp": [
+   0,
+   1
+  ],
+  "csp": [
+   48,
+   155
+  ],
+  "cst": [
+   20,
+   52
+  ],
+  "ptsp": [
+   0,
+   3
+  ],
+  "tsp": [
+   70,
+   286
+  ],
+  "tsb": [
+   31,
+   121
+  ],
+  "g07": [
+   2,
+   5
+  ],
+  "pmps07": [
+   5,
+   5
+  ],
+  "p07": [
+   5,
+   7
+  ],
+  "f07": [
+   5,
+   12
+  ],
+  "pplc": [
+   1,
+   2
+  ],
+  "plc": [
+   46,
+   165
+  ],
+  "pfut": [
+   0,
+   2
+  ],
+  "fut": [
+   30,
+   180
+  ],
+  "p10e": [
+   1,
+   3
+  ],
+  "10e": [
+   222,
+   368
+  ],
+  "me1": [
+   59,
+   185
+  ],
+  "lrw": [
+   94,
+   286
+  ],
+  "plrw": [
+   0,
+   3
+  ],
+  "dd1": [
+   38,
+   56
+  ],
+  "p08": [
+   3,
+   7
+  ],
+  "pjjt": [
+   6,
+   12
+  ],
+  "f08": [
+   4,
+   12
+  ],
+  "g08": [
+   1,
+   5
+  ],
+  "pjse": [
+   4,
+   8
+  ],
+  "pmps08": [
+   5,
+   6
+  ],
+  "ppro": [
+   2,
+   18
+  ],
+  "pmor": [
+   0,
+   2
+  ],
+  "mor": [
+   36,
+   150
+  ],
+  "p15a": [
+   1,
+   2
+  ],
+  "pshm": [
+   0,
+   2
+  ],
+  "shm": [
+   107,
+   286
+  ],
+  "peve": [
+   0,
+   2
+  ],
+  "eve": [
+   58,
+   180
+  ],
+  "drb": [
+   4,
+   15
+  ],
+  "me2": [
+   85,
+   245
+  ],
+  "ala": [
+   123,
+   234
+  ],
+  "pala": [
+   1,
+   2
+  ],
+  "dd2": [
+   22,
+   56
+  ],
+  "pdtp": [
+   1,
+   1
+  ],
+  "g09": [
+   6,
+   10
+  ],
+  "f09": [
+   6,
+   12
+  ],
+  "pmps09": [
+   5,
+   5
+  ],
+  "pcon": [
+   1,
+   2
+  ],
+  "con": [
+   66,
+   145
+  ],
+  "ddc": [
+   35,
+   56
+  ],
+  "parb": [
+   1,
+   3
+  ],
+  "arb": [
+   54,
+   145
+  ],
+  "p09": [
+   8,
+   13
+  ],
+  "pm10": [
+   2,
+   3
+  ],
+  "m10": [
+   155,
+   234
+  ],
+  "v09": [
+   7,
+   15
+  ],
+  "hop": [
+   82,
+   146
+  ],
+  "me3": [
+   97,
+   220
+  ],
+  "pzen": [
+   3,
+   5
+  ],
+  "zen": [
+   109,
+   234
+  ],
+  "ddd": [
+   26,
+   57
+  ],
+  "dci": [
+   36,
+   67
+  ],
+  "h09": [
+   15,
+   41
+  ],
+  "p10": [
+   7,
+   13
+  ],
+  "pmps10": [
+   5,
+   5
+  ],
+  "g10": [
+   5,
+   8
+  ],
+  "f10": [
+   5,
+   12
+  ],
+  "pdp10": [
+   0,
+   2
+  ],
+  "pwwk": [
+   1,
+   6
+  ],
+  "wwk": [
+   51,
+   145
+  ],
+  "dde": [
+   34,
+   67
+  ],
+  "proe": [
+   1,
+   4
+  ],
+  "roe": [
+   82,
+   233
+  ],
+  "dpa": [
+   77,
+   101
+  ],
+  "arc": [
+   59,
+   141
+  ],
+  "m11": [
+   148,
+   234
+  ],
+  "pm11": [
+   4,
+   6
+  ],
+  "v10": [
+   3,
+   15
+  ],
+  "ddf": [
+   41,
+   73
+  ],
+  "psom": [
+   1,
+   4
+  ],
+  "som": [
+   116,
+   234
+  ],
+  "td0": [
+   74,
+   174
+  ],
+  "pd2": [
+   11,
+   31
+  ],
+  "ps11": [
+   156,
+   209
+  ],
+  "f11": [
+   7,
+   12
+  ],
+  "pdp12": [
+   1,
+   3
+  ],
+  "g11": [
+   2,
+   8
+  ],
+  "pmps11": [
+   5,
+   5
+  ],
+  "me4": [
+   109,
+   260
+  ],
+  "pmbs": [
+   2,
+   4
+  ],
+  "mbs": [
+   71,
+   150
+  ],
+  "p11": [
+   3,
+   7
+  ],
+  "ddg": [
+   40,
+   72
+  ],
+  "pnph": [
+   1,
+   4
+  ],
+  "nph": [
+   74,
+   170
+  ],
+  "td2": [
+   47,
+   80
+  ],
+  "cmd": [
+   110,
+   303
+  ],
+  "pm12": [
+   0,
+   3
+  ],
+  "m12": [
+   133,
+   234
+  ],
+  "v11": [
+   3,
+   15
+  ],
+  "ddh": [
+   43,
+   77
+  ],
+  "pisd": [
+   2,
+   5
+  ],
+  "pw11": [
+   2,
+   3
+  ],
+  "isd": [
+   140,
+   254
+  ],
+  "pd3": [
+   9,
+   27
+  ],
+  "hho": [
+   1,
+   20
+  ],
+  "j12": [
+   1,
+   8
+  ],
+  "pdp13": [
+   0,
+   3
+  ],
+  "pw12": [
+   0,
+   3
+  ],
+  "f12": [
+   6,
+   12
+  ],
+  "pdka": [
+   1,
+   5
+  ],
+  "dka": [
+   67,
+   158
+  ],
+  "pidw": [
+   4,
+   17
+  ],
+  "ddi": [
+   39,
+   70
+  ],
+  "avr": [
+   102,
+   234
+  ],
+  "pc2": [
+   51,
+   136
+  ],
+  "m13": [
+   135,
+   234
+  ],
+  "v12": [
+   6,
+   15
+  ],
+  "ddj": [
+   34,
+   78
+  ],
+  "rtr": [
+   112,
+   254
+  ],
+  "prtr": [
+   2,
+   10
+  ],
+  "cm1": [
+   2,
+   18
+  ],
+  "f13": [
+   6,
+   12
+  ],
+  "j13": [
+   2,
+   8
+  ],
+  "pdp14": [
+   3,
+   3
+  ],
+  "pgtc": [
+   1,
+   10
+  ],
+  "gtc": [
+   95,
+   249
+  ],
+  "pavr": [
+   4,
+   6
+  ],
+  "ddk": [
+   39,
+   71
+  ],
+  "pdgm": [
+   1,
+   6
+  ],
+  "dgm": [
+   69,
+   156
+  ],
+  "mma": [
+   60,
+   229
+  ],
+  "psdc": [
+   1,
+   5
+  ],
+  "pm14": [
+   3,
+   6
+  ],
+  "m14": [
+   151,
+   234
+  ],
+  "pm13": [
+   1,
+   6
+  ],
+  "v13": [
+   10,
+   20
+  ],
+  "ddl": [
+   39,
+   68
+  ],
+  "pths": [
+   1,
+   10
+  ],
+  "ths": [
+   108,
+   234
+  ],
+  "c13": [
+   158,
+   341
+  ],
+  "j14": [
+   7,
+   14
+  ],
+  "f14": [
+   6,
+   12
+  ],
+  "pbng": [
+   3,
+   9
+  ],
+  "bng": [
+   61,
+   165
+  ],
+  "ddm": [
+   38,
+   76
+  ],
+  "pjou": [
+   4,
+   10
+  ],
+  "jou": [
+   65,
+   165
+  ],
+  "md1": [
+   13,
+   26
+  ],
+  "cns": [
+   65,
+   210
+  ],
+  "pcns": [
+   0,
+   1
+  ],
+  "vma": [
+   133,
+   325
+  ],
+  "ps14": [
+   0,
+   6
+  ],
+  "pdp15": [
+   1,
+   2
+  ],
+  "pm15": [
+   2,
+   13
+  ],
+  "cp1": [
+   4,
+   6
+  ],
+  "m15": [
+   142,
+   269
+  ],
+  "v14": [
+   4,
+   15
+  ],
+  "ddn": [
+   39,
+   71
+  ],
+  "ktk": [
+   126,
+   254
+  ],
+  "pktk": [
+   14,
+   44
+  ],
+  "c14": [
+   150,
+   322
+  ],
+  "jvc": [
+   22,
+   56
+  ],
+  "evg": [
+   38,
+   56
+  ],
+  "gvl": [
+   26,
+   57
+  ],
+  "dvd": [
+   35,
+   56
+  ],
+  "pgpx": [
+   10,
+   20
+  ],
+  "j15": [
+   3,
+   8
+  ],
+  "f15": [
+   7,
+   12
+  ],
+  "ugin": [
+   5,
+   26
+  ],
+  "cp2": [
+   3,
+   6
+  ],
+  "pfrf": [
+   5,
+   33
+  ],
+  "frf": [
+   77,
+   180
+  ],
+  "ddo": [
+   33,
+   58
+  ],
+  "pdtk": [
+   9,
+   42
+  ],
+  "dtk": [
+   90,
+   254
+  ],
+  "ptkdf": [
+   3,
+   4
+  ],
+  "tpr": [
+   110,
+   254
+  ],
+  "mm2": [
+   101,
+   249
+  ],
+  "ps15": [
+   0,
+   5
+  ],
+  "pori": [
+   12,
+   43
+  ],
+  "cp3": [
+   4,
+   6
+  ],
+  "ori": [
+   155,
+   273
+  ],
+  "v15": [
+   6,
+   15
+  ],
+  "ddp": [
+   36,
+   67
+  ],
+  "pss1": [
+   0,
+   5
+  ],
+  "pbfz": [
+   14,
+   70
+  ],
+  "bfz": [
+   111,
+   254
+  ],
+  "c15": [
+   139,
+   327
+  ],
+  "pz1": [
+   37,
+   149
+  ],
+  "j16": [
+   0,
+   8
+  ],
+  "ogw": [
+   62,
+   183
+  ],
+  "exp": [
+   17,
+   45
+  ],
+  "pogw": [
+   5,
+   55
+  ],
+  "ddq": [
+   36,
+   67
+  ],
+  "psoi": [
+   13,
+   79
+  ],
+  "soi": [
+   106,
+   287
+  ],
+  "w16": [
+   12,
+   16
+  ],
+  "f16": [
+   8,
+   12
+  ],
+  "ema": [
+   129,
+   249
+  ],
+  "wmc": [
+   1,
+   5
+  ],
+  "pemn": [
+   9,
+   64
+  ],
+  "emn": [
+   73,
+   208
+  ],
+  "v16": [
+   1,
+   15
+  ],
+  "cn2": [
+   81,
+   221
+  ],
+  "ddr": [
+   34,
+   62
+  ],
+  "mps": [
+   13,
+   54
+  ],
+  "kld": [
+   120,
+   264
+  ],
+  "pkld": [
+   10,
+   70
+  ],
+  "ps16": [
+   0,
+   5
+  ],
+  "c16": [
+   122,
+   341
+  ],
+  "pca": [
+   51,
+   136
+  ],
+  "f17": [
+   3,
+   9
+  ],
+  "j17": [
+   1,
+   9
+  ],
+  "paer": [
+   10,
+   55
+  ],
+  "aer": [
+   66,
+   194
+  ],
+  "mm3": [
+   131,
+   249
+  ],
+  "dds": [
+   27,
+   56
+  ],
+  "w17": [
+   26,
+   30
+  ],
+  "mp2": [
+   19,
+   54
+  ],
+  "akh": [
+   129,
+   272
+  ],
+  "pakh": [
+   14,
+   69
+  ],
+  "cma": [
+   130,
+   289
+  ],
+  "e01": [
+   46,
+   101
+  ],
+  "hou": [
+   79,
+   199
+  ],
+  "phou": [
+   5,
+   55
+  ],
+  "ps17": [
+   0,
+   6
+  ],
+  "c17": [
+   124,
+   299
+  ],
+  "phtr": [
+   0,
+   3
+  ],
+  "h17": [
+   0,
+   3
+  ],
+  "xln": [
+   158,
+   274
+  ],
+  "pss2": [
+   5,
+   5
+  ],
+  "pxln": [
+   20,
+   80
+  ],
+  "g17": [
+   5,
+   5
+  ],
+  "ddt": [
+   27,
+   57
+  ],
+  "ima": [
+   113,
+   249
+  ],
+  "v17": [
+   0,
+   16
+  ],
+  "pxtc": [
+   0,
+   10
+  ],
+  "e02": [
+   28,
+   47
+  ],
+  "ust": [
+   14,
+   249
+  ],
+  "pust": [
+   0,
+   1
+  ],
+  "j18": [
+   1,
+   8
+  ],
+  "rix": [
+   112,
+   205
+  ],
+  "prix": [
+   15,
+   63
+  ],
+  "pnat": [
+   1,
+   1
+  ],
+  "a25": [
+   107,
+   249
+  ],
+  "ddu": [
+   42,
+   71
+  ],
+  "dom": [
+   143,
+   265
+  ],
+  "pdom": [
+   31,
+   93
+  ],
+  "pbbd": [
+   0,
+   22
+  ],
+  "bbd": [
+   113,
+   254
+  ],
+  "cm2": [
+   111,
+   279
+  ],
+  "ss1": [
+   5,
+   8
+  ],
+  "gs1": [
+   32,
+   40
+  ],
+  "m19": [
+   207,
+   299
+  ],
+  "pss3": [
+   5,
+   5
+  ],
+  "pm19": [
+   28,
+   74
+  ],
+  "oana": [
+   12,
+   14
+  ],
+  "ana": [
+   12,
+   14
+  ],
+  "ps18": [
+   0,
+   5
+  ],
+  "ph17": [
+   0,
+   3
+  ],
+  "c18": [
+   123,
+   297
+  ],
+  "pgrn": [
+   18,
+   60
+  ],
+  "grn": [
+   128,
+   268
+  ],
+  "gk1": [
+   50,
+   122
+  ],
+  "prwk": [
+   5,
+   5
+  ],
+  "gnt": [
+   50,
+   63
+  ],
+  "g18": [
+   2,
+   5
+  ],
+  "pz2": [
+   55,
+   270
+  ],
+  "puma": [
+   7,
+   40
+  ],
+  "uma": [
+   98,
+   254
+  ],
+  "pf19": [
+   7,
+   7
+  ],
+  "prna": [
+   9,
+   59
+  ],
+  "rna": [
+   121,
+   268
+  ],
+  "gk2": [
+   43,
+   128
+  ],
+  "prw2": [
+   5,
+   5
+  ],
+  "j19": [
+   2,
+   8
+  ],
+  "war": [
+   117,
+   265
+  ],
+  "pwar": [
+   11,
+   92
+  ],
+  "med": [
+   1,
+   24
+  ],
+  "mh1": [
+   88,
+   255
+  ],
+  "ss2": [
+   2,
+   8
+  ],
+  "m20": [
+   201,
+   329
+  ],
+  "pm20": [
+   20,
+   73
+  ],
+  "ppp1": [
+   5,
+   5
+  ],
+  "ps19": [
+   0,
+   5
+  ],
+  "ph18": [
+   0,
+   4
+  ],
+  "c19": [
+   109,
+   292
+  ],
+  "eld": [
+   115,
+   285
+  ],
+  "peld": [
+   15,
+   68
+  ],
+  "ptg": [
+   0,
+   3
+  ],
+  "cmb1": [
+   9,
+   120
+  ],
+  "gn2": [
+   41,
+   59
+  ],
+  "ha1": [
+   11,
+   20
+  ],
+  "j20": [
+   6,
+   10
+  ],
+  "pf20": [
+   5,
+   6
+  ],
+  "thb": [
+   117,
+   273
+  ],
+  "pthb": [
+   14,
+   68
+  ],
+  "pwor": [
+   0,
+   2
+  ],
+  "und": [
+   8,
+   91
+  ],
+  "ha2": [
+   16,
+   25
+  ],
+  "pmei": [
+   44,
+   103
+  ],
+  "c20": [
+   107,
+   322
+  ],
+  "iko": [
+   115,
+   265
+  ],
+  "piko": [
+   15,
+   68
+  ],
+  "plg20": [
+   1,
+   2
+  ],
+  "ha3": [
+   13,
+   27
+  ],
+  "ss3": [
+   3,
+   8
+  ],
+  "m21": [
+   159,
+   285
+  ],
+  "pm21": [
+   18,
+   68
+  ],
+  "jmp": [
+   300,
+   460
+  ],
+  "pana": [
+   16,
+   23
+  ],
+  "ajmp": [
+   14,
+   18
+  ],
+  "ph19": [
+   0,
+   7
+  ],
+  "2xm": [
+   132,
+   337
+  ],
+  "anb": [
+   97,
+   118
+  ],
+  "akr": [
+   122,
+   309
+  ],
+  "pznr": [
+   8,
+   84
+  ],
+  "znc": [
+   55,
+   140
+  ],
+  "zne": [
+   16,
+   30
+  ],
+  "znr": [
+   93,
+   270
+  ],
+  "klr": [
+   114,
+   292
+  ],
+  "cmr": [
+   198,
+   531
+  ],
+  "cc1": [
+   1,
+   8
+  ],
+  "pj21": [
+   2,
+   10
+  ],
+  "khm": [
+   88,
+   305
+  ],
+  "pkhm": [
+   5,
+   88
+  ],
+  "khc": [
+   65,
+   119
+  ],
+  "slu": [
+   5,
+   16
+  ],
+  "ha4": [
+   7,
+   25
+  ],
+  "tsr": [
+   123,
+   410
+  ],
+  "stx": [
+   93,
+   280
+  ],
+  "sta": [
+   29,
+   63
+  ],
+  "pstx": [
+   6,
+   90
+  ],
+  "c21": [
+   110,
+   329
+  ],
+  "pmh2": [
+   11,
+   80
+  ],
+  "ha5": [
+   14,
+   25
+  ],
+  "pw21": [
+   3,
+   6
+  ],
+  "mh2": [
+   94,
+   309
+  ],
+  "h1r": [
+   15,
+   40
+  ],
+  "sld": [
+   512,
+   1739
+  ],
+  "plg21": [
+   1,
+   9
+  ],
+  "pafr": [
+   7,
+   81
+  ],
+  "afr": [
+   56,
+   266
+  ],
+  "afc": [
+   86,
+   275
+  ],
+  "ph20": [
+   0,
+   3
+  ],
+  "pl21": [
+   1,
+   5
+  ],
+  "cmb2": [
+   9,
+   120
+  ],
+  "pmh1": [
+   0,
+   2
+  ],
+  "j21": [
+   146,
+   389
+  ],
+  "mid": [
+   82,
+   272
+  ],
+  "mic": [
+   47,
+   149
+  ],
+  "pmid": [
+   9,
+   84
+  ],
+  "q06": [
+   3,
+   10
+  ],
+  "pvow": [
+   9,
+   84
+  ],
+  "voc": [
+   50,
+   150
+  ],
+  "vow": [
+   77,
+   272
+  ],
+  "ymid": [
+   0,
+   63
+  ],
+  "ph21": [
+   0,
+   4
+  ],
+  "dbl": [
+   146,
+   532
+  ],
+  "cc2": [
+   3,
+   8
+  ],
+  "pneo": [
+   3,
+   77
+  ],
+  "neo": [
+   65,
+   287
+  ],
+  "nec": [
+   39,
+   139
+  ],
+  "pl22": [
+   2,
+   5
+  ],
+  "yneo": [
+   0,
+   30
+  ],
+  "gdy": [
+   1,
+   9
+  ],
+  "prm": [
+   646,
+   2691
+  ],
+  "plst": [
+   2013,
+   5308
+  ],
+  "snc": [
+   93,
+   266
+  ],
+  "ncc": [
+   98,
+   350
+  ],
+  "pncc": [
+   6,
+   75
+  ],
+  "psnc": [
+   12,
+   80
+  ],
+  "pw22": [
+   4,
+   6
+  ],
+  "ysnc": [
+   0,
+   30
+  ],
+  "pclb": [
+   3,
+   99
+  ],
+  "clb": [
+   135,
+   651
+  ],
+  "plg22": [
+   2,
+   2
+  ],
+  "hbg": [
+   86,
+   393
+  ],
+  "2x2": [
+   110,
+   332
+  ],
+  "p22": [
+   3,
+   10
+  ],
+  "ha6": [
+   16,
+   20
+  ],
+  "ea1": [
+   6,
+   20
+  ],
+  "psvc": [
+   1,
+   3
+  ],
+  "p30a": [
+   16,
+   30
+  ],
+  "pdmu": [
+   17,
+   81
+  ],
+  "dmc": [
+   66,
+   192
+  ],
+  "dmu": [
+   119,
+   271
+  ],
+  "ydmu": [
+   7,
+   39
+  ],
+  "sunf": [
+   0,
+   48
+  ],
+  "40k": [
+   73,
+   286
+  ],
+  "ulst": [
+   1,
+   62
+  ],
+  "unf": [
+   6,
+   266
+  ],
+  "gn3": [
+   78,
+   125
+  ],
+  "slc": [
+   26,
+   88
+  ],
+  "bro": [
+   94,
+   280
+  ],
+  "pbro": [
+   11,
+   89
+  ],
+  "brr": [
+   22,
+   63
+  ],
+  "brc": [
+   81,
+   176
+  ],
+  "bot": [
+   0,
+   15
+  ],
+  "j22": [
+   471,
+   819
+  ],
+  "scd": [
+   182,
+   337
+  ],
+  "ea2": [
+   8,
+   25
+  ],
+  "ybro": [
+   0,
+   31
+  ],
+  "p23": [
+   6,
+   10
+  ],
+  "pr23": [
+   1,
+   3
+  ],
+  "dmr": [
+   104,
+   266
+  ],
+  "pone": [
+   4,
+   80
+  ],
+  "slx": [
+   0,
+   30
+  ],
+  "onc": [
+   54,
+   144
+  ],
+  "pl23": [
+   2,
+   5
+  ],
+  "one": [
+   78,
+   271
+  ],
+  "prcq": [
+   1,
+   3
+  ],
+  "yone": [
+   1,
+   31
+  ],
+  "sis": [
+   44,
+   76
+  ],
+  "p30h": [
+   3,
+   5
+  ],
+  "sir": [
+   102,
+   284
+  ],
+  "pwcs": [
+   9,
+   46
+  ],
+  "moc": [
+   125,
+   338
+  ],
+  "mom": [
+   66,
+   296
+  ],
+  "pmom": [
+   4,
+   80
+  ],
+  "mul": [
+   8,
+   65
+  ],
+  "mat": [
+   3,
+   50
+  ],
+  "p30m": [
+   1,
+   3
+  ],
+  "ltc": [
+   100,
+   341
+  ],
+  "ltr": [
+   65,
+   289
+  ],
+  "pltr": [
+   5,
+   84
+  ],
+  "pf23": [
+   2,
+   4
+  ],
+  "ea3": [
+   10,
+   25
+  ],
+  "ha7": [
+   13,
+   25
+  ],
+  "ph22": [
+   0,
+   5
+  ],
+  "cmm": [
+   252,
+   737
+  ],
+  "p30t": [
+   2,
+   2
+  ],
+  "pw23": [
+   4,
+   11
+  ],
+  "woe": [
+   65,
+   281
+  ],
+  "woc": [
+   47,
+   143
+  ],
+  "wot": [
+   19,
+   63
+  ],
+  "pwoe": [
+   3,
+   80
+  ],
+  "pmda": [
+   2,
+   4
+  ],
+  "ywoe": [
+   2,
+   31
+  ],
+  "who": [
+   65,
+   318
+  ],
+  "plci": [
+   3,
+   68
+  ],
+  "lci": [
+   72,
+   291
+  ],
+  "lcc": [
+   106,
+   313
+  ],
+  "rex": [
+   0,
+   20
+  ],
+  "ylci": [
+   1,
+   31
+  ],
+  "pw24": [
+   7,
+   18
+  ],
+  "rvr": [
+   112,
+   313
+  ],
+  "pl24": [
+   2,
+   6
+  ],
+  "ptsr": [
+   0,
+   3
+  ],
+  "mkm": [
+   56,
+   279
+  ],
+  "pmat": [
+   1,
+   8
+  ],
+  "pmkm": [
+   14,
+   90
+  ],
+  "pcmr": [
+   0,
+   6
+  ],
+  "mkc": [
+   82,
+   304
+  ],
+  "pss4": [
+   5,
+   5
+  ],
+  "pf24": [
+   1,
+   2
+  ],
+  "clu": [
+   110,
+   268
+  ],
+  "ymkm": [
+   0,
+   30
+  ],
+  "pip": [
+   114,
+   336
+  ],
+  "otp": [
+   18,
+   65
+  ],
+  "big": [
+   3,
+   30
+  ],
+  "otc": [
+   99,
+   306
+  ],
+  "potj": [
+   4,
+   80
+  ],
+  "otj": [
+   55,
+   276
+  ],
+  "plg24": [
+   3,
+   5
+  ],
+  "yotj": [
+   0,
+   30
+  ],
+  "pmh3": [
+   8,
+   81
+  ],
+  "h2r": [
+   3,
+   16
+  ],
+  "m3c": [
+   90,
+   320
+  ],
+  "mh3": [
+   59,
+   309
+  ],
+  "acr": [
+   38,
+   138
+  ],
+  "blb": [
+   97,
+   279
+  ],
+  "blc": [
+   125,
+   312
+  ],
+  "pblb": [
+   5,
+   80
+  ],
+  "spg": [
+   48,
+   149
+  ],
+  "mb2": [
+   77,
+   384
+  ],
+  "unk": [
+   17,
+   521
+  ],
+  "yblb": [
+   0,
+   30
+  ],
+  "dsc": [
+   97,
+   306
+  ],
+  "pdsk": [
+   1,
+   80
+  ],
+  "dsk": [
+   56,
+   276
+  ],
+  "pcbb": [
+   5,
+   5
+  ],
+  "pewk": [
+   3,
+   10
+  ],
+  "ydsk": [
+   0,
+   30
+  ],
+  "pltc": [
+   1,
+   4
+  ],
+  "j25": [
+   439,
+   768
+  ],
+  "pfdn": [
+   52,
+   81
+  ],
+  "fdn": [
+   368,
+   517
+  ],
+  "pio": [
+   105,
+   398
+  ],
+  "inr": [
+   108,
+   300
+  ],
+  "pf25": [
+   4,
+   19
+  ],
+  "pdft": [
+   3,
+   80
+  ],
+  "dft": [
+   70,
+   276
+  ],
+  "drc": [
+   63,
+   163
+  ],
+  "pl25": [
+   3,
+   5
+  ],
+  "ydft": [
+   0,
+   31
+  ],
+  "sch": [
+   18,
+   53
+  ],
+  "tdc": [
+   148,
+   373
+  ],
+  "tdm": [
+   95,
+   276
+  ],
+  "ptdm": [
+   6,
+   80
+  ],
+  "ytdm": [
+   0,
+   30
+  ],
+  "pa1": [
+   5,
+   11
+  ],
+  "fca": [
+   15,
+   64
+  ],
+  "fin": [
+   83,
+   312
+  ],
+  "pfin": [
+   4,
+   94
+  ],
+  "pss5": [
+   1,
+   2
+  ],
+  "rfin": [
+   0,
+   2
+  ],
+  "plg25": [
+   2,
+   2
+  ],
+  "pw25": [
+   5,
+   16
+  ],
+  "eos": [
+   11,
+   45
+  ],
+  "eoe": [
+   69,
+   266
+  ],
+  "peoe": [
+   5,
+   80
+  ],
+  "eoc": [
+   72,
+   171
+  ],
+  "slp": [
+   19,
+   55
+  ],
+  "aa2": [
+   10,
+   25
+  ],
+  "yeoe": [
+   1,
+   41
+  ],
+  "aa1": [
+   21,
+   26
+  ],
+  "ph23": [
+   0,
+   2
+  ],
+  "om1": [
+   59,
+   188
+  ],
+  "omb": [
+   11,
+   40
+  ],
+  "aa4": [
+   14,
+   28
+  ],
+  "aa3": [
+   7,
+   25
+  ],
+  "spm": [
+   64,
+   193
+  ],
+  "pspm": [
+   4,
+   68
+  ],
+  "spe": [
+   13,
+   26
+  ],
+  "lmar": [
+   1,
+   8
+  ],
+  "ptla": [
+   9,
+   80
+  ],
+  "tle": [
+   90,
+   242
+  ],
+  "tla": [
+   85,
+   286
+  ],
+  "fic": [
+   100,
+   339
+  ],
+  "pecl": [
+   5,
+   80
+  ],
+  "pw26": [
+   12,
+   23
+  ],
+  "ecl": [
+   67,
+   273
+  ],
+  "ecc": [
+   39,
+   153
+  ],
+  "yecl": [
+   2,
+   33
+  ],
+  "pl26": [
+   1,
+   4
+  ],
+  "tmc": [
+   32,
+   117
+  ],
+  "tmt": [
+   67,
+   195
+  ],
+  "pza": [
+   4,
+   20
+  ],
+  "pjsc": [
+   0,
+   4
+  ],
+  "psos": [
+   7,
+   80
+  ],
+  "soc": [
+   110,
+   375
+  ],
+  "sos": [
+   84,
+   271
+  ],
+  "soa": [
+   22,
+   65
+  ],
+  "ysos": [
+   2,
+   32
+  ],
+  "msh": [
+   61,
+   281
+  ],
+  "pspl": [
+   4,
+   14
+  ],
+  "msc": [
+   200,
+   616
+  ],
+  "mar": [
+   19,
+   94
+  ],
+  "purl": [
+   7,
+   18
+  ],
+  "hob": [
+   62,
+   193
+  ],
+  "hoc": [
+   42,
+   117
+  ],
+  "slz": [
+   47,
+   121
+  ],
+  "fra": [
+   81,
+   285
+  ],
+  "pbig": [
+   3,
+   30
+  ],
+  "fdc": [
+   168,
+   317
+  ],
+  "pfra": [
+   16,
+   90
+  ],
+  "frc": [
+   27,
+   87
+  ],
+  "yfra": [
+   0,
+   31
+  ],
+  "mbc": [
+   8,
+   80
+  ],
+  "pf26": [
+   7,
+   17
+  ],
+  "sds": [
+   3,
+   5
+  ],
+  "trk": [
+   56,
+   191
+  ],
+  "trc": [
+   32,
+   53
+  ],
+  "pf27": [
+   1,
+   1
+  ],
+  "mdd": [
+   6,
+   12
+  ],
+  "mdc": [
+   0,
+   1
+  ]
+ },
+ "missing": [
+  [
+   394,
+   "Card layout: transform"
+  ],
+  [
+   196,
+   "Card layout: saga"
+  ],
+  [
+   167,
+   "Card layout: adventure"
+  ],
+  [
+   142,
+   "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)"
+  ],
+  [
+   137,
+   "Card layout: split"
+  ],
+  [
+   134,
+   "Devoid (This card has no color.)"
+  ],
+  [
+   104,
+   "Crew N (Tap any number of creatures you control with total power N or more: This Vehicle becomes an artifact creature until end of turn.)"
+  ],
+  [
+   100,
+   "Convoke (Your creatures can help cast this spell. Each creature you tap while casting this spell pays for {N} or one mana of that creature's color.)"
+  ],
+  [
+   99,
+   "Card layout: modal_dfc"
+  ],
+  [
+   88,
+   "Crew N"
+  ],
+  [
+   72,
+   "Card layout: prepare"
+  ],
+  [
+   65,
+   "Partner (You can have two commanders if both have partner.)"
+  ],
+  [
+   62,
+   "Changeling (This card is every creature type.)"
+  ],
+  [
+   52,
+   "N/N"
+  ],
+  [
+   49,
+   "You may look at the top card of your library any time."
+  ],
+  [
+   48,
+   "Enchanted creature doesn't untap during its controller's untap step."
+  ],
+  [
+   46,
+   "Fuse (You may cast one or both halves of this card from your hand.)"
+  ],
+  [
+   44,
+   "Infect (This creature deals damage to creatures in the form of -N/-N counters and to players in the form of poison counters.)"
+  ],
+  [
+   44,
+   "{TK}{TK} — N/N"
+  ],
+  [
+   40,
+   "(As this Saga enters and after your draw step, add a lore counter.)"
+  ],
+  [
+   40,
+   "Draw a card at the beginning of the next turn's upkeep."
+  ],
+  [
+   39,
+   "Shadow (This creature can block or be blocked by only creatures with shadow.)"
+  ],
+  [
+   39,
+   "~ can be your commander."
+  ],
+  [
+   38,
+   "Start your engines! (If you have no speed, it starts at N. It increases once on each of your turns when an opponent loses life. Max speed is N.)"
+  ],
+  [
+   38,
+   "Swampwalk (This creature can't be blocked as long as defending player controls a Swamp.)"
+  ],
+  [
+   37,
+   "Cascade (When you cast this spell, exile cards from the top of your library until you exile a nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on the bottom in a random order.)"
+  ],
+  [
+   37,
+   "Fear (This creature can't be blocked except by artifact creatures and/or black creatures.)"
+  ],
+  [
+   35,
+   "Bushido N (Whenever this creature blocks or becomes blocked, it gets +N/+N until end of turn.)"
+  ],
+  [
+   35,
+   "Card layout: class"
+  ],
+  [
+   35,
+   "Daybound (If a player casts no spells during their own turn, it becomes night next turn.)"
+  ],
+  [
+   35,
+   "Nightbound (If a player casts at least two spells during their own turn, it becomes day next turn.)"
+  ],
+  [
+   34,
+   "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after IV.)"
+  ],
+  [
+   34,
+   "Card layout: mutate"
+  ],
+  [
+   34,
+   "Cumulative upkeep {N} (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)"
+  ],
+  [
+   34,
+   "Exalted (Whenever a creature you control attacks alone, that creature gets +N/+N until end of turn.)"
+  ],
+  [
+   34,
+   "Rebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)"
+  ],
+  [
+   33,
+   "Islandwalk (This creature can't be blocked as long as defending player controls an Island.)"
+  ],
+  [
+   33,
+   "This creature enters prepared. (While it's prepared, you may cast a copy of its spell. Doing so unprepares it.)"
+  ],
+  [
+   32,
+   "Station (Tap another creature you control: Put charge counters equal to its power on this Spacecraft. Station only as a sorcery. It's an artifact creature at N+.)"
+  ],
+  [
+   31,
+   "At the beginning of each upkeep, if a player cast two or more spells last turn, transform this creature."
+  ],
+  [
+   31,
+   "At the beginning of each upkeep, if no spells were cast last turn, transform this creature."
+  ],
+  [
+   31,
+   "Choose a Background (You can have a Background as a second commander.)"
+  ],
+  [
+   31,
+   "This creature can block only creatures with flying."
+  ],
+  [
+   28,
+   "Ascend (If you control ten or more permanents, you get the city's blessing for the rest of the game.)"
+  ],
+  [
+   28,
+   "Basic landcycling {N} ({N}, Discard this card: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.)"
+  ],
+  [
+   28,
+   "Delve (Each card you exile from your graveyard while casting this spell pays for {N}.)"
+  ],
+  [
+   28,
+   "You control enchanted creature."
+  ],
+  [
+   27,
+   "Aftermath (Cast this spell only from your graveyard. Then exile it.)"
+  ],
+  [
+   27,
+   "Doctor's companion (You can have two commanders if the other is the Doctor.)"
+  ],
+  [
+   27,
+   "Flanking (Whenever a creature without flanking blocks this creature, the blocking creature gets -N/-N until end of turn.)"
+  ],
+  [
+   27,
+   "LEVEL N+"
+  ],
+  [
+   27,
+   "LEVEL N-N"
+  ],
+  [
+   27,
+   "When this creature enters, you get {E}{E} (two energy counters)."
+  ],
+  [
+   26,
+   "Buyback {N} (You may pay an additional {N} as you cast this spell. If you do, put this card into your hand as it resolves.)"
+  ],
+  [
+   26,
+   "Card layout: leveler"
+  ],
+  [
+   26,
+   "Forestwalk (This creature can't be blocked as long as defending player controls a Forest.)"
+  ],
+  [
+   26,
+   "Horsemanship (This creature can't be blocked except by creatures with horsemanship.)"
+  ],
+  [
+   26,
+   "Wither (This deals damage to creatures in the form of -N/-N counters.)"
+  ],
+  [
+   26,
+   "{B}: Regenerate this creature."
+  ],
+  [
+   25,
+   "Soulbond (You may pair this creature with another unpaired creature when either enters. They remain paired for as long as you control both of them.)"
+  ],
+  [
+   25,
+   "Soulshift N (When this creature dies, you may return target Spirit card with mana value N or less from your graveyard to your hand.)"
+  ],
+  [
+   25,
+   "This creature can't attack unless defending player controls an Island."
+  ],
+  [
+   24,
+   "N+ | Flying"
+  ],
+  [
+   24,
+   "Persist (When this creature dies, if it had no -N/-N counters on it, return it to the battlefield under its owner's control with a -N/-N counter on it.)"
+  ],
+  [
+   24,
+   "Saddle N (Tap any number of other creatures you control with total power N or more: This Mount becomes saddled until end of turn. Saddle only as a sorcery.)"
+  ],
+  [
+   23,
+   "Exploit (When this creature enters, you may sacrifice a creature.)"
+  ],
+  [
+   23,
+   "{N}{B}: Regenerate this creature."
+  ],
+  [
+   22,
+   "Card layout: flip"
+  ],
+  [
+   22,
+   "Evolve (Whenever a creature you control enters, if that creature has greater power or toughness than this creature, put a +N/+N counter on this creature.)"
+  ],
+  [
+   22,
+   "Improvise (Your artifacts can help cast this spell. Each artifact you tap after you're done activating mana abilities pays for {N}.)"
+  ],
+  [
+   22,
+   "Intimidate (This creature can't be blocked except by artifact creatures and/or creatures that share a color with it.)"
+  ],
+  [
+   22,
+   "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)"
+  ],
+  [
+   22,
+   "Undying (When this creature dies, if it had no +N/+N counters on it, return it to the battlefield under its owner's control with a +N/+N counter on it.)"
+  ],
+  [
+   22,
+   "{TK}{TK}{TK} — N/N"
+  ],
+  [
+   21,
+   "Card layout: meld"
+  ],
+  [
+   21,
+   "Card layout: prototype"
+  ],
+  [
+   21,
+   "Spree (Choose one or more additional costs.)"
+  ],
+  [
+   21,
+   "You may choose not to untap this creature during your untap step."
+  ],
+  [
+   21,
+   "{T}: Prevent the next N damage that would be dealt to any target this turn."
+  ],
+  [
+   20,
+   "Bargain (You may sacrifice an artifact, enchantment, or token as you cast this spell.)"
+  ],
+  [
+   20,
+   "Card layout: host"
+  ],
+  [
+   20,
+   "Enchanted creature can't attack or block."
+  ],
+  [
+   20,
+   "Mentor (Whenever this creature attacks, put a +N/+N counter on target attacking creature with lesser power.)"
+  ],
+  [
+   20,
+   "Starting intensity N"
+  ],
+  [
+   20,
+   "Toxic N (Players dealt combat damage by this creature also get a poison counter.)"
+  ],
+  [
+   19,
+   "When this creature enters, you become the monarch."
+  ],
+  [
+   18,
+   "Extort (Whenever you cast a spell, you may pay {W/B}. If you do, each opponent loses N life and you gain that much life.)"
+  ],
+  [
+   18,
+   "Living weapon (When this Equipment enters, create a N/N black Phyrexian Germ creature token, then attach this to it.)"
+  ],
+  [
+   18,
+   "Morph {N}{U} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   18,
+   "When this Aura is put into a graveyard from the battlefield, return it to its owner's hand."
+  ],
+  [
+   17,
+   "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's defeated, exile it, then cast it transformed.)"
+  ],
+  [
+   17,
+   "Mountainwalk (This creature can't be blocked as long as defending player controls a Mountain.)"
+  ],
+  [
+   17,
+   "Myriad (Whenever this creature attacks, for each opponent other than defending player, you may create a token copy that's tapped and attacking that player or a planeswalker they control. Exile the tokens at end of combat.)"
+  ],
+  [
+   17,
+   "Retrace (You may cast this card from your graveyard by discarding a land card in addition to paying its other costs.)"
+  ],
+  [
+   17,
+   "Storm (When you cast this spell, copy it for each spell cast before it this turn.)"
+  ],
+  [
+   17,
+   "Teamwork N (As an additional cost to cast this spell, you may tap any number of creatures you control with total power N or more.)"
+  ],
+  [
+   16,
+   "Backup N (When this creature enters, put a +N/+N counter on target creature. If that's another creature, it gains the following ability until end of turn.)"
+  ],
+  [
+   16,
+   "Madness {N}{B} (If you discard this card, discard it into exile. When you do, cast it for its madness cost or put it into your graveyard.)"
+  ],
+  [
+   16,
+   "This creature can't be blocked by more than one creature."
+  ],
+  [
+   16,
+   "Umbra armor (If enchanted creature would be destroyed, instead remove all damage from it and destroy this Aura.)"
+  ],
+  [
+   15,
+   "(Gain the next level as a sorcery to add its ability.)"
+  ],
+  [
+   15,
+   "As this land enters, you may pay N life. If you don't, it enters tapped."
+  ],
+  [
+   15,
+   "Card layout: case"
+  ],
+  [
+   15,
+   "Cipher (Then you may exile this spell card encoded on a creature you control. Whenever that creature deals combat damage to a player, its controller may cast a copy of the encoded card without paying its mana cost.)"
+  ],
+  [
+   15,
+   "Job select (When this Equipment enters, create a N/N colorless Hero creature token, then attach this to it.)"
+  ],
+  [
+   15,
+   "Offspring {N} (You may pay an additional {N} as you cast this spell. If you do, when this creature enters, create a N/N token copy of it.)"
+  ],
+  [
+   15,
+   "Reconfigure {N} ({N}: Attach to target creature you control; or unattach from a creature. Reconfigure only as a sorcery. While attached, this isn't a creature.)"
+  ],
+  [
+   15,
+   "Renown N (When this creature deals combat damage to a player, if it isn't renowned, put a +N/+N counter on it and it becomes renowned.)"
+  ],
+  [
+   15,
+   "Skulk (This creature can't be blocked by creatures with greater power.)"
+  ],
+  [
+   15,
+   "Specialize {N}"
+  ],
+  [
+   15,
+   "Ward—Pay N life."
+  ],
+  [
+   15,
+   "When this creature enters, it explores. (Reveal the top card of your library. Put that card into your hand if it's a land. Otherwise, put a +N/+N counter on this creature, then put the card back or put it into your graveyard.)"
+  ],
+  [
+   15,
+   "When this creature enters, you take the initiative."
+  ],
+  [
+   15,
+   "{N}{G}: Regenerate this creature."
+  ],
+  [
+   15,
+   "~ enters the battlefield tapped."
+  ],
+  [
+   14,
+   "Assist (Another player can pay up to {N} of this spell's cost.)"
+  ],
+  [
+   14,
+   "Card layout: augment"
+  ],
+  [
+   14,
+   "Cast this spell only during the declare attackers step and only if you've been attacked this step."
+  ],
+  [
+   14,
+   "Hidden agenda (Start the game with this conspiracy face down in the command zone and secretly choose a card name. You may turn this conspiracy face up any time and reveal that name.)"
+  ],
+  [
+   14,
+   "Prevent all combat damage that would be dealt this turn."
+  ],
+  [
+   14,
+   "Skip your draw step."
+  ],
+  [
+   14,
+   "Storm (When you cast this spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)"
+  ],
+  [
+   14,
+   "Unearth {N}{B} ({N}{B}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)"
+  ],
+  [
+   14,
+   "Unleash (You may have this creature enter with a +N/+N counter on it. It can't block as long as it has a +N/+N counter on it.)"
+  ],
+  [
+   14,
+   "You may choose not to untap this artifact during your untap step."
+  ],
+  [
+   14,
+   "{TK}{TK}{TK}{TK} — N/N"
+  ],
+  [
+   14,
+   "{TK}{TK}{TK}{TK}{TK} — N/N"
+  ],
+  [
+   13,
+   "Battle cry (Whenever this creature attacks, each other attacking creature gets +N/+N until end of turn.)"
+  ],
+  [
+   13,
+   "Draft this card face up."
+  ],
+  [
+   13,
+   "For Mirrodin! (When this Equipment enters, create a N/N red Rebel creature token, then attach this to it.)"
+  ],
+  [
+   13,
+   "Learn. (You may reveal a Lesson card you own from outside the game and put it into your hand, or discard a card to draw a card.)"
+  ],
+  [
+   13,
+   "Living metal (During your turn, this Vehicle is also a creature.)"
+  ],
+  [
+   13,
+   "Madness {N}{R} (If you discard this card, discard it into exile. When you do, cast it for its madness cost or put it into your graveyard.)"
+  ],
+  [
+   13,
+   "Morph {N}{W} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   13,
+   "Play with the top card of your library revealed."
+  ],
+  [
+   13,
+   "This creature can block an additional creature each combat."
+  ],
+  [
+   13,
+   "This land enters tapped unless you control two or more other lands."
+  ],
+  [
+   13,
+   "When this creature becomes the target of a spell or ability, sacrifice it."
+  ],
+  [
+   12,
+   "(Start the game with this conspiracy face up in the command zone.)"
+  ],
+  [
+   12,
+   "Banding (Any creatures with banding, and up to one without, can attack in a band. Bands are blocked as a group. If any creatures with banding you control are blocking or being blocked by a creature, you divide that creature's combat damage, not its controller, among any of the creatures it's being blocked by or is blocking.)"
+  ],
+  [
+   12,
+   "Echo {N}{R} (At the beginning of your upkeep, if this came under your control since the beginning of your last upkeep, sacrifice it unless you pay its echo cost.)"
+  ],
+  [
+   12,
+   "Jump-start (You may cast this card from your graveyard by discarding a card in addition to paying its other costs. Then exile this card.)"
+  ],
+  [
+   12,
+   "Melee (Whenever this creature attacks, it gets +N/+N until end of turn for each opponent you attacked this combat.)"
+  ],
+  [
+   12,
+   "Phasing (This phases in or out before you untap during each of your untap steps. While it's phased out, it's treated as though it doesn't exist.)"
+  ],
+  [
+   12,
+   "Ravenous (This creature enters with X +N/+N counters on it. If X is N or more, draw a card when it enters.)"
+  ],
+  [
+   12,
+   "Riot (This creature enters with your choice of a +N/+N counter or haste.)"
+  ],
+  [
+   12,
+   "Start your engines!"
+  ],
+  [
+   12,
+   "Ward—Discard a card."
+  ],
+  [
+   12,
+   "When this enchantment enters, you become the monarch."
+  ],
+  [
+   12,
+   "When you control no Islands, sacrifice this creature."
+  ],
+  [
+   12,
+   "{G}: Regenerate this creature."
+  ],
+  [
+   12,
+   "{N}, {T}: Investigate. (Create a Clue token. It's an artifact with \"{N}, Sacrifice this token: Draw a card.\")"
+  ],
+  [
+   11,
+   "Bloodthirst N (If an opponent was dealt damage this turn, this creature enters with a +N/+N counter on it.)"
+  ],
+  [
+   11,
+   "Creatures with power less than this creature's power can't block it."
+  ],
+  [
+   11,
+   "Double team"
+  ],
+  [
+   11,
+   "Enlist (As this creature attacks, you may tap a nonattacking creature you control without summoning sickness. When you do, add its power to this creature's until end of turn.)"
+  ],
+  [
+   11,
+   "Entwine {N} (Choose both if you pay the entwine cost.)"
+  ],
+  [
+   11,
+   "Level up {N} ({N}: Put a level counter on this. Level up only as a sorcery.)"
+  ],
+  [
+   11,
+   "Morph {N}{G} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   11,
+   "Mountaincycling {N} ({N}, Discard this card: Search your library for a Mountain card, reveal it, put it into your hand, then shuffle.)"
+  ],
+  [
+   11,
+   "Plainscycling {N} ({N}, Discard this card: Search your library for a Plains card, reveal it, put it into your hand, then shuffle.)"
+  ],
+  [
+   11,
+   "Players can't gain life."
+  ],
+  [
+   11,
+   "Squad {N} (As an additional cost to cast this spell, you may pay {N} any number of times. When this creature enters, create that many tokens that are copies of it.)"
+  ],
+  [
+   11,
+   "This land enters tapped unless you control two or fewer other lands."
+  ],
+  [
+   11,
+   "Training (Whenever this creature attacks with another creature with greater power, put a +N/+N counter on this creature.)"
+  ],
+  [
+   11,
+   "When this creature enters, you get {E}{E}{E} (three energy counters)."
+  ],
+  [
+   11,
+   "When this land enters, return a land you control to its owner's hand."
+  ],
+  [
+   10,
+   "Afflict N (Whenever this creature becomes blocked, defending player loses N life.)"
+  ],
+  [
+   10,
+   "All creatures able to block this creature do so."
+  ],
+  [
+   10,
+   "As an additional cost to cast this spell, discard X cards."
+  ],
+  [
+   10,
+   "Dash {N}{R} (You may cast this spell for its dash cost. If you do, it gains haste, and it's returned from the battlefield to its owner's hand at the beginning of the next end step.)"
+  ],
+  [
+   10,
+   "Enchanted creature can't attack or block, and its activated abilities can't be activated."
+  ],
+  [
+   10,
+   "Fabricate N (When this creature enters, put a +N/+N counter on it or create a N/N colorless Servo artifact creature token.)"
+  ],
+  [
+   10,
+   "Gift a card (You may promise an opponent a gift as you cast this spell. If you do, they draw a card before its other effects.)"
+  ],
+  [
+   10,
+   "Ninjutsu {N}{B} ({N}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)"
+  ],
+  [
+   10,
+   "Read ahead (Choose a chapter and start with that many lore counters. Add one after your draw step. Skipped chapters don't trigger. Sacrifice after III.)"
+  ],
+  [
+   10,
+   "Saddle N"
+  ],
+  [
+   10,
+   "This creature must be blocked if able."
+  ],
+  [
+   10,
+   "This land enters tapped unless a player has N or less life."
+  ],
+  [
+   10,
+   "This land enters tapped unless you control a planeswalker."
+  ],
+  [
+   10,
+   "This land enters tapped unless you have two or more opponents."
+  ],
+  [
+   10,
+   "When this creature enters, open an Attraction. (Put the top card of your Attraction deck onto the battlefield.)"
+  ],
+  [
+   10,
+   "Whenever you cast a Spirit or Arcane spell, you may put a ki counter on this creature."
+  ],
+  [
+   10,
+   "You may cast this spell as though it had flash. If you cast it any time a sorcery couldn't have been cast, the controller of the permanent it becomes sacrifices it at the beginning of the next cleanup step."
+  ],
+  [
+   9,
+   "Bestow {N}{W} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)"
+  ],
+  [
+   9,
+   "Conspire (As you cast this spell, you may tap two untapped creatures you control that share a color with it. When you do, copy it and you may choose a new target for the copy.)"
+  ],
+  [
+   9,
+   "Dethrone (Whenever this creature attacks the player with the most life or tied for most life, put a +N/+N counter on it.)"
+  ],
+  [
+   9,
+   "Enchanted creature can't attack."
+  ],
+  [
+   9,
+   "Firebending N (Whenever this creature attacks, add {R}. This mana lasts until end of combat.)"
+  ],
+  [
+   9,
+   "Forestcycling {N} ({N}, Discard this card: Search your library for a Forest card, reveal it, put it into your hand, then shuffle.)"
+  ],
+  [
+   9,
+   "Increment (Whenever you cast a spell, if the amount of mana you spent is greater than this creature's power or toughness, put a +N/+N counter on this creature.)"
+  ],
+  [
+   9,
+   "Ingest (Whenever this creature deals combat damage to a player, that player exiles the top card of their library.)"
+  ],
+  [
+   9,
+   "Islandcycling {N} ({N}, Discard this card: Search your library for an Island card, reveal it, put it into your hand, then shuffle.)"
+  ],
+  [
+   9,
+   "Morph {N}{B} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   9,
+   "Morph {N}{G}{G} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   9,
+   "Morph {N}{R} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   9,
+   "Morph {N}{U}{U} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   9,
+   "Morph {U} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   9,
+   "Prevent the next N damage that would be dealt to any target this turn."
+  ],
+  [
+   9,
+   "Rampage N (Whenever this creature becomes blocked, it gets +N/+N until end of turn for each creature blocking it beyond the first.)"
+  ],
+  [
+   9,
+   "Remove this card from your deck before playing if you're not playing for ante."
+  ],
+  [
+   9,
+   "Storied (If you control three or more artifacts, legendaries, and/or Sagas, you have an enduring story for the rest of the game.)"
+  ],
+  [
+   9,
+   "Swampcycling {N} ({N}, Discard this card: Search your library for a Swamp card, reveal it, put it into your hand, then shuffle.)"
+  ],
+  [
+   9,
+   "Tap target creature. It doesn't untap during its controller's next untap step."
+  ],
+  [
+   9,
+   "This land enters tapped. As it enters, choose a color."
+  ],
+  [
+   9,
+   "When this artifact is put into a graveyard from the battlefield, draw a card."
+  ],
+  [
+   9,
+   "Whenever this creature deals damage, you gain that much life."
+  ],
+  [
+   9,
+   "You may play lands from your graveyard."
+  ],
+  [
+   9,
+   "{N}, {T}: Search your library for a Mercenary permanent card with mana value N or less, put it onto the battlefield, then shuffle."
+  ],
+  [
+   9,
+   "{N}, {T}: Search your library for a Rebel permanent card with mana value N or less, put it onto the battlefield, then shuffle."
+  ],
+  [
+   9,
+   "{N}{R}: Level N"
+  ],
+  [
+   9,
+   "~ deals N damage to target creature. If that creature would die this turn, exile it instead."
+  ],
+  [
+   8,
+   "As this enchantment enters, choose an artist."
+  ],
+  [
+   8,
+   "Casualty N (As you cast this spell, you may sacrifice a creature with power N or greater. When you do, copy this spell and you may choose a new target for the copy.)"
+  ],
+  [
+   8,
+   "Devour N (As this creature enters, you may sacrifice any number of creatures. It enters with that many +N/+N counters on it.)"
+  ],
+  [
+   8,
+   "Disturb {N}{U} (You may cast this card from your graveyard transformed for its disturb cost.)"
+  ],
+  [
+   8,
+   "Echo {N}{G} (At the beginning of your upkeep, if this came under your control since the beginning of your last upkeep, sacrifice it unless you pay its echo cost.)"
+  ],
+  [
+   8,
+   "If it's neither day nor night, it becomes day as this creature enters."
+  ],
+  [
+   8,
+   "If you would gain life, you gain that much life plus N instead."
+  ],
+  [
+   8,
+   "Investigate. (Create a Clue token. It's an artifact with \"{N}, Sacrifice this token: Draw a card.\")"
+  ],
+  [
+   8,
+   "Mobilize N (Whenever this creature attacks, create a tapped and attacking N/N red Warrior creature token. Sacrifice it at the beginning of the next end step.)"
+  ],
+  [
+   8,
+   "Ninjutsu {N}{U} ({N}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)"
+  ],
+  [
+   8,
+   "Plot {N}{G} (You may pay {N}{G} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)"
+  ],
+  [
+   8,
+   "Plot {N}{R} (You may pay {N}{R} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)"
+  ],
+  [
+   8,
+   "Provoke (Whenever this creature attacks, you may have target creature defending player controls untap and block it if able.)"
+  ],
+  [
+   8,
+   "Ready to run (You can have two commanders if both have ready to run.)"
+  ],
+  [
+   8,
+   "Sunburst (This creature enters with a +N/+N counter on it for each color of mana spent to cast it.)"
+  ],
+  [
+   8,
+   "Tap up to two target creatures. Those creatures don't untap during their controller's next untap step."
+  ],
+  [
+   8,
+   "Target opponent reveals their hand. You choose a nonland card from it. That player discards that card."
+  ],
+  [
+   8,
+   "When this creature enters, investigate. (Create a Clue token. It's an artifact with \"{N}, Sacrifice this token: Draw a card.\")"
+  ],
+  [
+   8,
+   "You may have this creature assign its combat damage as though it weren't blocked."
+  ],
+  [
+   8,
+   "{N}: This creature becomes the creature type of your choice until end of turn."
+  ],
+  [
+   7,
+   "Blitz {N}{R} (If you cast this spell for its blitz cost, it gains haste and \"When this creature dies, draw a card.\" Sacrifice it at the beginning of the next end step.)"
+  ],
+  [
+   7,
+   "Casualty N (As you cast this spell, you may sacrifice a creature with power N or greater. When you do, copy this spell.)"
+  ],
+  [
+   7,
+   "Converge — This creature enters with a +N/+N counter on it for each color of mana spent to cast it."
+  ],
+  [
+   7,
+   "Copy target instant or sorcery spell. You may choose new targets for the copy."
+  ],
+  [
+   7,
+   "Devour N (As this creature enters, you may sacrifice any number of creatures. It enters with twice that many +N/+N counters on it.)"
+  ],
+  [
+   7,
+   "Disturb {N}{W} (You may cast this card from your graveyard transformed for its disturb cost.)"
+  ],
+  [
+   7,
+   "Echo {N} (At the beginning of your upkeep, if this came under your control since the beginning of your last upkeep, sacrifice it unless you pay its echo cost.)"
+  ],
+  [
+   7,
+   "Echo {N}{R}{R} (At the beginning of your upkeep, if this came under your control since the beginning of your last upkeep, sacrifice it unless you pay its echo cost.)"
+  ],
+  [
+   7,
+   "Enchanted creature gets +N/+N and is goaded. (It attacks each combat if able and attacks a player other than you if able.)"
+  ],
+  [
+   7,
+   "Enchanted permanent can't attack or block, and its activated abilities can't be activated."
+  ],
+  [
+   7,
+   "Enchanted permanent doesn't untap during its controller's untap step."
+  ],
+  [
+   7,
+   "Foretell {N}{U} (During your turn, you may pay {N} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)"
+  ],
+  [
+   7,
+   "Haunt (When this creature dies, exile it haunting target creature.)"
+  ],
+  [
+   7,
+   "If a creature an opponent controls would die, exile it instead."
+  ],
+  [
+   7,
+   "If damage would be dealt to this creature, prevent that damage. Remove a +N/+N counter from this creature."
+  ],
+  [
+   7,
+   "Megamorph {N}{U} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its megamorph cost and put a +N/+N counter on it.)"
+  ],
+  [
+   7,
+   "Modular N (This creature enters with a +N/+N counter on it. When it dies, you may put its +N/+N counters on target artifact creature.)"
+  ],
+  [
+   7,
+   "Modular N (This creature enters with two +N/+N counters on it. When it dies, you may put its +N/+N counters on target artifact creature.)"
+  ],
+  [
+   7,
+   "Partner—Friends forever (You can have two commanders if both have this ability.)"
+  ],
+  [
+   7,
+   "Plot {N}{U} (You may pay {N}{U} and exile this card from your hand. Cast it as a sorcery on a later turn without paying its mana cost. Plot only as a sorcery.)"
+  ],
+  [
+   7,
+   "Sunburst (This artifact enters with a charge counter on it for each color of mana spent to cast it.)"
+  ],
+  [
+   7,
+   "Target player draws two cards and loses N life."
+  ],
+  [
+   7,
+   "This creature enters with a +N/+N counter on it for each time it was kicked."
+  ],
+  [
+   7,
+   "This spell costs {N} less to cast for each creature in your party. (Your party consists of up to one each of Cleric, Rogue, Warrior, and Wizard.)"
+  ],
+  [
+   7,
+   "Toxic N"
+  ],
+  [
+   7,
+   "When this creature enters, it connives. (Draw a card, then discard a card. If you discarded a nonland card, put a +N/+N counter on this creature.)"
+  ],
+  [
+   7,
+   "When this creature enters, look at the top four cards of your library, then put them back in any order."
+  ],
+  [
+   7,
+   "When this creature enters, tap target creature an opponent controls. That creature doesn't untap during its controller's next untap step."
+  ],
+  [
+   7,
+   "When ~ enters, empower Jace N. (Put five loyalty counters on a Jace token you control. If you don't control one, first create a blue Jace planeswalker token with \"[−N]: Surveil N\" and \"[−N]: Draw a card.\")"
+  ],
+  [
+   7,
+   "When ~ is put into a graveyard from anywhere, shuffle it into its owner's library."
+  ],
+  [
+   7,
+   "Whenever a creature dealt damage by this creature this turn dies, put a +N/+N counter on this creature."
+  ],
+  [
+   7,
+   "You control enchanted permanent."
+  ],
+  [
+   7,
+   "Your opponents can't gain life."
+  ],
+  [
+   7,
+   "{N}, {T}, Sacrifice this artifact: You may put a silver-bordered or acorn permanent card from your hand onto the battlefield."
+  ],
+  [
+   7,
+   "{N}, {T}: Draw a card. Activate only if you have no cards in hand."
+  ],
+  [
+   7,
+   "{N}: Regenerate this creature."
+  ],
+  [
+   7,
+   "{N}{B}: Level N"
+  ],
+  [
+   7,
+   "{N}{U}: Level N"
+  ],
+  [
+   6,
+   "(You may cast a legendary sorcery only if you control a legendary creature or planeswalker.)"
+  ],
+  [
+   6,
+   "All creatures able to block target creature this turn do so."
+  ],
+  [
+   6,
+   "As an additional cost to cast this spell, you may reveal a Dragon card from your hand."
+  ],
+  [
+   6,
+   "As this creature enters, choose an opponent."
+  ],
+  [
+   6,
+   "Bestow {N}{B} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)"
+  ],
+  [
+   6,
+   "Bestow {N}{G} (If you cast this card for its bestow cost, it's an Aura spell with enchant creature. It becomes a creature again if it's not attached.)"
+  ],
+  [
+   6,
+   "Choose two —\n• Untap two target permanents.\n• Tap each permanent target player controls with exactly one word in its name.\n• Discard all the cards in your hand, then draw that many cards.\n• Return target instant or sorcery card from your graveyard to your hand."
+  ],
+  [
+   6,
+   "Choose up to five {P} worth of modes. You may choose the same mode more than once."
+  ],
+  [
+   6,
+   "Cumulative upkeep {U} (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)"
+  ],
+  [
+   6,
+   "Dash {N}{B} (You may cast this spell for its dash cost. If you do, it gains haste, and it's returned from the battlefield to its owner's hand at the beginning of the next end step.)"
+  ],
+  [
+   6,
+   "Each creature you control assigns combat damage equal to its toughness rather than its power."
+  ],
+  [
+   6,
+   "Each player can't cast more than one spell each turn."
+  ],
+  [
+   6,
+   "First strike, protection from loose lips (Nothing with an open mouth in its artwork can block, target, deal damage to, or attach to this creature.)"
+  ],
+  [
+   6,
+   "Foretell {N}{W} (During your turn, you may pay {N} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)"
+  ],
+  [
+   6,
+   "Heroic — Whenever you cast a spell that targets this creature, put a +N/+N counter on this creature."
+  ],
+  [
+   6,
+   "Hideaway N (When this land enters, look at the top four cards of your library, exile one face down, then put the rest on the bottom in a random order.)"
+  ],
+  [
+   6,
+   "If you would gain life, you gain twice that much life instead."
+  ],
+  [
+   6,
+   "Megamorph {N}{G} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its megamorph cost and put a +N/+N counter on it.)"
+  ],
+  [
+   6,
+   "Morph {N}{B}{B} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   6,
+   "Morph {N}{R}{R} (You may cast this card face down as a N/N creature for {N}. Turn it face up any time for its morph cost.)"
+  ],
+  [
+   6,
+   "Prize — Create two N/N red Balloon creature tokens with flying, then sacrifice this Attraction and open an Attraction."
+  ],
+  [
+   6,
+   "Prize — You get {TK}{TK}, then you may put a sticker on a nonland permanent you own. Sacrifice ~ and open an Attraction."
+  ],
+  [
+   6,
+   "Prize — You get {TK}{TK}{TK}, then you may put a sticker on a nonland permanent you own. Sacrifice ~ and open an Attraction."
+  ],
+  [
+   6,
+   "Station"
+  ],
+  [
+   6,
+   "Take an extra turn after this one."
+  ],
+  [
+   6,
+   "This creature can block any number of creatures."
+  ],
+  [
+   6,
+   "This creature can't attack alone."
+  ],
+  [
+   6,
+   "This creature can't attack or block alone."
+  ],
+  [
+   6,
+   "Toxic N (Players dealt combat damage by this creature also get two poison counters.)"
+  ],
+  [
+   6,
+   "Unearth {N}{R} ({N}{R}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)"
+  ]
+ ]
+}

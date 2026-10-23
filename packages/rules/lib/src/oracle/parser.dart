@@ -515,19 +515,19 @@ class _FaceParser {
   Trigger? _stepTrigger(String h) {
     final m = rx(h, r'at the beginning of (your|each|each opponent\x27s|each player\x27s|the next|each of your) (upkeep|end step|draw step|precombat main phase|first main phase|postcombat main phase|combat|second main phase)(?: on your turn)?');
     if (m == null) {
-      if (h == 'at the beginning of combat on your turn') return const StepTrigger(Step.beginCombat, Who.you);
-      if (h == 'at the beginning of each combat') return const StepTrigger(Step.beginCombat, Who.any);
-      if (h == 'at the beginning of the end step' || h == 'at end of turn') return const StepTrigger(Step.end, Who.any);
+      if (h == 'at the beginning of combat on your turn') return const StepTrigger(TurnStep.beginCombat, Who.you);
+      if (h == 'at the beginning of each combat') return const StepTrigger(TurnStep.beginCombat, Who.any);
+      if (h == 'at the beginning of the end step' || h == 'at end of turn') return const StepTrigger(TurnStep.end, Who.any);
       return null;
     }
     final whose = switch (m[1]) { 'your' || 'each of your' => Who.you, "each opponent's" => Who.opponent, _ => Who.any };
     final step = switch (m[2]) {
-      'upkeep' => Step.upkeep,
-      'end step' => Step.end,
-      'draw step' => Step.draw,
-      'precombat main phase' || 'first main phase' => Step.main1,
-      'postcombat main phase' || 'second main phase' => Step.main2,
-      _ => Step.beginCombat,
+      'upkeep' => TurnStep.upkeep,
+      'end step' => TurnStep.end,
+      'draw step' => TurnStep.draw,
+      'precombat main phase' || 'first main phase' => TurnStep.main1,
+      'postcombat main phase' || 'second main phase' => TurnStep.main2,
+      _ => TurnStep.beginCombat,
     };
     return StepTrigger(step, h.endsWith('on your turn') ? Who.you : whose);
   }
@@ -952,10 +952,10 @@ class _FaceParser {
     m = rx(p, r'is a (.+?) creature with base power and toughness (\d+)/(\d+)(?: named (.+))?');
     if (m != null) {
       final words = m[1].split(' ');
-      final colors = <Color>{};
+      final colors = <ManaColor>{};
       final subs = <String>[];
       for (final w in words) {
-        final c = Color.fromWord(w);
+        final c = ManaColor.fromWord(w);
         if (c != null) {
           colors.add(c);
         } else if (w == 'and') {
@@ -1135,7 +1135,7 @@ class _FaceParser {
     if (t.endsWith('.')) t = t.substring(0, t.length - 1);
     // "Until end of turn, X"
     var m = RegExp(r'^until end of turn, (.+)$').firstMatch(t);
-    if (m != null) return _clauses(m.group(1)!, ctx, duration: Duration.endOfTurn);
+    if (m != null) return _clauses(m.group(1)!, ctx, duration: EffectDuration.endOfTurn);
     m = RegExp(r'^you may (.+)$').firstMatch(t);
     if (m != null && !t.startsWith('you may play') && !t.startsWith('you may cast')) {
       final e = _clauses(m.group(1)!, ctx, mayPrefix: true);
@@ -1175,7 +1175,7 @@ class _FaceParser {
   }
 
   /// Clauses joined by ", then", " and", ", and": try the whole thing first, then split.
-  Effect? _clauses(String s, BodyCtx ctx, {Duration? duration, bool mayPrefix = false}) {
+  Effect? _clauses(String s, BodyCtx ctx, {EffectDuration? duration, bool mayPrefix = false}) {
     final t = s.trim();
     final mark = ctx.mark();
     final whole = clause(t, ctx, duration: duration);
@@ -1204,7 +1204,7 @@ class _FaceParser {
   // Clauses (one action)
   // -------------------------------------------------------------------------------------------
 
-  Effect? clause(String c, BodyCtx ctx, {Duration? duration}) {
+  Effect? clause(String c, BodyCtx ctx, {EffectDuration? duration}) {
     final t = c.trim();
     final mark = ctx.mark();
     final r = _clause(t, ctx, duration);
@@ -1212,7 +1212,7 @@ class _FaceParser {
     return r;
   }
 
-  Effect? _clause(String t, BodyCtx ctx, Duration? duration) {
+  Effect? _clause(String t, BodyCtx ctx, EffectDuration? duration) {
     List<String>? m;
 
     // --- Damage -------------------------------------------------------------------------------
@@ -1570,7 +1570,7 @@ class _FaceParser {
     if (m != null) {
       final set = parseObjects(m[1], ctx);
       if (set == null) return null;
-      return GainControl(set, duration: m[2].isEmpty ? Duration.permanent : Duration.endOfTurn);
+      return GainControl(set, duration: m[2].isEmpty ? EffectDuration.permanent : EffectDuration.endOfTurn);
     }
     m = rx(t, r'attach (?:it|~) to (.+)');
     if (m != null) {
@@ -1584,12 +1584,12 @@ class _FaceParser {
     if (m != null) {
       final subj = m[1];
       final rest = '${m[2]} ${m[3]}';
-      final dur = switch (m[4]) { 'until end of turn' || 'this turn' => Duration.endOfTurn, 'until your next turn' => Duration.untilYourNextTurn, _ => duration };
+      final dur = switch (m[4]) { 'until end of turn' || 'this turn' => EffectDuration.endOfTurn, 'until your next turn' => EffectDuration.untilYourNextTurn, _ => duration };
       if (dur != null || rest.startsWith('can\'t')) {
         final set = parseObjects(subj, ctx);
         if (set != null) {
           final mods = _mods(rest, ctx);
-          if (mods != null) return Grant(set, mods, duration: dur ?? Duration.endOfTurn);
+          if (mods != null) return Grant(set, mods, duration: dur ?? EffectDuration.endOfTurn);
         }
       }
     }
@@ -1676,13 +1676,13 @@ class _FaceParser {
         if (subs == null) return null;
         ctx.it = const Remembered('created');
         return CreateToken(
-            TokenSpec(name: _orig(named[1]), power: int.parse(named[3]), toughness: int.parse(named[4]), colors: {Color.fromWord(named[5])!}, subtypes: subs, supertypes: named[2].isEmpty ? const {} : const {Supertype.legendary}),
+            TokenSpec(name: _orig(named[1]), power: int.parse(named[3]), toughness: int.parse(named[4]), colors: {ManaColor.fromWord(named[5])!}, subtypes: subs, supertypes: named[2].isEmpty ? const {} : const {Supertype.legendary}),
             amount,
             controller: controller);
       }
       return null;
     }
-    final colors = m[4] == 'colorless' ? <Color>{} : {for (final w in m[4].split(RegExp(r',? and |, '))) ?Color.fromWord(w)};
+    final colors = m[4] == 'colorless' ? <ManaColor>{} : {for (final w in m[4].split(RegExp(r',? and |, '))) ?ManaColor.fromWord(w)};
     final subs = _subtypes(m[5]);
     if (subs == null) return null;
     final kws = <Kw>[];
@@ -1862,3 +1862,6 @@ final Map<String, TokenSpec> predefinedTokens = {
   ),
 };
 
+
+/// [engineVersion] under a name that doesn't clash with fields called engineVersion.
+const rulesEngineVersion = engineVersion;

@@ -14,12 +14,12 @@ extension GameTesting on Game {
     state.turn = 2;
     state.active = active;
     state.firstPlayer = active;
-    state.step = Step.main1;
+    state.step = TurnStep.main1;
     state.stepDone = true;
     state.priority = active;
     // Stop everywhere so tests see every priority.
     for (final p in state.players) {
-      p.stops = Stops(mine: Step.values.toSet(), theirs: Step.values.toSet());
+      p.stops = Stops(mine: TurnStep.values.toSet(), theirs: TurnStep.values.toSet());
     }
     state.rules = state.rules.copyWith(autoPassWhenNothingToDo: false);
     _dirty();
@@ -50,7 +50,7 @@ extension GameTesting on Game {
     }
   }
 
-  void setStep(Step s, {PlayerId? priority}) {
+  void setStep(TurnStep s, {PlayerId? priority}) {
     state.step = s;
     state.stepDone = true;
     state.priority = priority ?? state.active;

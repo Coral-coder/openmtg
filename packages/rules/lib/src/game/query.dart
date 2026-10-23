@@ -102,7 +102,7 @@ extension GameQuery on Game {
     }
     if (f.chosenColor) {
       final src = state.objOrNull(ctx.source);
-      final col = src?.chosenColor == null ? null : Color.fromWord(src!.chosenColor!);
+      final col = src?.chosenColor == null ? null : ManaColor.fromWord(src!.chosenColor!);
       if (col == null || !c.colors.contains(col)) return false;
     }
     if (f.historic && !(c.isLegendary || c.isArtifact || c.subtypes.contains('Saga'))) return false;
@@ -452,7 +452,7 @@ extension GameQuery on Game {
       for (var i = 0; i < c.abilities.length; i++) {
         final a = c.abilities[i];
         if (a is ActivatedAbility && zoneOfKind(a.zone) == o.zone) {
-          if (_probe(() => _activate(p, id, i))) out.add(ActivateAction(p, id, i));
+          if (_probe(() => _activate(p, id, i))) out.add(ActivateAbilityAction(p, id, i));
         } else if (a is ManaAbility && o.zone == Zone.battlefield) {
           if (_canPayManaAbilityCost(p, id, a)) out.add(ManaAction(p, id, i));
         }
@@ -495,6 +495,56 @@ extension GameQuery on Game {
       return false;
     } on NeedDecision {
       return false;
+    } finally {
+      state = snap;
+      _choices = prevChoices;
+      _charCache = prevCache.$1;
+      _charVersion = prevCache.$2;
+      _charState = prevCache.$3;
+    }
+  }
+
+  /// Why [a] can't be done now, in words for the table, or null if it can.
+  String? whyNot(GameAction a) {
+    if (state.over) return 'The game is over.';
+    if (!state.inProgress) return 'The game has not begun.';
+    if (state.pending != null) return 'Answer the question first.';
+    final p = a.player;
+    if (state.priority != p) return state.active == p ? 'Wait: your opponent can respond.' : "It's not your turn.";
+    switch (a) {
+      case PlayLandAction(:final id):
+        if (canPlayLand(p, id)) return null;
+        if (state.active != p) return 'Lands are played on your own turn.';
+        if (!(state.step == TurnStep.main1 || state.step == TurnStep.main2)) return 'Lands are played in a main phase.';
+        if (state.stack.isNotEmpty) return 'Wait until the stack is empty.';
+        if (state.player(p).stats.landsPlayed >= landsAllowed(p)) return 'You already played a land this turn.';
+        return "You can't play that land now.";
+      case CastAction(:final id, :final option, :final face):
+        return _probeError(() => _castSpell(p, id, face, option));
+      case ActivateAbilityAction(:final id, :final index):
+        return _probeError(() => _activate(p, id, index));
+      case ManaAction(:final id, :final index):
+        final c = chars(id);
+        if (index >= c.abilities.length || c.abilities[index] is! ManaAbility) return 'Not a mana ability.';
+        return _canPayManaAbilityCost(p, id, c.abilities[index] as ManaAbility) ? null : (state.obj(id).tapped ? 'It is tapped.' : 'Summoning sick.');
+      default:
+        return null;
+    }
+  }
+
+  String? _probeError(void Function() f) {
+    final snap = state;
+    final prevChoices = _choices;
+    final prevCache = (_charCache, _charVersion, _charState);
+    state = state.clone();
+    _choices = _Choices(const [], auto: true);
+    try {
+      f();
+      return null;
+    } on GameError catch (e) {
+      return '${e.message}${e.message.endsWith('.') ? '' : '.'}';
+    } on NeedDecision {
+      return null;
     } finally {
       state = snap;
       _choices = prevChoices;

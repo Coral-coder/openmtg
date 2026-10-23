@@ -217,8 +217,8 @@ extension GameEffects on Game {
       }
     }
     if (chooseColor != null) {
-      final pick = ask(Decision(kind: DecisionKind.option, player: controller, prompt: 'Choose a color for ${self.name}', labels: [for (final c in Color.values) c.word], source: id));
-      chooseColor = Color.values[pick.first].word;
+      final pick = ask(Decision(kind: DecisionKind.option, player: controller, prompt: 'Choose a color for ${self.name}', labels: [for (final c in ManaColor.values) c.word], source: id));
+      chooseColor = ManaColor.values[pick.first].word;
     }
     if (chooseType != null) {
       final types = _commonCreatureTypes(controller);
@@ -609,7 +609,7 @@ extension GameEffects on Game {
             state.delayed.add(DelayedTrigger(
               controller: ps.first,
               sourceId: t.id,
-              ability: const TriggeredAbility('Sacrifice this token at the beginning of the end step.', StepTrigger(Step.end, Who.any), Body(effect: Sacrifice(You(), Filter.any, Fixed(1), self: true))),
+              ability: const TriggeredAbility('Sacrifice this token at the beginning of the end step.', StepTrigger(TurnStep.end, Who.any), Body(effect: Sacrifice(You(), Filter.any, Fixed(1), self: true))),
               objects: [(t.id, t.zcc)],
               createdTurn: state.turn,
             ));
@@ -630,7 +630,7 @@ extension GameEffects on Game {
         final ids = _ref(obj, ctx);
         if (ids.isEmpty) return;
         final p = chars(ids.first).power ?? 0;
-        state.effects.add(ActiveEffect(timestamp: state.nextTimestamp++, sourceId: ctx.source ?? 0, controller: ctx.controller, affected: [(ids.first, state.obj(ids.first).zcc)], mods: const [ModPT(Fixed(0), Fixed(0))], duration: Duration.endOfTurn, turn: state.turn, amounts: {0: (p, 0)}));
+        state.effects.add(ActiveEffect(timestamp: state.nextTimestamp++, sourceId: ctx.source ?? 0, controller: ctx.controller, affected: [(ids.first, state.obj(ids.first).zcc)], mods: const [ModPT(Fixed(0), Fixed(0))], duration: EffectDuration.endOfTurn, turn: state.turn, amounts: {0: (p, 0)}));
       case CounterSpell(:final obj, :final exileInstead):
         final ids = _ref(obj, ctx);
         if (ids.isEmpty) return;
@@ -756,7 +756,7 @@ extension GameEffects on Game {
         for (final id in resolveObjs(set, ctx)) {
           final o = state.obj(id);
           o.playableBy = ctx.controller;
-          o.playableUntil = duration == Duration.endOfTurn ? state.turn : state.turn + 99;
+          o.playableUntil = duration == EffectDuration.endOfTurn ? state.turn : state.turn + 99;
           o.playFree = free;
         }
       case RuleChange(:final rule, :final duration):
@@ -864,7 +864,7 @@ extension GameEffects on Game {
     state.stack.clear();
     _endCombat();
     state.pendingTriggers.clear();
-    _beginStep(Step.cleanup);
+    _beginStep(TurnStep.cleanup);
     state.stepDone = false;
   }
 

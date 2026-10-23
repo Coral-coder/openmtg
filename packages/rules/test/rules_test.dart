@@ -28,7 +28,7 @@ void resolveAll(Game g) {
 
 /// Passes until the game reaches [step] (declining blocks and attacks on the way), or a
 /// decision other than those is pending, or the game ends.
-void passTo(Game g, Step step) {
+void passTo(Game g, TurnStep step) {
   for (var i = 0; i < 200 && !g.state.over; i++) {
     final pd = g.state.pending;
     if (pd != null) {
@@ -219,17 +219,15 @@ void main() {
   });
 
   group('CR 506–511 combat', () {
-    void toAttack(Game g) => passTo(g, Step.declareAttackers);
-
     test('unblocked attacker deals damage; lifelink gains life', () {
       final g = empty();
       final hawk = g.addCard("Healer's Hawk", 0, Zone.battlefield);
-      g.setStep(Step.beginCombat);
+      g.setStep(TurnStep.beginCombat);
       g.apply(PassAction(0));
       g.apply(PassAction(1));
       expect(g.state.pending!.decision.kind, DecisionKind.attackers);
       answer(g, [hawk, playerEntity(1)]);
-      passTo(g, Step.endCombat);
+      passTo(g, TurnStep.endCombat);
       expect(life(g, 1), 19);
       expect(life(g, 0), 21);
     });
@@ -247,11 +245,11 @@ void main() {
       final g = empty();
       final vindicator = g.addCard('Swiftblade Vindicator', 0, Zone.battlefield); // 1/1 double strike
       final aegis = g.addCard('Inspiring Paladin', 1, Zone.battlefield);
-      g.setStep(Step.beginCombat);
+      g.setStep(TurnStep.beginCombat);
       g.apply(PassAction(0));
       g.apply(PassAction(1));
       answer(g, [vindicator, playerEntity(1)]);
-      passTo(g, Step.endCombat);
+      passTo(g, TurnStep.endCombat);
       expect(g.state.pending, isNull);
       // Unblocked double strike deals damage twice.
       expect(life(g, 1), 18);
@@ -262,13 +260,13 @@ void main() {
       final g = empty();
       final hydra = g.addCard('Quakestrider Ceratops', 0, Zone.battlefield); // 12/8 no trample
       final wall = g.addCard('Treetop Snarespinner', 1, Zone.battlefield); // 1/4 reach deathtouch
-      g.setStep(Step.beginCombat);
+      g.setStep(TurnStep.beginCombat);
       g.apply(PassAction(0));
       g.apply(PassAction(1));
       answer(g, [hydra, playerEntity(1)]);
       passToDecision(g, DecisionKind.blockers);
       answer(g, [wall, hydra]);
-      passTo(g, Step.endCombat);
+      passTo(g, TurnStep.endCombat);
       expect(zoneOf(g, hydra), Zone.graveyard, reason: 'deathtouch');
       expect(zoneOf(g, wall), Zone.graveyard);
       expect(life(g, 1), 20, reason: 'no trample');
@@ -279,7 +277,7 @@ void main() {
       final feaster = g.addCard('Crypt Feaster', 0, Zone.battlefield);
       final b1 = g.addCard('Savannah Lions', 1, Zone.battlefield);
       g.addCard('Savannah Lions', 1, Zone.battlefield);
-      g.setStep(Step.beginCombat);
+      g.setStep(TurnStep.beginCombat);
       g.apply(PassAction(0));
       g.apply(PassAction(1));
       answer(g, [feaster, playerEntity(1)]);
@@ -290,7 +288,7 @@ void main() {
     test('vigilance: attacking doesn\'t tap', () {
       final g = empty();
       final angel = g.addCard('Serra Angel', 0, Zone.battlefield);
-      g.setStep(Step.beginCombat);
+      g.setStep(TurnStep.beginCombat);
       g.apply(PassAction(0));
       g.apply(PassAction(1));
       answer(g, [angel, playerEntity(1)]);
@@ -344,7 +342,7 @@ void main() {
 
     test('drawing from an empty library loses', () {
       final g = empty();
-      passTo(g, Step.draw);
+      passTo(g, TurnStep.draw);
       // Bob's turn: his library is empty, so he loses when he draws.
       expect(g.state.over, isTrue);
       expect(g.state.winner, 0);
@@ -395,7 +393,7 @@ void main() {
       final g = empty();
       final vet = g.addCard('Dauntless Veteran', 0, Zone.battlefield);
       final lions = g.addCard('Savannah Lions', 0, Zone.battlefield);
-      g.setStep(Step.beginCombat);
+      g.setStep(TurnStep.beginCombat);
       g.apply(PassAction(0));
       g.apply(PassAction(1));
       answer(g, [vet, playerEntity(1)]);
@@ -458,7 +456,7 @@ void main() {
       pay(g);
       resolveAll(g);
       expect(g.chars(lions).power, 5);
-      passTo(g, Step.upkeep);
+      passTo(g, TurnStep.upkeep);
       expect(g.chars(lions).power, 2);
     });
 
@@ -468,7 +466,7 @@ void main() {
       g.addCard('Plains', 0, Zone.battlefield);
       final katana = g.addCard('Quick-Draw Katana', 0, Zone.battlefield);
       final lions = g.addCard('Savannah Lions', 0, Zone.battlefield);
-      final equip = g.legalActions(0).whereType<ActivateAction>().firstWhere((a) => a.id == katana);
+      final equip = g.legalActions(0).whereType<ActivateAbilityAction>().firstWhere((a) => a.id == katana);
       g.apply(equip);
       target(g, [lions]);
       pay(g);
@@ -537,13 +535,13 @@ void main() {
       final ajani = g.addCard('Ajani, Caller of the Pride', 0, Zone.battlefield);
       final lions = g.addCard('Savannah Lions', 0, Zone.battlefield);
       final start = g.state.obj(ajani).counters['loyalty']!;
-      final plus = g.legalActions(0).whereType<ActivateAction>().firstWhere((a) => a.id == ajani);
+      final plus = g.legalActions(0).whereType<ActivateAbilityAction>().firstWhere((a) => a.id == ajani);
       g.apply(plus);
       target(g, [lions]);
       resolveAll(g);
       expect(g.state.obj(ajani).counters['loyalty'], start + 1);
       expect(g.chars(lions).power, 3);
-      expect(g.legalActions(0).whereType<ActivateAction>().where((a) => a.id == ajani), isEmpty);
+      expect(g.legalActions(0).whereType<ActivateAbilityAction>().where((a) => a.id == ajani), isEmpty);
     });
 
     test('Food token: sacrifice to gain 3', () {

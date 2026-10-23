@@ -257,10 +257,10 @@ class TurnStats {
 
 /// When a player wants the game to stop and give them priority instead of passing for them.
 class Stops {
-  Stops({Set<Step>? mine, Set<Step>? theirs, this.respond = true}) : mine = mine ?? {Step.main1, Step.main2, Step.declareBlockers}, theirs = theirs ?? {Step.declareBlockers};
+  Stops({Set<TurnStep>? mine, Set<TurnStep>? theirs, this.respond = true}) : mine = mine ?? {TurnStep.main1, TurnStep.main2, TurnStep.declareBlockers}, theirs = theirs ?? {TurnStep.declareBlockers};
 
   /// Steps of their own turn and of opponents' turns where they get priority.
-  Set<Step> mine, theirs;
+  Set<TurnStep> mine, theirs;
 
   /// Stop when an opponent's spell or ability is on the stack and they could respond.
   bool respond;
@@ -275,8 +275,8 @@ class Stops {
   Map<String, dynamic> toJson() => {'m': [for (final s in mine) s.index], 't': [for (final s in theirs) s.index], 'r': respond};
 
   static Stops fromJson(Map<String, dynamic> j) => Stops(
-        mine: {for (final i in (j['m'] as List)) Step.values[i as int]},
-        theirs: {for (final i in (j['t'] as List)) Step.values[i as int]},
+        mine: {for (final i in (j['m'] as List)) TurnStep.values[i as int]},
+        theirs: {for (final i in (j['t'] as List)) TurnStep.values[i as int]},
         respond: j['r'] as bool? ?? true,
       );
 }
@@ -452,7 +452,7 @@ class ActiveEffect {
   /// Locked set of affected objects as (id, zcc) pairs.
   final List<(ObjId, int)> affected;
   final List<Mod> mods;
-  final Duration duration;
+  final EffectDuration duration;
 
   /// The turn it was created (for "until your next turn").
   final int turn;
@@ -699,7 +699,7 @@ class GameState {
 
   /// Players get priority in this cleanup step (CR 514.3a).
   bool cleanupPriority = false;
-  Step step = Step.untap;
+  TurnStep step = TurnStep.untap;
   PlayerId? priority;
 
   /// Players who passed in succession since the last action (CR 117.4).

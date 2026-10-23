@@ -72,8 +72,8 @@ class CardDatabase {
         engineVersion: j['engine'] as int? ?? 0);
   }
 
-  static String _colors(List<Color> cs) => cs.map((c) => c.symbol).join();
-  static List<Color> _parseColors(Object? s) => s == null ? const [] : [for (final ch in (s as String).split('')) ?Color.fromSymbol(ch)];
+  static String _colors(List<ManaColor> cs) => cs.map((c) => c.symbol).join();
+  static List<ManaColor> _parseColors(Object? s) => s == null ? const [] : [for (final ch in (s as String).split('')) ?ManaColor.fromSymbol(ch)];
 
   static List<Object?> _trim(List<Object?> row) {
     while (row.isNotEmpty && (row.last == null || row.last == '' || (row.last is List && (row.last as List).isEmpty) || row.last == false)) {
@@ -182,7 +182,7 @@ class CardDatabase {
     return b.toString();
   }
 
-  static Face _faceFromScryfall(Map<String, dynamic> f, {List<Color>? cardColors}) {
+  static Face _faceFromScryfall(Map<String, dynamic> f, {List<ManaColor>? cardColors}) {
     final cost = f['mana_cost'] as String?;
     final colors = (f['colors'] as List?)?.cast<String>();
     final indicator = (f['color_indicator'] as List?)?.cast<String>();
@@ -195,15 +195,15 @@ class CardDatabase {
       toughness: f['toughness'] as String?,
       loyalty: f['loyalty'] as String?,
       defense: f['defense'] as String?,
-      colors: colors == null ? cardColors : [for (final c in colors) ?Color.fromSymbol(c)],
-      colorIndicator: indicator == null ? null : [for (final c in indicator) ?Color.fromSymbol(c)],
+      colors: colors == null ? cardColors : [for (final c in colors) ?ManaColor.fromSymbol(c)],
+      colorIndicator: indicator == null ? null : [for (final c in indicator) ?ManaColor.fromSymbol(c)],
     );
   }
 
   /// Builds a card from a Scryfall card object (one printing).
   static CardDef fromScryfall(Map<String, dynamic> j, {List<String> sets = const [], List<String>? unsupported}) {
     final layout = Layout.parse(j['layout'] as String? ?? 'normal');
-    final cardColors = [for (final c in (j['colors'] as List? ?? const [])) ?Color.fromSymbol(c as String)];
+    final cardColors = [for (final c in (j['colors'] as List? ?? const [])) ?ManaColor.fromSymbol(c as String)];
     final rawFaces = j['card_faces'] as List?;
     final faces = <Face>[];
     if (rawFaces != null && rawFaces.isNotEmpty) {
@@ -218,7 +218,7 @@ class CardDatabase {
       name: j['name'] as String,
       layout: layout,
       faces: faces,
-      colorIdentity: [for (final c in (j['color_identity'] as List? ?? const [])) ?Color.fromSymbol(c as String)],
+      colorIdentity: [for (final c in (j['color_identity'] as List? ?? const [])) ?ManaColor.fromSymbol(c as String)],
       keywords: (j['keywords'] as List?)?.cast<String>() ?? const [],
       legalities: legalityString((j['legalities'] as Map?)?.cast<String, dynamic>()),
       producedMana: (j['produced_mana'] as List?)?.cast<String>() ?? const [],

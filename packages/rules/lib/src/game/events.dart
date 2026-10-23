@@ -76,7 +76,7 @@ class CountersEvent extends GameEvent {
 
 class StepEvent extends GameEvent {
   const StepEvent(this.step, this.active);
-  final Step step;
+  final TurnStep step;
   final PlayerId active;
 }
 

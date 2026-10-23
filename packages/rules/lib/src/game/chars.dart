@@ -27,7 +27,7 @@ class Chars {
   Set<CardType> types;
   List<String> subtypes;
   Set<Supertype> supertypes;
-  Set<Color> colors;
+  Set<ManaColor> colors;
   ManaCost? manaCost;
   int? power, toughness;
   int? loyalty, defense;
