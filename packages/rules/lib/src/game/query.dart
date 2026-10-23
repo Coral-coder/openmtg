@@ -266,6 +266,8 @@ extension GameQuery on Game {
         return n;
       case XValue():
         return ctx.x;
+      case RollResult():
+        return ctx.results['roll'] ?? 0;
       case CountOf(:final set):
         return resolveObjs(set, ctx).length;
       case PlayerCount(:final players):
@@ -376,6 +378,8 @@ extension GameQuery on Game {
         return ctx.didIt;
       case AmountCompare(:final a, :final cmp, :final b):
         return cmp.test(evalAmount(a, ctx), evalAmount(b, ctx));
+      case WonFlip(:final won):
+        return ctx.results.containsKey('flip') && (ctx.results['flip'] == 1) == won;
     }
   }
 

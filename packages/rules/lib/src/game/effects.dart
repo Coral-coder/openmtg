@@ -165,11 +165,12 @@ extension GameEffects on Game {
     _move(id, Zone.graveyard, sacrificed: true);
   }
 
-  /// Destroys a permanent unless it's indestructible (CR 701.8).
-  bool _destroy(ObjId id) {
+  /// Destroys a permanent unless it's indestructible (CR 701.8) or regenerates (CR 701.15).
+  bool _destroy(ObjId id, {bool noRegen = false}) {
     final o = state.objOrNull(id);
     if (o == null || o.zone != Zone.battlefield) return false;
     if (chars(id).has(Kw.indestructible)) return false;
+    if (!noRegen && _regenerate(id)) return false;
     _move(id, Zone.graveyard);
     return true;
   }
@@ -317,6 +318,8 @@ extension GameEffects on Game {
       }
       if (!toPlayer && resolveObjs(r.set, rctx).contains(target)) return 0;
     }
+    n = _shieldPrevent(source, target, n, combat);
+    if (n <= 0) return 0;
     if (toPlayer) {
       final p = entityPlayer(target);
       if (src.hasName('infect')) {
@@ -512,10 +515,10 @@ extension GameEffects on Game {
         _scry(ctx.controller, evalAmount(amount, ctx));
       case Surveil(:final amount):
         _surveil(ctx.controller, evalAmount(amount, ctx));
-      case Destroy(:final set):
+      case Destroy(:final set, :final noRegen):
         var n = 0;
         for (final id in resolveObjs(set, ctx)) {
-          if (_destroy(id)) n++;
+          if (_destroy(id, noRegen: noRegen)) n++;
         }
         ctx.results['destroyed'] = n;
       case MoveTo():
@@ -742,6 +745,8 @@ extension GameEffects on Game {
         _endTheTurn();
       case Noop():
         break;
+      case Regenerate() || PreventNext() || RevealHand() || FlipCoin() || RollDie() || Explore():
+        _execShieldsAndChance(e, ctx);
       case CopySpell(:final obj, :final amount):
         final ids = _ref(obj, ctx);
         if (ids.isEmpty) return;
@@ -943,6 +948,14 @@ extension GameEffects on Game {
         for (final id in rest.reversed) {
           _move(id, Zone.library);
         }
+      case RestGoes.topAnyOrder:
+        final order = rest.length > 1 ? ask(Decision(kind: DecisionKind.order, player: p, prompt: 'Order the cards on top (first is the top card)', options: rest)) : rest;
+        final pl = state.player(p);
+        for (final id in order) {
+          pl.library.remove(id);
+        }
+        pl.library.insertAll(0, order);
+        _dirty();
     }
   }
 

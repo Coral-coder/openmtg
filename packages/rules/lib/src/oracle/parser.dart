@@ -8,9 +8,11 @@ import '../ir/ir.dart';
 import 'phrases.dart';
 import 'text.dart';
 
+part 'library_hand.dart';
+
 /// Bump when the parser or engine changes what it supports: the database's stored coverage is
 /// recomputed when it was made by another version.
-const engineVersion = 1;
+const engineVersion = 2;
 
 class ParsedFace {
   ParsedFace(this.face, this.abilities, this.unsupported);
@@ -37,6 +39,10 @@ class OracleParser {
 
   /// Rethrow parser crashes instead of reporting the paragraph as unsupported (tests).
   static bool strict = false;
+
+  /// When set, collects what failed to parse ("sentence: …", "trigger: …", "static: …"), so
+  /// tools can rank the gaps by how many cards each one blocks (bin/gaps.dart).
+  static List<String>? diag;
 
   static ParsedCard parse(CardDef card) => _cache.putIfAbsent(card.name, () => _parse(card));
 
@@ -200,7 +206,8 @@ class _FaceParser {
       return _triggered(para, p);
     }
 
-    final st = _spellStatic(p, para) ?? _static(p, para);
+    final st = libraryHandStatic(p, para) ?? _spellStatic(p, para) ?? _static(p, para);
+    if (st == null) OracleParser.diag?.add('static: $p');
     return st;
   }
 
@@ -364,6 +371,8 @@ class _FaceParser {
       }
       idx = indexOutsideQuotes(p, ', ', idx + 1);
     }
+    final c = indexOutsideQuotes(p, ', ');
+    OracleParser.diag?.add('trigger: ${c > 0 ? p.substring(0, c) : p}');
     return null;
   }
 
@@ -577,6 +586,8 @@ class _FaceParser {
 
   Condition? condition(String s, BodyCtx ctx) {
     final t = s.trim();
+    final lh = libraryHandCondition(t);
+    if (lh != null) return lh;
     switch (t) {
       case 'you attacked this turn' || 'you attacked with a creature this turn':
         return const AttackedThisTurn();
@@ -1054,6 +1065,20 @@ class _FaceParser {
     final steps = <Effect>[];
     for (var i = 0; i < ss.length; i++) {
       var s = ss[i];
+      // Effects spanning sentences ("look at the top four cards …. put the rest …").
+      final multi = libraryHandMulti(ss, i, ctx);
+      if (multi != null) {
+        steps.add(multi.$1);
+        i += multi.$2 - 1;
+        continue;
+      }
+      // "Destroy target creature. It can't be regenerated."
+      if (isCantRegenerate(s) && steps.isNotEmpty) {
+        final e = noRegen(steps.last);
+        if (e == null) return null;
+        steps[steps.length - 1] = e;
+        continue;
+      }
       // "If you do, X."
       var m = RegExp(r'^if you do, (.+)$').firstMatch(s);
       if (m != null && steps.isNotEmpty) {
@@ -1116,7 +1141,10 @@ class _FaceParser {
       }
       if (s.startsWith('then ')) s = s.substring(5);
       final e = sentence(s, ctx);
-      if (e == null) return null;
+      if (e == null) {
+        OracleParser.diag?.add('sentence: $s');
+        return null;
+      }
       steps.add(e);
     }
     if (steps.isEmpty) return null;
@@ -1256,6 +1284,8 @@ class _FaceParser {
 
   Effect? _clause2(String t, BodyCtx ctx, EffectDuration? duration) {
     List<String>? m;
+    final lh = libraryHandClause(t, ctx);
+    if (lh != null) return lh;
 
     // --- Damage -------------------------------------------------------------------------------
     m = rx(t, r'(~|it|that creature|target creature you control|(?:another )?target creature) deals (\w+|damage equal to .+?) damage to (.+)');

@@ -1117,7 +1117,7 @@ class LookAndPick extends Effect {
   final bool mayPick, reveal, tapped;
 }
 
-enum RestGoes { bottomRandom, bottomAnyOrder, graveyard, top, exile }
+enum RestGoes { bottomRandom, bottomAnyOrder, graveyard, top, exile, topAnyOrder }
 
 /// Reveal cards from the top until a matching card; it goes to [zone], the rest to [rest].
 class RevealUntil extends Effect {
@@ -1661,4 +1661,79 @@ class InfoAbility extends Ability {
   const InfoAbility(super.text, {this.anyNumber = false, this.openingHandBattlefield = false});
   final bool anyNumber;
   final bool openingHandBattlefield;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Regeneration, prevention shields, hands and chance (CR 701.15, 615.7, 701.20, 705, 706)
+// ---------------------------------------------------------------------------------------------
+
+/// "Regenerate ~" (CR 701.15): the next time it would be destroyed this turn, instead tap it,
+/// remove all damage from it and remove it from combat.
+class Regenerate extends Effect {
+  const Regenerate(this.set);
+  final ObjSet set;
+}
+
+/// A prevention shield until end of turn (CR 615.7): "prevent the next 3 damage that would be
+/// dealt to any target", "prevent all combat damage that would be dealt this turn".
+/// One of [target] (a target index: player or object), [set] or [toYou] says what's protected;
+/// none of them protects everything (Fog). [by] instead stops damage dealt by those objects.
+class PreventNext extends Effect {
+  const PreventNext({this.amount, this.target, this.set, this.toYou = false, this.by, this.combatOnly = false});
+
+  /// Null: all of it.
+  final Amount? amount;
+  final int? target;
+  final ObjSet? set;
+  final bool toYou;
+  final ObjSet? by;
+  final bool combatOnly;
+}
+
+/// "Target opponent reveals their hand" / "look at target player's hand"; with [filter], you
+/// then choose a card from it that's discarded (or exiled): Duress (CR 701.20).
+class RevealHand extends Effect {
+  const RevealHand(this.who, {this.filter, this.exile = false, this.optional = false});
+  final PlayerRef who;
+  final Filter? filter;
+  final bool exile;
+
+  /// "You may choose …. If you do, …".
+  final bool optional;
+}
+
+/// "It explores" (CR 701.44): reveal the top card; a land goes to hand, otherwise a +1/+1
+/// counter on the creature and the card may go to the graveyard.
+class Explore extends Effect {
+  const Explore(this.set);
+  final ObjSet set;
+}
+
+/// "Flip a coin" (CR 705); [WonFlip] reads the result.
+class FlipCoin extends Effect {
+  const FlipCoin();
+}
+
+/// "Roll a six-sided die" (CR 706); [RollResult] reads the total.
+class RollDie extends Effect {
+  const RollDie(this.sides, {this.count = 1});
+  final int sides;
+  final int count;
+}
+
+/// "If you win the flip" / "if you lose the flip".
+class WonFlip extends Condition {
+  const WonFlip(this.won);
+  final bool won;
+}
+
+/// The total of the last die roll in this resolution.
+class RollResult extends Amount {
+  const RollResult();
+}
+
+/// "You may look at the top card of your library any time" (an exception to CR 401.2): the
+/// table shows that player their top card.
+class LookAtTopAnyTime extends RuleMod {
+  const LookAtTopAnyTime();
 }

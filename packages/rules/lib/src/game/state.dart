@@ -480,6 +480,32 @@ class DelayedTrigger {
   String digest() => '$controller|$sourceId|${ability.text.hashCode}|${objects.map((o) => '${o.$1}.${o.$2}').join(',')}|$createdTurn|$oneShot';
 }
 
+/// A one-turn shield (immutable; using part of it replaces the entry): a regeneration shield on
+/// an object (CR 701.15), or a prevention shield (CR 615.7) for an entity (a player or an
+/// object), for everything ([entity] null), or against damage dealt by an object ([by]).
+class Shield {
+  const Shield.regen(int obj, this.zcc)
+      : regen = true,
+        entity = obj,
+        amount = 1,
+        by = false,
+        combatOnly = false;
+  const Shield.prevent(this.entity, this.zcc, this.amount, {this.by = false, this.combatOnly = false}) : regen = false;
+  final bool regen;
+  final int? entity;
+
+  /// The object's zone-change count when the shield was made (0 for players and everything).
+  final int zcc;
+
+  /// Damage still to prevent; -1 for all of it.
+  final int amount;
+  final bool by, combatOnly;
+
+  Shield withAmount(int n) => Shield.prevent(entity, zcc, n, by: by, combatOnly: combatOnly);
+
+  String digest() => '${regen ? 'R' : 'P'}|$entity.$zcc|$amount|$by|$combatOnly';
+}
+
 class EmblemObj {
   EmblemObj(this.owner, this.abilities, this.text, this.id);
   final PlayerId owner;
@@ -713,6 +739,9 @@ class GameState {
   List<ActiveEffect> effects = [];
   List<DelayedTrigger> delayed = [];
   List<EmblemObj> emblems = [];
+
+  /// Regeneration and prevention shields; they all end at cleanup.
+  List<Shield> shields = [];
   Pending? pending;
   bool over = false;
   PlayerId? winner;
@@ -774,6 +803,7 @@ class GameState {
     s.effects = List.of(effects);
     s.delayed = List.of(delayed);
     s.emblems = List.of(emblems);
+    s.shields = List.of(shields);
     s.pending = pending;
     s.over = over;
     s.winner = winner;
@@ -812,6 +842,9 @@ class GameState {
     }
     for (final e in emblems) {
       b.writeln('em:${e.digest()}');
+    }
+    for (final s in shields) {
+      b.writeln('sh:${s.digest()}');
     }
     if (pending != null) b.writeln('pd:${pending!.digest()}');
     return b.toString();

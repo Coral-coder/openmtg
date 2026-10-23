@@ -26,6 +26,7 @@ part 'effects.dart';
 part 'events.dart';
 part 'combat.dart';
 part 'sba.dart';
+part 'shields.dart';
 part 'testing.dart';
 
 /// Answers for the decisions of one task run; throws [NeedDecision] when they run out.
@@ -532,6 +533,7 @@ class Game {
       o.damage = 0;
       o.deathtouched = false;
     }
+    state.shields.clear();
     state.effects.removeWhere((e) => e.duration == EffectDuration.endOfTurn || e.duration == EffectDuration.thisTurn);
     for (final o in state.objects.values) {
       if (o.playableBy != null && o.playableUntil <= state.turn && o.playableUntil >= 0) {

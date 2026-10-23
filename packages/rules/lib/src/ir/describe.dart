@@ -85,6 +85,7 @@ String _cond(Condition c) => switch (c) {
       RememberedAny(:final slot, :final filter) => '$slot has ${_filter(filter)}',
       DidIt() => 'didIt',
       AmountCompare(:final a, :final cmp, :final b) => '${_amt(a)} ${cmp.name} ${_amt(b)}',
+      WonFlip(:final won) => won ? 'wonFlip' : 'lostFlip',
     };
 
 String _repl(Replacement r) => switch (r) {
@@ -145,6 +146,7 @@ String _pl(PlayerRef p) => switch (p) {
 String _amt(Amount a) => switch (a) {
       Fixed(:final n) => '$n',
       XValue() => 'X',
+      RollResult() => 'roll',
       CountOf(:final set) => '#(${_set(set)})',
       PlayerCount(:final players) => '#${_pl(players)}',
       StatOf(:final stat, :final obj) => '${stat.name}(${_ref(obj)})',
@@ -225,7 +227,7 @@ String eff(Effect e) => switch (e) {
       Mill(:final amount, :final who) => 'mill ${_amt(amount)} ${_pl(who)}',
       Scry(:final amount) => 'scry ${_amt(amount)}',
       Surveil(:final amount) => 'surveil ${_amt(amount)}',
-      Destroy(:final set) => 'destroy ${_set(set)}',
+      Destroy(:final set, :final noRegen) => 'destroy ${_set(set)}${noRegen ? ' (no regen)' : ''}',
       MoveTo(:final set, :final zone, :final tapped, :final underYourControl, :final counters) => 'move ${_set(set)} → ${zone.name}${tapped ? ' tapped' : ''}${underYourControl ? ' yours' : ''}${counters.isEmpty ? '' : ' $counters'}${e.untilSourceLeaves ? ' untilLeaves' : ''}${e.ownerChoosesTopOrBottom ? ' top/bottom' : ''}',
       Sacrifice(:final who, :final filter, :final amount, :final self) => self ? 'sac self' : 'sac ${_pl(who)} ${_amt(amount)} ${_filter(filter)}',
       Tap(:final set) => 'tap ${_set(set)}',
@@ -260,4 +262,12 @@ String eff(Effect e) => switch (e) {
       ChooseFromRemembered(:final slot, :final then) => 'choose from $slot → ${eff(then)}',
       ChooseEffect(:final options) => 'choose(${options.map(eff).join(' | ')})',
       KeepOneOfEachType(:final who) => 'keepOneOfEach ${_pl(who)}',
+      Regenerate(:final set) => 'regenerate ${_set(set)}',
+      PreventNext(:final amount, :final target, :final set, :final toYou, :final by, :final combatOnly) =>
+        'prevent${combatOnly ? ' combat' : ''} ${amount == null ? 'all' : _amt(amount)}${target != null ? ' to T$target' : ''}${set != null ? ' to ${_set(set)}' : ''}${toYou ? ' to you' : ''}${by != null ? ' by ${_set(by)}' : ''}',
+      RevealHand(:final who, :final filter, :final exile, :final optional) =>
+        'revealHand ${_pl(who)}${filter == null ? '' : ' → ${optional ? 'may ' : ''}${exile ? 'exile' : 'discard'} ${_filter(filter)}'}',
+      FlipCoin() => 'flipCoin',
+      Explore(:final set) => 'explore ${_set(set)}',
+      RollDie(:final sides, :final count) => 'roll ${count}d$sides',
     };
