@@ -214,6 +214,7 @@ class Bot {
       case DecisionKind.modes:
         final opts = List.of(d.options);
         _rng.shuffle(opts);
+        if (d.max == 0) return const [];
         return (opts.take(d.min.clamp(1, d.max)).toList()..sort());
       case DecisionKind.number:
         return [d.max];

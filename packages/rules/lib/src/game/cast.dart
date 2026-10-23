@@ -210,6 +210,11 @@ extension GameCast on Game {
         if (m.targets.every((t) => t.min == 0 || legalTargets(t, ctx, spell: spell).length >= t.min)) ok.add(i);
       }
       if (ok.length < body.minModes) throw GameError('No legal mode');
+      // "Choose up to one" with nothing legal: no modes, nothing to ask (CR 700.2).
+      if (ok.isEmpty) {
+        item.modes = const [];
+        return _chooseTargetsFor(p, item, body, const [], ctx, spell: spell, cancellable: cancellable);
+      }
       // No choice to make: exactly as many legal modes as must be chosen (a fused split spell).
       if (ok.length == body.minModes && body.maxModes == body.minModes) {
         item.modes = ok;

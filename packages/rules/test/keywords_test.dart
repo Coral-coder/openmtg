@@ -222,4 +222,20 @@ void main() {
       expect(zoneOf(g, plains), Zone.hand);
     });
   });
+
+  group('modes', () {
+    test('"choose up to one" with no legal mode chooses none, without asking (CR 700.2)', () {
+      final g = game();
+      for (var i = 0; i < 4; i++) {
+        g.addCard('Forest', 0, Zone.battlefield);
+      }
+      final slinger = g.addCard('Sawblade Slinger', 0, Zone.hand);
+      g.apply(CastAction(0, slinger));
+      pay(g);
+      resolveAll(g);
+      expect(g.state.pending, isNull, reason: 'no artifact or Zombie to target');
+      expect(g.state.stack, isEmpty);
+      expect(zoneOf(g, slinger), Zone.battlefield);
+    });
+  });
 }
