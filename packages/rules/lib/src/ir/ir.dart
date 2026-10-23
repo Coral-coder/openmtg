@@ -1819,3 +1819,111 @@ class RollResult extends Amount {
 class LookAtTopAnyTime extends RuleMod {
   const LookAtTopAnyTime();
 }
+
+// ---------------------------------------------------------------------------------------------
+// More effects: energy, paying during resolution, clash, amass, bolster, untap skipping...
+// ---------------------------------------------------------------------------------------------
+
+/// "You get {E}{E}" (CR 122.1): energy counters on a player.
+class GetEnergy extends Effect {
+  const GetEnergy(this.amount, {this.who = const You(), this.poison = false});
+  final Amount amount;
+  final PlayerRef who;
+
+  /// Poison counters instead (CR 122.1f; ten or more and a player loses, CR 704.5c).
+  final bool poison;
+}
+
+/// "Pay {E}{E}" as a cost.
+class EnergyCost extends CostPart {
+  const EnergyCost(this.n);
+  final int n;
+}
+
+/// The energy a player has ("the amount of {E} you have").
+class EnergyOf extends Amount {
+  const EnergyOf(this.player);
+  final PlayerRef player;
+}
+
+/// "You may pay {2}" / "pay 3 life" / "pay {E}{E}" while resolving; "if you do" follows.
+class PayEffect extends Effect {
+  const PayEffect({this.mana, this.life = 0, this.energy = 0});
+  final ManaCost? mana;
+  final int life, energy;
+}
+
+/// "Clash with an opponent" (CR 701.23); "if you win" reads [WonClash].
+class Clash extends Effect {
+  const Clash();
+}
+
+class WonClash extends Condition {
+  const WonClash();
+}
+
+/// "Amass Zombies 2" (CR 701.47).
+class Amass extends Effect {
+  const Amass(this.subtype, this.amount);
+  final String subtype;
+  final Amount amount;
+}
+
+/// "Bolster 2" (CR 701.39): counters on the creature you control with the least toughness.
+class Bolster extends Effect {
+  const Bolster(this.amount);
+  final Amount amount;
+}
+
+/// "… doesn't untap during its controller's next untap step".
+class SkipNextUntap extends Effect {
+  const SkipNextUntap(this.set);
+  final ObjSet set;
+}
+
+/// "Take an extra turn after this one" (CR 500.7).
+class ExtraTurn extends Effect {
+  const ExtraTurn({this.who = const You()});
+  final PlayerRef who;
+}
+
+/// A player chooses [amount] objects matching [filter] in [from] (not targeted) and moves them
+/// to [to]: "return a land you control to its owner's hand", "you may put a land card from your
+/// hand onto the battlefield tapped".
+class ChooseAndMove extends Effect {
+  const ChooseAndMove(this.filter, this.from, this.to, {this.who = const You(), this.amount = const Fixed(1), this.tapped = false});
+  final Filter filter;
+  final ZoneKind from, to;
+  final PlayerRef who;
+  final Amount amount;
+  final bool tapped;
+}
+
+/// "Sacrifice it at the beginning of the next end step" ([sacrifice]) or "return it to the
+/// battlefield under its owner's control at the beginning of the next end step" ([returnIt]).
+class AtNextEndStep extends Effect {
+  const AtNextEndStep(this.set, {this.sacrifice = false, this.returnIt = false, this.exile = false, this.toHand = false, this.underYourControl = false, this.step = TurnStep.end});
+  final ObjSet set;
+  final bool sacrifice, returnIt, exile, toHand, underYourControl;
+
+  /// The next end step, or end of combat ("sacrifice it at end of combat").
+  final TurnStep step;
+}
+
+/// "Choose a color" / "choose a creature type" while resolving: kept on the source, where "of
+/// the chosen color/type" reads it.
+class ChooseValue extends Effect {
+  const ChooseValue(this.what);
+  final String what; // 'color' | 'creature type'
+}
+
+/// "Populate" (CR 701.30): copy a creature token you control.
+class Populate extends Effect {
+  const Populate();
+}
+
+/// Activation windows: "activate only during your upkeep", "… before attackers are declared".
+class StepIn extends Condition {
+  const StepIn(this.steps);
+  final Set<TurnStep> steps;
+}

@@ -69,6 +69,8 @@ Amount? parseQuantity(String s, BodyCtx ctx) {
   if (t.startsWith('the ')) t = t.substring(4);
   final simple = parseAmount(t);
   if (simple != null) return simple;
+  final sacrificed = rx(t, r"(?:the )?sacrificed (?:creature|artifact|permanent)'s (power|toughness)");
+  if (sacrificed != null) return ResultAmount(sacrificed[1] == 'power' ? 'sacPower' : 'sacToughness');
   final sac = rx(t, r"that creature's (power|toughness)");
   if (sac != null && ctx.lastVerb == 'sacrifice') return ResultAmount(sac[1] == 'power' ? 'sacPower' : 'sacToughness');
   final m1 = rx(t, r"(?:its|~'s|that creature's) (power|toughness|mana value)");
@@ -210,19 +212,31 @@ Filter? parseFilterCore(String phrase) {
         changed = true;
       }
     }
-    if (t.endsWith(' of the chosen type')) {
-      t = t.substring(0, t.length - 19);
-      f = f.copyWith(chosenType: true);
-      changed = true;
+    for (final suffix in const [' of the chosen type', ' of that type', ' of the chosen creature type']) {
+      if (t.endsWith(suffix)) {
+        t = t.substring(0, t.length - suffix.length);
+        f = f.copyWith(chosenType: true);
+        changed = true;
+      }
     }
-    if (t.endsWith(' of the chosen color')) {
-      t = t.substring(0, t.length - 20);
-      f = f.copyWith(chosenColor: true);
+    for (final suffix in const [' of the chosen color', ' of that color']) {
+      if (t.endsWith(suffix)) {
+        t = t.substring(0, t.length - suffix.length);
+        f = f.copyWith(chosenColor: true);
+        changed = true;
+      }
+    }
+    // "creatures you control of the chosen type": the controller phrase comes first.
+    final ofChosen = RegExp(r'^(.+) (you control|your opponents control|an opponent controls) of the chosen (type|color)$').firstMatch(t);
+    if (ofChosen != null) {
+      t = '${ofChosen.group(1)} ${ofChosen.group(2)}';
+      f = ofChosen.group(3) == 'type' ? f.copyWith(chosenType: true) : f.copyWith(chosenColor: true);
       changed = true;
     }
   }
   // Leading qualifiers.
-  final words = t.split(' ');
+  // "nonartifact, nonblack creature": qualifiers may be separated by commas.
+  final words = [for (final w in t.split(' ')) w.endsWith(',') && w.length > 4 && w.startsWith('non') ? w.substring(0, w.length - 1) : w];
   var i = 0;
   while (i < words.length) {
     final w = words[i];
@@ -307,6 +321,12 @@ Filter? _typeList(String s, Filter f) {
     }
   }
   if (t.isEmpty) return f;
+  // "permanent card", "mercenary permanent card": a card of a permanent type.
+  if (f.card && (t == 'permanent' || t.endsWith(' permanent'))) {
+    f = f.copyWith(permanent: true);
+    t = t == 'permanent' ? '' : t.substring(0, t.length - 10);
+    if (t.isEmpty) return f;
+  }
   // "artifact, enchantment, or creature" / "creature or planeswalker" / "instant and sorcery"
   final parts = t.replaceAll(', and/or ', ', ').replaceAll(' and/or ', ', ').replaceAll(', or ', ', ').replaceAll(' or ', ', ').replaceAll(', and ', ', ').replaceAll(' and ', ', ').split(', ');
   final types = <CardType>{};
@@ -520,7 +540,7 @@ PlayerRef? parsePlayer(String phrase, BodyCtx ctx) {
       return TargetPlayer(i);
     case 'that player' || 'they' || 'the player':
       return ctx.thatPlayer ?? const EventPlayer();
-    case 'its controller' || "that creature's controller" || "that permanent's controller" || "that spell's controller":
+    case 'its controller' || "that creature's controller" || "that permanent's controller" || "that spell's controller" || "that land's controller" || "that artifact's controller" || "that enchantment's controller" || "that planeswalker's controller":
       final r = ctx.it;
       if (r == null) return null;
       return ControllerOf(r);

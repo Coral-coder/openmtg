@@ -23,6 +23,8 @@ extension GameEffects on Game {
         item: item,
         sourceLki: item.sourceLki ?? (src != null && src.zcc == item.sourceZcc ? chars(item.sourceId).copy() : null),
         wasCast: src?.wasCast ?? false);
+    // What was paid ("the sacrificed creature's power") is readable while resolving.
+    ctx.results.addAll(item.paidCost);
     final ab = item.ability;
     final body = switch (ab) { SpellAbility(:final body) => body, ActivatedAbility(:final body) => body, TriggeredAbility(:final body) => body, _ => const Body() };
 
@@ -404,7 +406,7 @@ extension GameEffects on Game {
           final before = state.version;
           _exec(effect, ctx);
           // "If you do" depends on having actually done it (sacrificed, discarded...).
-          if (effect is Sacrifice || effect is Discard) ctx.didIt = ctx.results['did'] != 0 && state.version != before;
+          if (effect is Sacrifice || effect is Discard || effect is PayEffect || effect is ChooseAndMove) ctx.didIt = ctx.results['did'] != 0 && state.version != before;
         }
       case If(:final cond, :final then, :final otherwise):
         if (evalCondition(cond, ctx)) {
@@ -456,13 +458,15 @@ extension GameEffects on Game {
             _dealDamage(sid, src, playerEntity(p), n);
           }
         }
-      case DamageTarget(:final amount, :final index, :final source):
-        final n = evalAmount(amount, ctx);
+      case DamageTarget(:final amount, :final index, :final source, :final divided):
+        final all = evalAmount(amount, ctx);
         final src = _sourceChars(ctx, source);
         final sid = _sourceId(ctx, source);
         if (index < ctx.targets.length) {
           for (var i = 0; i < ctx.targets[index].length; i++) {
             final t = ctx.targets[index][i];
+            // Divided damage uses the split chosen on casting; an illegal target's share is lost.
+            final n = divided ? (ctx.results['div$index.$i'] ?? all) : all;
             if (isPlayerEntity(t)) {
               if (!state.player(entityPlayer(t)).lost) _dealDamage(sid, src, t, n);
             } else if (state.objOrNull(t)?.zone == Zone.battlefield) {
@@ -774,6 +778,8 @@ extension GameEffects on Game {
         break;
       case Regenerate() || PreventNext() || RevealHand() || FlipCoin() || RollDie() || Explore():
         _execShieldsAndChance(e, ctx);
+      case GetEnergy() || PayEffect() || Clash() || Amass() || Bolster() || SkipNextUntap() || ExtraTurn() || ChooseAndMove() || Populate() || AtNextEndStep() || ChooseValue():
+        _execMore(e, ctx);
       case CopySpell(:final obj, :final amount):
         final ids = _ref(obj, ctx);
         if (ids.isEmpty) return;

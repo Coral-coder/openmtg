@@ -106,6 +106,10 @@ class GameObject {
   bool sacrificeAtEnd = false;
   bool exileIfDies = false;
 
+  /// Untap steps of its controller it still skips ("doesn't untap during its controller's next
+  /// untap step").
+  int skipUntap = 0;
+
   /// Cast with flashback: exile it instead of anywhere else it would go from the stack.
   bool exileOnResolve = false;
 
@@ -164,6 +168,7 @@ class GameObject {
     ..playableUntil = playableUntil
     ..playFree = playFree
     ..sacrificeAtEnd = sacrificeAtEnd
+    ..skipUntap = skipUntap
     ..exileIfDies = exileIfDies
     ..exileOnResolve = exileOnResolve
     ..arrivedTurn = arrivedTurn
@@ -201,6 +206,7 @@ class GameObject {
     playableUntil = 0;
     playFree = false;
     sacrificeAtEnd = false;
+    skipUntap = 0;
     exileIfDies = false;
     exileOnResolve = false;
     attacking = null;
@@ -215,7 +221,7 @@ class GameObject {
   String digest() {
     final c = (counters.entries.where((e) => e.value != 0).map((e) => '${e.key}=${e.value}').toList()..sort()).join(',');
     final a = (activations.entries.map((e) => '${e.key}=${e.value}').toList()..sort()).join(';');
-    return '$id.$zcc|$cardName|${token?.key ?? ''}|${copyOfCard ?? ''}|${copyOfToken?.key ?? ''}|$owner|$controller|${zone.index}|$tapped|$faceDown|$phasedOut|$face|${adventureBy ?? ''}|$c|$damage|$deathtouched|$attachedTo|$timestamp|$controlSince|$enteredTurn|$wasCast|$kicked|$x|$chosenColor|$chosenType|$a|${(activatedEver.toList()..sort()).join(';')}|$playableBy|$playableUntil|$playFree|$sacrificeAtEnd|$exileIfDies|$exileOnResolve|$arrivedTurn|$attacking|${blocking.join(',')}|${blockedBy.join(',')}|$blocked|$dealtFirstStrikeDamage|${extraTypes.join(',')}|${exiledUntilLeaves.join(',')}|$tokenCopy|${copyExtra.length}|${damagedBy.join(',')}';
+    return '$id.$zcc|$cardName|${token?.key ?? ''}|${copyOfCard ?? ''}|${copyOfToken?.key ?? ''}|$owner|$controller|${zone.index}|$tapped|$faceDown|$phasedOut|$face|${adventureBy ?? ''}|$c|$damage|$deathtouched|$attachedTo|$timestamp|$controlSince|$enteredTurn|$wasCast|$kicked|$x|$chosenColor|$chosenType|$a|${(activatedEver.toList()..sort()).join(';')}|$playableBy|$playableUntil|$playFree|$sacrificeAtEnd|$skipUntap|$exileIfDies|$exileOnResolve|$arrivedTurn|$attacking|${blocking.join(',')}|${blockedBy.join(',')}|$blocked|$dealtFirstStrikeDamage|${extraTypes.join(',')}|${exiledUntilLeaves.join(',')}|$tokenCopy|${copyExtra.length}|${damagedBy.join(',')}';
   }
 }
 
@@ -300,6 +306,9 @@ class Player {
   int life = 20;
   int startingLife = 20;
   int poison = 0;
+
+  /// Energy counters (CR 122.1).
+  int energy = 0;
   List<ObjId> library = []; // index 0 is the top
   List<ObjId> hand = [];
   List<ObjId> graveyard = [];
@@ -321,6 +330,7 @@ class Player {
     ..life = life
     ..startingLife = startingLife
     ..poison = poison
+    ..energy = energy
     ..library = List.of(library)
     ..hand = List.of(hand)
     ..graveyard = List.of(graveyard)
@@ -345,7 +355,7 @@ class Player {
       };
 
   String digest() =>
-      '$id|$name|$life|$startingLife|$poison|${library.join(',')}|${hand.join(',')}|${graveyard.join(',')}|${exile.join(',')}|${pool.map((m) => m.digest()).join()}|$lost|$won|$mulligans|$kept|$drewFromEmpty|${stats.digest()}|${stops.digest()}|$toBottom';
+      '$id|$name|$life|$startingLife|$poison|${library.join(',')}|${hand.join(',')}|${graveyard.join(',')}|${exile.join(',')}|${pool.map((m) => m.digest()).join()}|$lost|$won|$mulligans|$kept|$drewFromEmpty|${stats.digest()}|${stops.digest()}|$toBottom|$energy';
 }
 
 enum StackKind { spell, activated, triggered }
@@ -418,7 +428,7 @@ class StackItem {
         ..targetZcc = [for (final t in targetZcc) List.of(t)]
         ..sourceLki = sourceLki;
 
-  String digest() => '$id|${kind.index}|$controller|$sourceId.$sourceZcc|${_stable(ability?.text)}|$objId|${modes.join(',')}|${targets.map((t) => t.join(',')).join(';')}|${targetZcc.map((t) => t.join(',')).join(';')}|$x|$kicked|${event?.digest() ?? ''}|$isCopy';
+  String digest() => '$id|${kind.index}|$controller|$sourceId.$sourceZcc|${_stable(ability?.text)}|$objId|${modes.join(',')}|${targets.map((t) => t.join(',')).join(';')}|${targetZcc.map((t) => t.join(',')).join(';')}|$x|$kicked|${event?.digest() ?? ''}|$isCopy|${(paidCost.entries.map((e) => '${e.key}=${e.value}').toList()..sort()).join(',')}';
 }
 
 /// What a trigger event was about, kept with the triggered ability (CR 603.10 look-back data).

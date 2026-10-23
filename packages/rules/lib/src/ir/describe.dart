@@ -43,6 +43,7 @@ String _part(CostPart p) => switch (p) {
       TapCost(:final n, :final filter) => n == 0 ? 'tap self' : 'tap $n ${_filter(filter)}',
       ReturnCost(:final filter) => 'return ${_filter(filter)}',
       AddCountersCost(:final kind, :final n) => 'add $n $kind',
+      EnergyCost(:final n) => 'energy $n',
     };
 
 String _produce(ManaProduce p) => '${p.fixed.isNotEmpty ? p.fixed.map((m) => m.name).join() : ''}${p.choice.isNotEmpty ? p.choice.map((m) => m.name).join('/') : ''}${p.anyColor ? 'any' : ''}${p.chosenColor ? 'chosen' : ''} x${_amt(p.amount)}${p.restriction != null ? ' only ${_filter(p.restriction!)}' : ''}';
@@ -95,6 +96,8 @@ String _cond(Condition c) => switch (c) {
       DidIt() => 'didIt',
       AmountCompare(:final a, :final cmp, :final b) => '${_amt(a)} ${cmp.name} ${_amt(b)}',
       WonFlip(:final won) => won ? 'wonFlip' : 'lostFlip',
+      WonClash() => 'wonClash',
+      StepIn(:final steps) => 'during ${steps.map((s) => s.name).join('/')}',
     };
 
 String _repl(Replacement r) => switch (r) {
@@ -171,6 +174,7 @@ String _amt(Amount a) => switch (a) {
       Fixed(:final n) => '$n',
       XValue() => 'X',
       RollResult() => 'roll',
+      EnergyOf(:final player) => 'energy(${_pl(player)})',
       CountOf(:final set) => '#(${_set(set)})',
       PlayerCount(:final players) => '#${_pl(players)}',
       StatOf(:final stat, :final obj) => '${stat.name}(${_ref(obj)})',
@@ -293,6 +297,17 @@ String eff(Effect e) => switch (e) {
       RevealHand(:final who, :final filter, :final exile, :final optional) =>
         'revealHand ${_pl(who)}${filter == null ? '' : ' → ${optional ? 'may ' : ''}${exile ? 'exile' : 'discard'} ${_filter(filter)}'}',
       FlipCoin() => 'flipCoin',
+      GetEnergy(:final amount, :final who, :final poison) => '${poison ? 'poison' : 'energy'} +${_amt(amount)} ${_pl(who)}',
+      PayEffect(:final mana, :final life, :final energy) => 'pay${mana == null ? '' : ' ${mana.text}'}${life > 0 ? ' $life life' : ''}${energy > 0 ? ' $energy energy' : ''}',
+      Clash() => 'clash',
+      Amass(:final subtype, :final amount) => 'amass $subtype ${_amt(amount)}',
+      Bolster(:final amount) => 'bolster ${_amt(amount)}',
+      SkipNextUntap(:final set) => 'skipUntap ${_set(set)}',
+      ExtraTurn(:final who) => 'extraTurn ${_pl(who)}',
+      ChooseAndMove(:final filter, :final from, :final to, :final who, :final amount, :final tapped) => 'choose ${_amt(amount)} ${_filter(filter)} in ${from.name} (${_pl(who)}) → ${to.name}${tapped ? ' tapped' : ''}',
+      Populate() => 'populate',
+      ChooseValue(:final what) => 'choose $what',
+      AtNextEndStep(:final set, :final sacrifice) => '${sacrifice ? 'sacrifice' : 'return'} ${_set(set)} at next end step',
       Explore(:final set) => 'explore ${_set(set)}',
       RollDie(:final sides, :final count) => 'roll ${count}d$sides',
     };
