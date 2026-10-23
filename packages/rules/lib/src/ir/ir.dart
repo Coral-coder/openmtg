@@ -70,7 +70,7 @@ class LifeTotal extends Amount {
   final PlayerRef player;
 }
 
-enum TurnStat { lifeGained, lifeLost, cardsDrawn, spellsCast }
+enum TurnStat { lifeGained, lifeLost, cardsDrawn, spellsCast, damageTaken }
 
 class TurnCount extends Amount {
   const TurnCount(this.stat, this.player);
@@ -642,9 +642,12 @@ class RemoveCountersCost extends CostPart {
 
 /// "Tap an untapped creature you control", "tap ten untapped Elves you control".
 class TapCost extends CostPart {
-  const TapCost(this.filter, this.n);
+  const TapCost(this.filter, this.n, {this.totalPower = 0});
   final Filter filter;
   final int n;
+
+  /// Crew: any number of them with total power at least this.
+  final int totalPower;
 }
 
 /// "Return a land you control to its owner's hand".

@@ -218,12 +218,70 @@ class _FaceParser {
     final parts = p.endsWith('.') ? [p.substring(0, p.length - 1)] : p.split(RegExp(r', |; '));
     final out = <Ability>[];
     for (final part in parts) {
-      final k = parseKeyword(part.trim(), part.trim());
+      final k = parseKeyword(part.trim(), part.trim()) ?? _expandKeyword(part.trim());
       if (k == null) return null;
       out.addAll(k);
     }
     return out;
   }
+
+  /// Keywords that are shorthand for abilities the parser already reads: each is rewritten as
+  /// its rules text (CR 702) and parsed like any other paragraph.
+  static final List<(RegExp, String)> _keywordTexts = [
+    (RegExp(r'^exalted$'), 'whenever a creature you control attacks alone, that creature gets +1/+1 until end of turn'),
+    (RegExp(r'^bushido (\d+)$'), 'whenever ~ blocks or becomes blocked, ~ gets +\$1/+\$1 until end of turn'),
+    (RegExp(r'^persist$'), 'when ~ dies, if it had no -1/-1 counters on it, return it to the battlefield under its owner\'s control with a -1/-1 counter on it'),
+    (RegExp(r'^undying$'), 'when ~ dies, if it had no +1/+1 counters on it, return it to the battlefield under its owner\'s control with a +1/+1 counter on it'),
+    (RegExp(r'^soulshift (\d+)$'), 'when ~ dies, you may return target spirit card with mana value \$1 or less from your graveyard to your hand'),
+    (RegExp(r'^afterlife (\d+)$'), 'when ~ dies, create \$1 1/1 white and black spirit creature tokens with flying'),
+    (RegExp(r'^bloodthirst (\d+)$'), 'if an opponent was dealt damage this turn, ~ enters with \$1 +1/+1 counters on it'),
+    (RegExp(r'^battle cry$'), 'whenever ~ attacks, each other attacking creature gets +1/+0 until end of turn'),
+    (RegExp(r'^afflict (\d+)$'), 'whenever ~ becomes blocked, defending player loses \$1 life'),
+    (RegExp(r'^annihilator (\d+)$'), 'whenever ~ attacks, defending player sacrifices \$1 permanents'),
+    (RegExp(r'^training$'), 'whenever ~ attacks with another creature with greater power, put a +1/+1 counter on ~'),
+    (RegExp(r'^dethrone$'), 'whenever ~ attacks the player with the most life or tied for most life, put a +1/+1 counter on ~'),
+    (RegExp(r'^living weapon$'), 'when ~ enters, create a 0/0 black phyrexian germ creature token, then attach ~ to it'),
+    (RegExp(r'^extort$'), 'whenever you cast a spell, you may pay {w/b}. if you do, each opponent loses 1 life and you gain that much life'),
+    (RegExp(r'^evolve$'), 'whenever another creature you control enters, if that creature\'s power is greater than ~\'s power or that creature\'s toughness is greater than ~\'s toughness, put a +1/+1 counter on ~'),
+    (RegExp(r'^modular (\d+)$'), '~ enters with \$1 +1/+1 counters on it'),
+    (RegExp(r'^fabricate (\d+)$'), 'when ~ enters, put \$1 +1/+1 counters on it'),
+    (RegExp(r'^riot$'), '~ enters with a +1/+1 counter on it'),
+  ];
+
+  List<Ability>? _expandKeyword(String k) {
+    for (final (re, text) in _keywordTexts) {
+      final m = re.firstMatch(k);
+      if (m == null) continue;
+      final body = text.replaceAllMapped(RegExp(r'\$(\d)'), (x) => m.group(int.parse(x.group(1)!))!);
+      final r = paragraph(body);
+      if (r == null) return null;
+      return [for (final a in r) _relabel(a, k)];
+    }
+    // Crew N (CR 702.122).
+    final crew = rx(k, r'crew (\d+)');
+    if (crew != null) {
+      final ctx = BodyCtx();
+      final body = _bodyOf('~ becomes an artifact creature until end of turn', ctx);
+      if (body == null) return null;
+      return [ActivatedAbility(k, Cost(parts: [TapCost(const Filter(types: {CardType.creature}, other: true), 0, totalPower: int.parse(crew[1]))]), body)];
+    }
+    // Typecycling and landcycling (CR 702.29e).
+    final tc = rx(k, r'(basic land|plains|island|swamp|mountain|forest|[a-z]+)cycling (\{[^}]+\}(?:\{[^}]+\})*)');
+    if (tc != null) {
+      final what = tc[1] == 'basic land' ? 'basic land' : tc[1];
+      final ctx = BodyCtx();
+      final body = _bodyOf('search your library for a $what card, reveal it, put it into your hand, then shuffle', ctx);
+      if (body == null) return null;
+      return [ActivatedAbility(k, Cost(mana: ManaCost.parse(tc[2].toUpperCase()), parts: const [DiscardCost(Filter.any, self: true)]), body, zone: ZoneKind.hand)];
+    }
+    return null;
+  }
+
+  /// Shows the keyword, not its expansion, as the ability's text.
+  Ability _relabel(Ability a, String k) => switch (a) {
+        TriggeredAbility() => TriggeredAbility(k, a.trigger, a.body, condition: a.condition, oncePerTurn: a.oncePerTurn, zone: a.zone, optionalCost: a.optionalCost),
+        _ => a,
+      };
 
   // -------------------------------------------------------------------------------------------
   // Activated abilities (CR 602) and mana abilities (CR 605)
@@ -414,6 +472,18 @@ class _FaceParser {
     }
     m = rx(h, r'whenever you attack(?: with (two|three|four|five) or more creatures)?');
     if (m != null) return [(YouAttackTrigger(min: m[1].isEmpty ? 1 : numberWord(m[1])!), null)];
+    m = rx(h, r'(?:when|whenever) (.+?) attacks alone');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      if (set == null) return null;
+      return [(AttacksTrigger(set, alone: true), null)];
+    }
+    m = rx(h, r'(?:when|whenever) (.+?) blocks or becomes blocked');
+    if (m != null) {
+      final set = _triggerSubject(m[1], ctx);
+      if (set == null) return null;
+      return [(BlocksTrigger(set), null), (BecomesBlockedTrigger(set), null)];
+    }
     m = rx(h, r'(?:when|whenever) (.+?) attacks(?: while (.+))?');
     if (m != null) {
       final set = _triggerSubject(m[1], ctx);
@@ -584,7 +654,12 @@ class _FaceParser {
 
   Condition? condition(String s, BodyCtx ctx) {
     final t = s.trim();
+    // Persist and undying: "it had no -1/-1 counters on it" (last known information).
+    final hadNo = rx(t, r'(?:it|~) had no ([a-z+/0-9-]+) counters on it');
+    if (hadNo != null) return Not(ObjMatches(const EventObj(), Filter(withCounter: hadNo[1])));
     switch (t) {
+      case 'an opponent was dealt damage this turn' || 'an opponent has been dealt damage this turn':
+        return const TurnStatCondition(TurnStat.damageTaken, EachOpponent(), Cmp.gt, 0);
       case 'you attacked this turn' || 'you attacked with a creature this turn':
         return const AttackedThisTurn();
       case 'a creature died this turn':
@@ -732,7 +807,14 @@ class _FaceParser {
       final g = parseGroup(m[1], ctx);
       if (g != null) return [ReplacementAbility(raw, EntersTapped(g))];
     }
-    m = rx(t, r"(?:if ~ was kicked, it|~) enters with (a|an|one|two|three|four|five|x) ([a-z+/0-9-]+) counters? on it(?: if (.+))?");
+    final lead = rx(t, r"if (.+?), ~ enters with (.+)");
+    if (lead != null && !t.startsWith('if ~ was kicked')) {
+      final c = condition(lead[1], ctx);
+      final r = c == null ? null : _static('~ enters with ${lead[2]}', raw);
+      final rep = r != null && r.length == 1 && r.first is ReplacementAbility ? (r.first as ReplacementAbility).replacement : null;
+      if (rep is EntersWithCounters && rep.condition == null) return [ReplacementAbility(raw, EntersWithCounters(rep.set, rep.kind, rep.amount, condition: c))];
+    }
+    m = rx(t, r"(?:if ~ was kicked, it|~) enters with (a|an|one|two|three|four|five|six|seven|eight|x|\d+) ([a-z+/0-9-]+) counters? on it(?: if (.+))?");
     if (m != null) {
       Condition? c = t.startsWith('if ~ was kicked') ? const Kicked() : null;
       if (m[3].isNotEmpty) {
@@ -929,6 +1011,8 @@ class _FaceParser {
       final kws = _kwList(m[1]);
       if (kws != null) return [for (final k in kws) AddKw(k)];
     }
+    // Crew: a Vehicle "becomes an artifact creature" with its printed power and toughness.
+    if (rx(p, r'becomes? an artifact creature') != null) return const [TypeMod(types: {CardType.artifact, CardType.creature})];
     m = rx(p, r'(?:has|have|gains?) "(.+)"');
     if (m != null) {
       final a = OracleParser.parseGranted(m[1].replaceAll('~', 'this creature'));
@@ -1232,6 +1316,19 @@ class _FaceParser {
   }
 
   Effect? _clause(String t, BodyCtx ctx, EffectDuration? duration) {
+    // "Return it to the battlefield … with a -1/-1 counter on it."
+    final withC = rx(t, r'(return .+ to the battlefield.*?) with (a|an|one|two|three) ([a-z+/0-9-]+) counters? on (?:it|them)');
+    if (withC != null) {
+      final e = _clause(withC[1], ctx, duration);
+      if (e is! MoveTo) return null;
+      return MoveTo(e.set, e.zone,
+          tapped: e.tapped,
+          underYourControl: e.underYourControl,
+          counters: {...e.counters, withC[3]: numberWord(withC[2]) ?? 1},
+          remember: e.remember,
+          attacking: e.attacking,
+          extraTypes: e.extraTypes);
+    }
     // "…, then draws seven cards": a third-person verb with no subject keeps the last subject.
     final carried = ctx.lastSubject;
     if (carried != null && RegExp(r'^(draws|discards|loses|gains|mills|sacrifices|creates|reveals|shuffles|puts|returns) ').hasMatch(t)) {

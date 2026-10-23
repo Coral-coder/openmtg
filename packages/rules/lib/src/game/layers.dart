@@ -29,10 +29,20 @@ extension GameLayers on Game {
     if (c != null) return c;
     final o = state.obj(id);
     final b = _baseChars(o);
-    _applySelfCda(id, b);
+    // Two "power equal to the number of creature cards in your graveyard" cards look at each
+    // other: while one's CDA is being worked out, the other sees its printed values (a CDA only
+    // defines what it says, never the types those counts match on).
+    if (!_cdaInProgress.add(id)) return b;
+    try {
+      _applySelfCda(id, b);
+    } finally {
+      _cdaInProgress.remove(id);
+    }
     _charCache[id] = b;
     return b;
   }
+
+  static final Set<ObjId> _cdaInProgress = {};
 
   void _ensureChars() {
     if (_charVersion == state.version && identical(_charState, state)) return;
@@ -87,6 +97,8 @@ extension GameLayers on Game {
       if (a is KeywordAbility) {
         c.keywords.add(a.kw);
         if (a.kw == Kw.allCreatureTypes) c.allCreatureTypes = true;
+        // Devoid (CR 702.114): colorless in every zone.
+        if (a.kw.name == 'devoid') c.colors.clear();
       }
     }
     return c;

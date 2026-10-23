@@ -72,6 +72,16 @@ extension GameCombat on Game {
     if (b.has(Kw.cantBlock) || b.has(Kw.cantAttackOrBlock)) return false;
     if (a.has(Kw.unblockable)) return false;
     if (a.has(Kw.flying) && !b.has(Kw.flying) && !b.has(Kw.reach)) return false;
+    // Evasion keywords (CR 702.14, 702.28, 702.36, 702.13, 702.31, 702.118).
+    if (b.hasName('shadow') != a.hasName('shadow')) return false;
+    if (a.hasName('horsemanship') && !b.hasName('horsemanship')) return false;
+    if (a.hasName('fear') && !b.isArtifact && !b.colors.contains(ManaColor.black)) return false;
+    if (a.hasName('intimidate') && !b.isArtifact && !b.colors.any(a.colors.contains)) return false;
+    if (a.hasName('skulk') && (b.power ?? 0) > (a.power ?? 0)) return false;
+    for (final k in a.kws('landwalk')) {
+      final ctx = EvalCtx(this, controller: b.controller);
+      if (state.battlefield.any((id) => chars(id).controller == b.controller && matchesFilter(k.filter!, id, ctx))) return false;
+    }
     for (final k in a.kws("can't be blocked by")) {
       if (_qualityMatches(k.filter!, b)) return false;
     }

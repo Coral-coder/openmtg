@@ -306,7 +306,7 @@ extension GameQuery on Game {
         var t = 0;
         for (final p in resolvePlayers(player, ctx)) {
           final s = state.player(p).stats;
-          t += switch (stat) { TurnStat.lifeGained => s.lifeGained, TurnStat.lifeLost => s.lifeLost, TurnStat.cardsDrawn => s.cardsDrawn, TurnStat.spellsCast => s.spellsCast };
+          t += switch (stat) { TurnStat.lifeGained => s.lifeGained, TurnStat.lifeLost => s.lifeLost, TurnStat.cardsDrawn => s.cardsDrawn, TurnStat.spellsCast => s.spellsCast, TurnStat.damageTaken => s.damageTaken };
         }
         return t;
       case EventAmount():
@@ -347,7 +347,7 @@ extension GameQuery on Game {
       case TurnStatCondition(:final stat, :final player, :final cmp, :final n):
         return resolvePlayers(player, ctx).any((p) {
           final s = state.player(p).stats;
-          final v = switch (stat) { TurnStat.lifeGained => s.lifeGained, TurnStat.lifeLost => s.lifeLost, TurnStat.cardsDrawn => s.cardsDrawn, TurnStat.spellsCast => s.spellsCast };
+          final v = switch (stat) { TurnStat.lifeGained => s.lifeGained, TurnStat.lifeLost => s.lifeLost, TurnStat.cardsDrawn => s.cardsDrawn, TurnStat.spellsCast => s.spellsCast, TurnStat.damageTaken => s.damageTaken };
           return cmp.test(v, n);
         });
       case CountCondition(:final amount, :final cmp, :final n):
@@ -359,6 +359,8 @@ extension GameQuery on Game {
       case WasCast():
         return ctx.wasCast;
       case ObjMatches(:final obj, :final filter):
+        // "If it had no -1/-1 counters on it": the counters it had as the event happened.
+        if (obj is EventObj && filter.withCounter != null && ctx.event != null) return (ctx.event!.objCounters[filter.withCounter!] ?? 0) > 0;
         final ids = _ref(obj, ctx);
         if (ids.isEmpty) {
           // Look back at the object as it last existed.

@@ -39,6 +39,7 @@ String _part(CostPart p) => switch (p) {
       PayLifeCost(:final amount) => 'life ${_amt(amount)}',
       ExileFromGraveyardCost(:final n, :final self) => self ? 'exile self from gy' : 'exile $n from gy',
       RemoveCountersCost(:final kind, :final n) => 'remove $n $kind',
+      TapCost(:final totalPower) when totalPower > 0 => 'crew $totalPower',
       TapCost(:final n, :final filter) => n == 0 ? 'tap self' : 'tap $n ${_filter(filter)}',
       ReturnCost(:final filter) => 'return ${_filter(filter)}',
       AddCountersCost(:final kind, :final n) => 'add $n $kind',

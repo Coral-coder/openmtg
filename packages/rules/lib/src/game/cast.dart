@@ -422,6 +422,28 @@ extension GameCast on Game {
           final k = kinds.length == 1 ? 0 : ask(Decision(kind: DecisionKind.option, player: p, prompt: 'Which counter?', labels: kinds, source: source, cancellable: true)).first;
           _removeCounters(o.id, kinds[k], 1);
         }
+      case TapCost(:final filter, :final totalPower) when totalPower > 0:
+        // Crew (CR 702.122): tap any number of other untapped creatures with enough total power.
+        // Strongest first, and the fewest that are enough as the minimum, so the default
+        // answer is a legal one.
+        final options = [
+          for (final id in state.battlefield)
+            if (id != source && !state.obj(id).tapped && chars(id).controller == p && matchesFilter(filter.copyWith(controller: Who.you, tapped: false), id, ctx)) id,
+        ]..sort((a, b) {
+            final d = (chars(b).power ?? 0) - (chars(a).power ?? 0);
+            return d != 0 ? d : a - b;
+          });
+        var need = 0, sum = 0;
+        while (need < options.length && sum < totalPower) {
+          sum += chars(options[need]).power ?? 0;
+          need++;
+        }
+        if (sum < totalPower) throw GameError('Not enough untapped creatures to crew $totalPower');
+        final pick = ask(Decision(kind: DecisionKind.cards, player: p, prompt: 'Crew $totalPower: tap creatures with total power $totalPower or more', options: options, min: need, max: options.length, source: source, cancellable: true));
+        if (pick.fold<int>(0, (a, id) => a + (chars(id).power ?? 0)) < totalPower) throw GameError('Not enough total power to crew $totalPower');
+        for (final id in pick) {
+          _tap(id);
+        }
       case TapCost(:final filter, :final n):
         if (n == 0) {
           if (state.obj(source).tapped) throw GameError('Already tapped');

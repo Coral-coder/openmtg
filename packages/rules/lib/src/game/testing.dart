@@ -60,4 +60,10 @@ extension GameTesting on Game {
 
   /// Settles the game after manual setup (state-based actions, triggers).
   void settle() => _advance();
+
+  /// Destroys a permanent as an effect would, then settles (dies triggers go on the stack).
+  void destroyForTest(ObjId id) {
+    _destroy(id);
+    _advance();
+  }
 }

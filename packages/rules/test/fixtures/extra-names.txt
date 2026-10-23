@@ -1,0 +1,28 @@
+# Cards outside Foundations used by rules tests (tools/make_fixture.py builds extra.json).
+Plains
+Island
+Swamp
+Mountain
+Forest
+Grizzly Bears
+Hill Giant
+Akrasan Squire
+Anaconda
+Dauthi Cutthroat
+Blackcleave Goblin
+Boggart Ram-Gang
+Annex Sentry
+Avian Changeling
+Blinding Drone
+Aerie Ouphes
+Butcher Ghoul
+Araba Mothrider
+Blood Ogre
+Adventurer's Airship
+Apex Witchstalker
+Commander Greven il-Vec
+Barbarian General
+Farbog Revenant
+Academy Raider
+Body of Jukai
+Boneyard Wurm

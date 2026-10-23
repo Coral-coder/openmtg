@@ -5,54 +5,6 @@ import 'package:test/test.dart';
 
 import 'helpers.dart';
 
-Game empty({int active = 0}) => Game(fdn(), players: ['Alice', 'Bob'], seed: 1)..startEmpty(active: active);
-
-void answer(Game g, List<int> a) => g.apply(AnswerAction(g.state.pending!.decision.player, a));
-
-/// Answers a target decision unless it was forced (and so skipped by the engine).
-void target(Game g, List<int> ids) {
-  if (g.state.pending?.decision.kind == DecisionKind.targets) answer(g, ids);
-}
-
-/// Pays automatically if payment is asked.
-void pay(Game g) {
-  if (g.state.pending?.decision.kind == DecisionKind.payMana) answer(g, []);
-}
-
-/// Passes priority until the stack is empty (or a decision is pending).
-void resolveAll(Game g) {
-  for (var i = 0; i < 50 && g.state.stack.isNotEmpty && g.state.pending == null; i++) {
-    g.apply(PassAction(g.state.priority!));
-  }
-}
-
-/// Passes until the game reaches [step] (declining blocks and attacks on the way), or a
-/// decision other than those is pending, or the game ends.
-void passTo(Game g, TurnStep step) {
-  for (var i = 0; i < 200 && !g.state.over; i++) {
-    final pd = g.state.pending;
-    if (pd != null) {
-      if (pd.decision.kind == DecisionKind.blockers || pd.decision.kind == DecisionKind.attackers) {
-        answer(g, []);
-        continue;
-      }
-      return;
-    }
-    if (g.state.step == step && g.state.stack.isEmpty && g.state.priority != null) return;
-    g.apply(PassAction(g.state.priority!));
-  }
-}
-
-/// Passes until a decision of [kind] is pending.
-void passToDecision(Game g, DecisionKind kind) {
-  for (var i = 0; i < 100 && g.state.pending?.decision.kind != kind; i++) {
-    g.apply(PassAction(g.state.priority!));
-  }
-}
-
-int life(Game g, int p) => g.state.player(p).life;
-Zone zoneOf(Game g, int id) => g.state.obj(id).zone;
-
 void main() {
   group('CR 106/605 mana', () {
     test('lands and mana creatures pay for spells automatically', () {

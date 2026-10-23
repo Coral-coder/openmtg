@@ -319,10 +319,17 @@ extension GameEffects on Game {
     }
     if (toPlayer) {
       final p = entityPlayer(target);
+      state.player(p).stats.damageTaken += n;
       if (src.hasName('infect')) {
         state.player(p).poison += n;
       } else {
         _loseLife(p, n);
+      }
+      // Toxic (CR 702.164): combat damage to a player also gives poison counters.
+      if (combat) {
+        for (final k in src.kws('toxic')) {
+          state.player(p).poison += k.n;
+        }
       }
     } else {
       final o = state.obj(target);

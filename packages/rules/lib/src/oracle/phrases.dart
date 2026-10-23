@@ -377,6 +377,7 @@ String? parseKeywordName(String s) {
   const names = {
     'flying', 'first strike', 'double strike', 'deathtouch', 'defender', 'flash', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace',
     'reach', 'trample', 'vigilance', 'shroud', 'prowess', 'ward', 'flanking', 'shadow', 'fear', 'intimidate', 'horsemanship', 'skulk',
+    'infect', 'wither', 'devoid', 'toxic', 'landwalk',
   };
   return names.contains(s) ? s : null;
 }
@@ -663,6 +664,17 @@ List<Ability>? parseKeyword(String raw, String text) {
     'shroud': Kw.shroud,
     'prowess': Kw.prowess,
   };
+  // Keywords the engine checks by name (combat, damage, characteristics).
+  const named = {'infect', 'wither', 'fear', 'intimidate', 'shadow', 'horsemanship', 'skulk', 'devoid'};
+  if (named.contains(t)) return [KeywordAbility(text, Kw(t))];
+  if (t == 'changeling') return [KeywordAbility(text, Kw.allCreatureTypes)];
+  final toxic = rx(t, r'toxic (\d+)');
+  if (toxic != null) return [KeywordAbility(text, Kw('toxic', n: int.parse(toxic[1])))];
+  // Landwalk (CR 702.14): "swampwalk", "nonbasic landwalk", "legendary landwalk".
+  final walk = rx(t, r'(plains|island|swamp|mountain|forest|desert)walk');
+  if (walk != null) return [KeywordAbility(text, Kw('landwalk', filter: Filter(types: const {CardType.land}, subtypes: {subtypeWords[walk[1]]!})))];
+  if (t == 'nonbasic landwalk') return [KeywordAbility(text, const Kw('landwalk', filter: Filter(types: {CardType.land}, notSupertypes: {Supertype.basic})))];
+  if (t == 'legendary landwalk') return [KeywordAbility(text, const Kw('landwalk', filter: Filter(types: {CardType.land}, supertypes: {Supertype.legendary})))];
   final s = simple[t];
   if (s != null) {
     if (s == Kw.prowess) {

@@ -236,6 +236,9 @@ class TurnStats {
   int landsPlayed = 0;
   int gainLifeEvents = 0;
 
+  /// Damage dealt to this player this turn (bloodthirst).
+  int damageTaken = 0;
+
   /// Permanent types cast from the graveyard this turn (Muldrotha).
   Set<String> graveyardPlays = {};
 
@@ -250,9 +253,10 @@ class TurnStats {
     ..attacked = attacked
     ..landsPlayed = landsPlayed
     ..gainLifeEvents = gainLifeEvents
+    ..damageTaken = damageTaken
     ..graveyardPlays = Set.of(graveyardPlays);
 
-  String digest() => '$lifeGained,$lifeLost,$cardsDrawn,$spellsCast,$noncreatureSpellsCast,$instantSorceryCast,$creaturesAttackedWith,$attacked,$landsPlayed,$gainLifeEvents,${(graveyardPlays.toList()..sort()).join('+')}';
+  String digest() => '$lifeGained,$lifeLost,$cardsDrawn,$spellsCast,$noncreatureSpellsCast,$instantSorceryCast,$creaturesAttackedWith,$attacked,$landsPlayed,$gainLifeEvents,$damageTaken,${(graveyardPlays.toList()..sort()).join('+')}';
 }
 
 /// When a player wants the game to stop and give them priority instead of passing for them.
