@@ -9,6 +9,7 @@ import 'phrases.dart';
 import 'text.dart';
 
 part 'library_hand.dart';
+part 'more_effects.dart';
 
 /// Bump when the parser or engine changes what it supports: the database's stored coverage is
 /// recomputed when it was made by another version.
@@ -74,7 +75,9 @@ class OracleParser {
   static Ability? parseGranted(String text, {bool creature = true}) {
     final f = Face(name: '~', typeLine: creature ? 'Creature' : 'Artifact', oracleText: text);
     final p = _FaceParser(f);
-    final r = p.paragraph(text.trim());
+    // Granted text names its bearer as "this creature" (normalization does this for card text).
+    final t = text.trim().replaceAll(RegExp(r"\bthis (creature|artifact|enchantment|land|permanent|token|equipment|vehicle)\b"), '~');
+    final r = p.paragraph(t);
     if (r == null || r.length != 1) return null;
     return r.first;
   }
@@ -300,6 +303,38 @@ class _FaceParser {
     var r = rest.trim();
     var sorcery = false, once = false, onlyOnce = false, yourTurn = false;
     Condition? cond;
+    // "Choose one. Activate only as a sorcery.\n• …": the restriction comes before the modes.
+    final midRestriction = RegExp(r'^(choose (?:one|two|three|one or more|one or both))\. (activate only [^.\n]+)\.?\n').firstMatch(r);
+    if (midRestriction != null) {
+      r = '${midRestriction.group(1)} —\n${r.substring(midRestriction.end)}. ${midRestriction.group(2)}';
+    }
+    // Activation windows (CR 602.5d).
+    for (final (suffix, steps) in const [
+      ('. activate only during your turn, before attackers are declared', {TurnStep.untap, TurnStep.upkeep, TurnStep.draw, TurnStep.main1, TurnStep.beginCombat}),
+      ('. activate only during your upkeep', {TurnStep.upkeep}),
+      ('. activate only during your end step', {TurnStep.end}),
+    ]) {
+      for (final s in [suffix, '$suffix.']) {
+        if (r.endsWith(s)) {
+          r = r.substring(0, r.length - s.length);
+          yourTurn = true;
+          cond = StepIn(steps);
+        }
+      }
+    }
+    for (final (suffix, steps) in const [
+      ('. activate only during combat', {TurnStep.beginCombat, TurnStep.declareAttackers, TurnStep.declareBlockers, TurnStep.firstStrikeDamage, TurnStep.combatDamage, TurnStep.endCombat}),
+      ('. activate only before blockers are declared', {TurnStep.untap, TurnStep.upkeep, TurnStep.draw, TurnStep.main1, TurnStep.beginCombat, TurnStep.declareAttackers, TurnStep.main2, TurnStep.end, TurnStep.cleanup}),
+      ('. activate only during any upkeep step', {TurnStep.upkeep}),
+      ('. activate only during an upkeep step', {TurnStep.upkeep}),
+    ]) {
+      for (final s in [suffix, '$suffix.']) {
+        if (r.endsWith(s)) {
+          r = r.substring(0, r.length - s.length);
+          cond = StepIn(steps);
+        }
+      }
+    }
     var changed = true;
     while (changed) {
       changed = false;
@@ -413,7 +448,8 @@ class _FaceParser {
           }
         }
         // "you may pay {R}. if you do, ..."
-        final pay = RegExp(r'^you may pay ((?:\{[^}]+\})+)\. if you do, (.+)$', dotAll: true).firstMatch(rest);
+        // Mana only: energy ({E}) is paid by the effect itself.
+        final pay = RegExp(r'^you may pay ((?:\{[^}e]+\})+)\. if you do, (.+)$', dotAll: true).firstMatch(rest);
         if (pay != null) {
           payCost = ManaCost.parse(pay.group(1)!.toUpperCase());
           rest = pay.group(2)!;
@@ -663,6 +699,8 @@ class _FaceParser {
 
   Condition? condition(String s, BodyCtx ctx) {
     final t = s.trim();
+    // After a clash: "if you win" (CR 701.23).
+    if (t == 'you win' || t == 'you won' || t == 'you win the clash') return const WonClash();
     // Persist and undying: "it had no -1/-1 counters on it" (last known information).
     final hadNo = rx(t, r'(?:it|~) had no ([a-z+/0-9-]+) counters on it');
     if (hadNo != null) return Not(ObjMatches(const EventObj(), Filter(withCounter: hadNo[1])));
@@ -1126,6 +1164,20 @@ class _FaceParser {
 
   /// "choose one —\n• a\n• b" → a modal body.
   Body? _modal(String text, BodyCtx ctx) {
+    // Confluences: "choose three. you may choose the same mode more than once." Each mode is
+    // offered as many times as it may be chosen.
+    final rep = RegExp(r'^choose (two|three|four)\. you may choose the same mode more than once\.?\n(.+)$', dotAll: true).firstMatch(text.trim());
+    if (rep != null) {
+      final n = numberWord(rep.group(1)!)!;
+      final inner = _modal('choose one —\n${rep.group(2)!}', ctx);
+      if (inner == null) return null;
+      return Body(
+        modes: [for (final b in inner.modes) for (var i = 0; i < n; i++) b],
+        minModes: n,
+        maxModes: n,
+        modeLabels: [for (final l in inner.modeLabels) for (var i = 0; i < n; i++) l],
+      );
+    }
     final m = RegExp(r'^(?:(.+?)[,.] )?choose (one|two|one or both|one or more|up to one|any number) —\n?(.+)$', dotAll: true).firstMatch(text.trim());
     if (m == null || m.group(1) != null) return null;
     final bullets = m.group(3)!.split(RegExp(r'\n?• ')).map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
@@ -1220,6 +1272,35 @@ class _FaceParser {
         ctx.targetWhen = null;
         if (e == null) return null;
         steps.add(If(c, e, prev));
+        continue;
+      }
+      // "Counter target spell. If that spell is countered this way, exile it instead of putting it
+      // into its owner's graveyard."
+      if (s == "if that spell is countered this way, exile it instead of putting it into its owner's graveyard" && steps.isNotEmpty) {
+        final last = steps.last;
+        if (last is CounterSpell) {
+          steps[steps.length - 1] = CounterSpell(last.obj, exileInstead: true);
+          continue;
+        }
+        if (last is Unless && last.effect is CounterSpell) {
+          steps[steps.length - 1] = Unless(CounterSpell((last.effect as CounterSpell).obj, exileInstead: true), last.payer, mana: last.mana, life: last.life, alternative: last.alternative);
+          continue;
+        }
+      }
+      // "Create a 1/1 Eldrazi Scion creature token. It has 'Sacrifice ~: Add {C}.'"
+      m = RegExp(r'^(?:it has|they have|they each have) "(.+)"$').firstMatch(s);
+      if (m != null && steps.isNotEmpty && steps.last is CreateToken) {
+        final a = OracleParser.parseGranted(m.group(1)!);
+        if (a == null) return null;
+        final c = steps.removeLast() as CreateToken;
+        final sp = c.spec;
+        steps.add(CreateToken(
+            TokenSpec(name: sp.name, power: sp.power, toughness: sp.toughness, colors: sp.colors, types: sp.types, subtypes: sp.subtypes, supertypes: sp.supertypes, keywords: sp.keywords, abilities: [...sp.abilities, a], text: [if (sp.text.isNotEmpty) sp.text, a.text].join('\n')),
+            c.amount,
+            controller: c.controller,
+            tapped: c.tapped,
+            attacking: c.attacking,
+            remember: c.remember));
         continue;
       }
       m = RegExp(r'^otherwise, (.+)$').firstMatch(s);
@@ -1390,6 +1471,8 @@ class _FaceParser {
     List<String>? m;
     final lh = libraryHandClause(t, ctx);
     if (lh != null) return lh;
+    final more = moreClause(t, ctx);
+    if (more != null) return more;
 
     // --- Damage -------------------------------------------------------------------------------
     m = rx(t, r'(~|it|that creature|target creature you control|(?:another )?target creature) deals (\w+|damage equal to .+?) damage to (.+)');
@@ -1840,12 +1923,16 @@ class _FaceParser {
   /// black Rat creature token", "legendary 8/8 blue Octopus creature token named ...".
   Effect? _createTokens(String desc, Amount amount, BodyCtx ctx, {PlayerRef controller = const You()}) {
     var d = desc.trim();
-    var tapped = false;
+    var tapped = false, attacking = false;
     if (d.startsWith('tapped ')) {
       tapped = true;
       d = d.substring(7);
     }
-    final pre = predefinedTokens[d.replaceAll(RegExp(r' tokens?$'), '')];
+    if (d.endsWith(" that's tapped and attacking")) {
+      tapped = attacking = true;
+      d = d.substring(0, d.length - 28);
+    }
+    final pre = predefinedTokens[d.replaceAll(RegExp(r' tokens?$'), '')] ?? _textToken(d.replaceAll(RegExp(r' tokens?$'), ''));
     if (pre != null) {
       ctx.it = const Remembered('created');
       return CreateToken(pre, amount, controller: controller, tapped: tapped);
@@ -1869,10 +1956,27 @@ class _FaceParser {
     final subs = _subtypes(m[5]);
     if (subs == null) return null;
     final kws = <Kw>[];
+    final granted = <Ability>[];
     if (m[7].isNotEmpty) {
-      final ks = _kwList(m[7]);
-      if (ks == null) return null;
-      kws.addAll(ks);
+      // 'with flying', 'with "~ can't block."', 'with toxic 1 and "~ can't block."'
+      var w = m[7];
+      for (final q in RegExp(r'"([^"]+)"').allMatches(m[7])) {
+        final a = OracleParser.parseGranted(q.group(1)!);
+        if (a == null) return null;
+        granted.add(a);
+        w = w.replaceFirst(q.group(0)!, '');
+      }
+      w = w.trim().replaceAll(RegExp(r'(,? and|,)$'), '').trim();
+      if (w.isNotEmpty) {
+        final ks = _kwList(w);
+        if (ks != null) {
+          kws.addAll(ks);
+        } else {
+          final k = parseKeyword(w, w);
+          if (k == null || k.any((a) => a is! KeywordAbility)) return null;
+          kws.addAll([for (final a in k) (a as KeywordAbility).kw]);
+        }
+      }
     }
     final types = {CardType.creature, if (m[6].startsWith('artifact')) CardType.artifact, if (m[6].startsWith('enchantment')) CardType.enchantment};
     final name = m[8].isNotEmpty ? _orig(m[8]) : subs.join(' ');
@@ -1887,11 +1991,36 @@ class _FaceParser {
         subtypes: subs,
         supertypes: m[1].isEmpty ? const {} : const {Supertype.legendary},
         keywords: kws,
+        abilities: granted,
+        text: granted.map((a) => a.text).join('\n'),
       ),
       amount,
       controller: controller,
       tapped: tapped,
+      attacking: attacking,
     );
+  }
+
+  /// Artifact tokens defined by their rules text (CR 111.10), parsed like card text.
+  static const _tokenTexts = {
+    'lander': ('Lander', '{2}, {T}, Sacrifice this token: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.'),
+    'mutagen': ('Mutagen', '{1}, {T}, Sacrifice this token: Put a +1/+1 counter on target creature. Activate only as a sorcery.'),
+    'map': ('Map', '{1}, {T}, Sacrifice this artifact: Target creature you control explores. Activate only as a sorcery.'),
+    'gold': ('Gold', 'Sacrifice this artifact: Add one mana of any color.'),
+    'junk': ('Junk', '{T}, Sacrifice this artifact: Exile the top card of your library. You may play that card this turn. Activate only as a sorcery.'),
+  };
+
+  static final Map<String, TokenSpec?> _textTokenCache = {};
+
+  TokenSpec? _textToken(String name) {
+    final def = _tokenTexts[name];
+    if (def == null) return null;
+    return _textTokenCache.putIfAbsent(name, () {
+      final f = Face(name: def.$1, typeLine: 'Token Artifact — ${def.$1}', oracleText: def.$2);
+      final p = OracleParser.parseFace(f);
+      if (p.unsupported.isNotEmpty || p.abilities.isEmpty) return null;
+      return TokenSpec(name: def.$1, types: const {CardType.artifact}, subtypes: [def.$1], abilities: p.abilities, text: def.$2);
+    });
   }
 
   List<String>? _subtypes(String s) {

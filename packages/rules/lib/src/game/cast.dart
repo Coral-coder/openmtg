@@ -545,6 +545,9 @@ extension GameCast on Game {
         _moveTo(pick.first, Zone.hand);
       case AddCountersCost(:final kind, :final n):
         _addCounters(source, kind, n);
+      case EnergyCost(:final n):
+        if (state.player(p).energy < n) throw GameError('Not enough energy (you have ${state.player(p).energy})');
+        state.player(p).energy -= n;
     }
   }
 

@@ -165,6 +165,7 @@ class PlayerBar extends StatelessWidget {
             ),
           ),
           if (p.poison > 0) Padding(padding: const EdgeInsets.only(left: 6), child: Text('☠${p.poison}', style: t.style(14, color: t.ok))),
+          if (p.energy > 0) Padding(padding: const EdgeInsets.only(left: 6), child: Tooltip(message: 'Energy', child: Text('⚡${p.energy}', style: t.style(14, color: t.accent2)))),
           const Spacer(),
           for (final m in pool.entries) Padding(padding: const EdgeInsets.only(right: 2), child: ManaPips('{${m.key}}' * m.value, size: 14)),
           chip(Icons.style, '${p.hand.length}', 'Cards in hand'),

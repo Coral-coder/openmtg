@@ -23,6 +23,8 @@ extension GameEffects on Game {
         item: item,
         sourceLki: item.sourceLki ?? (src != null && src.zcc == item.sourceZcc ? chars(item.sourceId).copy() : null),
         wasCast: src?.wasCast ?? false);
+    // What was paid ("the sacrificed creature's power") is readable while resolving.
+    ctx.results.addAll(item.paidCost);
     final ab = item.ability;
     final body = switch (ab) { SpellAbility(:final body) => body, ActivatedAbility(:final body) => body, TriggeredAbility(:final body) => body, _ => const Body() };
 
@@ -403,7 +405,7 @@ extension GameEffects on Game {
           final before = state.version;
           _exec(effect, ctx);
           // "If you do" depends on having actually done it (sacrificed, discarded...).
-          if (effect is Sacrifice || effect is Discard) ctx.didIt = ctx.results['did'] != 0 && state.version != before;
+          if (effect is Sacrifice || effect is Discard || effect is PayEffect || effect is ChooseAndMove) ctx.didIt = ctx.results['did'] != 0 && state.version != before;
         }
       case If(:final cond, :final then, :final otherwise):
         if (evalCondition(cond, ctx)) {
@@ -773,6 +775,8 @@ extension GameEffects on Game {
         break;
       case Regenerate() || PreventNext() || RevealHand() || FlipCoin() || RollDie() || Explore():
         _execShieldsAndChance(e, ctx);
+      case GetEnergy() || PayEffect() || Clash() || Amass() || Bolster() || SkipNextUntap() || ExtraTurn() || ChooseAndMove() || Populate() || AtNextEndStep() || ChooseValue():
+        _execMore(e, ctx);
       case CopySpell(:final obj, :final amount):
         final ids = _ref(obj, ctx);
         if (ids.isEmpty) return;

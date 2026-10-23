@@ -28,6 +28,7 @@ part 'events.dart';
 part 'combat.dart';
 part 'sba.dart';
 part 'shields.dart';
+part 'more_effects.dart';
 part 'testing.dart';
 
 /// Answers for the decisions of one task run; throws [NeedDecision] when they run out.
@@ -509,6 +510,10 @@ class Game {
       final o = state.obj(id);
       if (o.controller != p) continue;
       o.phasedOut = false;
+      if (o.skipUntap > 0) {
+        o.skipUntap--;
+        continue;
+      }
       if (!o.tapped) continue;
       final c = chars(id);
       if (c.has(Kw.doesntUntap)) continue;

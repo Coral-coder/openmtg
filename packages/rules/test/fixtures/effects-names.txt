@@ -1,0 +1,30 @@
+# Cards used by test/effects_test.dart (tools/make_fixture.py builds effects.json).
+Plains
+Island
+Swamp
+Mountain
+Forest
+Grizzly Bears
+Hill Giant
+Ornithopter
+Aether Chaser
+Adder-Staff Boggart
+Corsairs of Umbar
+Abzan Advantage
+Broken Bond
+Arbalest Elite
+Balduvian Dead
+Flickerwisp
+Capture of Jingzhou
+Alaborn Veteran
+Armor Sliver
+Edgewall Pack
+Beamsaw Prospector
+Abstruse Interference
+Assert Authority
+And They Shall Know No Fear
+Arcane Subtraction
+Terror
+Aeromunculus
+Daring Piracy
+Brokers Confluence
