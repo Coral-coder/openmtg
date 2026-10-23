@@ -71,8 +71,13 @@ class GameObject {
   bool faceDown = false;
   bool phasedOut = false;
 
-  /// For double-faced cards: the back face is up. For split/adventure on the stack: which half.
+  /// For double-faced cards: the back face is up (1). On the stack, the half being cast: for a
+  /// split card 0 or 1, or 2 when both halves are fused (CR 702.102); for an adventurer card 1
+  /// is the Adventure (CR 715).
   int face = 0;
+
+  /// Exiled as a resolved Adventure: this player may cast the creature from exile (CR 715.4).
+  PlayerId? adventureBy;
 
   Map<String, int> counters = {};
   int damage = 0;
@@ -139,6 +144,7 @@ class GameObject {
     ..faceDown = faceDown
     ..phasedOut = phasedOut
     ..face = face
+    ..adventureBy = adventureBy
     ..counters = Map.of(counters)
     ..damage = damage
     ..deathtouched = deathtouched
@@ -178,6 +184,7 @@ class GameObject {
     faceDown = false;
     phasedOut = false;
     face = 0;
+    adventureBy = null;
     counters = {};
     damage = 0;
     deathtouched = false;
@@ -207,7 +214,7 @@ class GameObject {
   String digest() {
     final c = (counters.entries.where((e) => e.value != 0).map((e) => '${e.key}=${e.value}').toList()..sort()).join(',');
     final a = (activations.entries.map((e) => '${e.key}=${e.value}').toList()..sort()).join(';');
-    return '$id.$zcc|$cardName|${token?.key ?? ''}|${copyOfCard ?? ''}|${copyOfToken?.key ?? ''}|$owner|$controller|${zone.index}|$tapped|$faceDown|$phasedOut|$face|$c|$damage|$deathtouched|$attachedTo|$timestamp|$controlSince|$enteredTurn|$wasCast|$kicked|$x|$chosenColor|$chosenType|$a|${(activatedEver.toList()..sort()).join(';')}|$playableBy|$playableUntil|$playFree|$sacrificeAtEnd|$exileIfDies|$exileOnResolve|$arrivedTurn|$attacking|${blocking.join(',')}|${blockedBy.join(',')}|$blocked|$dealtFirstStrikeDamage|${extraTypes.join(',')}|${exiledUntilLeaves.join(',')}|$tokenCopy|${copyExtra.length}|${damagedBy.join(',')}';
+    return '$id.$zcc|$cardName|${token?.key ?? ''}|${copyOfCard ?? ''}|${copyOfToken?.key ?? ''}|$owner|$controller|${zone.index}|$tapped|$faceDown|$phasedOut|$face|${adventureBy ?? ''}|$c|$damage|$deathtouched|$attachedTo|$timestamp|$controlSince|$enteredTurn|$wasCast|$kicked|$x|$chosenColor|$chosenType|$a|${(activatedEver.toList()..sort()).join(';')}|$playableBy|$playableUntil|$playFree|$sacrificeAtEnd|$exileIfDies|$exileOnResolve|$arrivedTurn|$attacking|${blocking.join(',')}|${blockedBy.join(',')}|$blocked|$dealtFirstStrikeDamage|${extraTypes.join(',')}|${exiledUntilLeaves.join(',')}|$tokenCopy|${copyExtra.length}|${damagedBy.join(',')}';
   }
 }
 

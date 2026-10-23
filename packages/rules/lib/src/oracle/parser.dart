@@ -30,7 +30,7 @@ class ParsedCard {
 }
 
 /// Layouts the engine plays today.
-const supportedLayouts = {Layout.normal, Layout.token};
+const supportedLayouts = {Layout.normal, Layout.token, Layout.split, Layout.adventure, Layout.modalDfc, Layout.transform};
 
 class OracleParser {
   static final Map<String, ParsedCard> _cache = {};
@@ -52,6 +52,8 @@ class OracleParser {
     if (!supportedLayouts.contains(card.layout)) {
       unsupported.add('Card layout: ${card.layout.scryfall}');
     }
+    // Battles need protectors and their own combat rules (CR 310), which aren't in yet.
+    if (card.faces.any((f) => f.type.types.contains(CardType.battle))) unsupported.add('Battles (CR 310)');
     for (final f in card.faces) {
       final pf = parseFace(f, cardName: card.name);
       faces.add(pf);
@@ -218,6 +220,11 @@ class _FaceParser {
     final parts = p.endsWith('.') ? [p.substring(0, p.length - 1)] : p.split(RegExp(r', |; '));
     final out = <Ability>[];
     for (final part in parts) {
+      // Split-card keywords the casting rules read off the face (CR 702.102, 702.127).
+      if (part.trim() == 'fuse' || part.trim() == 'aftermath') {
+        out.add(KeywordAbility(raw, Kw(part.trim())));
+        continue;
+      }
       final k = parseKeyword(part.trim(), part.trim()) ?? _expandKeyword(part.trim());
       if (k == null) return null;
       out.addAll(k);
@@ -1709,6 +1716,12 @@ class _FaceParser {
       final set = parseObjects(m[1], ctx);
       if (set == null) return null;
       return Tap(set);
+    }
+    m = rx(t, r'transform (.+)');
+    if (m != null) {
+      final set = parseObjects(m[1], ctx);
+      if (set == null) return null;
+      return TransformPermanents(set);
     }
     m = rx(t, r'untap (.+)');
     if (m != null) {

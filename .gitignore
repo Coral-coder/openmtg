@@ -53,3 +53,4 @@ app.*.map.json
 packages/rules/build/
 packages/rules/.dart_tool/
 android/key.properties
+.claude/worktrees/

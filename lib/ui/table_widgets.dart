@@ -40,7 +40,7 @@ class TableCard extends StatelessWidget {
       width: width,
       height: h,
       child: Stack(clipBehavior: Clip.none, children: [
-        Positioned.fill(child: ClipRRect(borderRadius: BorderRadius.circular(width * 0.05), child: CardPicture(def: def, chars: c, size: width > 150 ? 'normal' : 'small'))),
+        Positioned.fill(child: ClipRRect(borderRadius: BorderRadius.circular(width * 0.05), child: CardPicture(def: def, chars: c, size: width > 150 ? 'normal' : 'small', back: o.face == 1 && (def?.layout.isDoubleFaced ?? false)))),
         if (glow != null)
           Positioned.fill(
             child: IgnorePointer(

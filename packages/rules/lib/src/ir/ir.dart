@@ -991,6 +991,12 @@ class Untap extends Effect {
   final ObjSet set;
 }
 
+/// Turns a transforming double-faced permanent to its other face (CR 701.28).
+class TransformPermanents extends Effect {
+  const TransformPermanents(this.set);
+  final ObjSet set;
+}
+
 class PutCounters extends Effect {
   const PutCounters(this.set, this.kind, this.amount);
   final ObjSet set;

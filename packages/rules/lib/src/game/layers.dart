@@ -65,25 +65,14 @@ extension GameLayers on Game {
       if (def == null) {
         c = Chars(name: o.cardName, types: {}, subtypes: [], supertypes: {}, colors: {}, manaCost: null, power: null, toughness: null, loyalty: null, defense: null, abilities: [], controller: o.controller, owner: o.owner);
       } else {
-        final faceIndex = (o.copyOfCard != null ? (o.copyOfFace ?? 0) : o.face).clamp(0, def.faces.length - 1);
-        final f = def.faces[faceIndex];
-        final parsed = OracleParser.parse(def);
-        final abilities = faceIndex < parsed.faces.length ? parsed.faces[faceIndex].abilities : const <Ability>[];
-        c = Chars(
-          name: f.name,
-          types: Set.of(f.type.types),
-          subtypes: List.of(f.type.subtypes),
-          supertypes: Set.of(f.type.supertypes),
-          colors: (f.colorIndicator ?? f.colors).toSet(),
-          manaCost: f.manaCost,
-          power: _ptValue(f.power),
-          toughness: _ptValue(f.toughness),
-          loyalty: f.loyalty == null ? null : int.tryParse(f.loyalty!) ?? 0,
-          defense: f.defense == null ? null : int.tryParse(f.defense!) ?? 0,
-          abilities: List.of(abilities),
-          controller: o.controller,
-          owner: o.owner,
-        );
+        final face = o.copyOfCard != null ? (o.copyOfFace ?? 0) : o.face;
+        // A split card has both halves' characteristics combined except as a spell cast as one
+        // half (CR 709.4); fused on the stack, it has both too (CR 702.102c).
+        if (def.layout == Layout.split && def.faces.length > 1 && (o.zone != Zone.stack || face >= 2)) {
+          c = _combinedChars(def, o);
+        } else {
+          c = _faceChars(def, face.clamp(0, def.faces.length - 1), o);
+        }
       }
     }
     // Copy exceptions are part of the copiable values (CR 707.9b).
@@ -102,6 +91,56 @@ extension GameLayers on Game {
       }
     }
     return c;
+  }
+
+  /// One face of a card (CR 711–712, 715).
+  Chars _faceChars(CardDef def, int faceIndex, GameObject o) {
+    final f = def.faces[faceIndex];
+    final parsed = OracleParser.parse(def);
+    final abilities = faceIndex < parsed.faces.length ? parsed.faces[faceIndex].abilities : const <Ability>[];
+    final c = Chars(
+      name: f.name,
+      types: Set.of(f.type.types),
+      subtypes: List.of(f.type.subtypes),
+      supertypes: Set.of(f.type.supertypes),
+      colors: (f.colorIndicator ?? f.colors).toSet(),
+      manaCost: f.manaCost,
+      power: _ptValue(f.power),
+      toughness: _ptValue(f.toughness),
+      loyalty: f.loyalty == null ? null : int.tryParse(f.loyalty!) ?? 0,
+      defense: f.defense == null ? null : int.tryParse(f.defense!) ?? 0,
+      abilities: List.of(abilities),
+      controller: o.controller,
+      owner: o.owner,
+    );
+    // A transforming card's back face has its front face's mana value (CR 712.8e).
+    if (faceIndex > 0 && (def.layout == Layout.transform || def.layout == Layout.meld)) c.mvOverride = def.front.manaValue;
+    return c;
+  }
+
+  /// Both halves of a split card at once: both names, the sum of the costs, every type and
+  /// color (CR 709.4).
+  Chars _combinedChars(CardDef def, GameObject o) {
+    final parsed = OracleParser.parse(def);
+    var cost = ManaCost.empty;
+    for (final f in def.faces) {
+      if (f.manaCost != null) cost = cost + f.manaCost!;
+    }
+    return Chars(
+      name: def.name,
+      types: {for (final f in def.faces) ...f.type.types},
+      subtypes: [for (final f in def.faces) ...f.type.subtypes],
+      supertypes: {for (final f in def.faces) ...f.type.supertypes},
+      colors: {for (final f in def.faces) ...(f.colorIndicator ?? f.colors)},
+      manaCost: cost,
+      power: null,
+      toughness: null,
+      loyalty: null,
+      defense: null,
+      abilities: [for (final pf in parsed.faces) ...pf.abilities],
+      controller: o.controller,
+      owner: o.owner,
+    );
   }
 
   Chars _tokenChars(TokenSpec s, GameObject o) {

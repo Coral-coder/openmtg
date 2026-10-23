@@ -23,6 +23,7 @@ Future<void> showCardDetail(BuildContext context, {required TableController ctl,
         return CardDetailView(
           def: def,
           chars: g.chars(id),
+          back: o.face == 1 && (def?.layout.isDoubleFaced ?? false),
           status: _status(ctl, id),
           actions: [
             for (final a in acts)
@@ -78,8 +79,11 @@ class _ActionRow extends StatelessWidget {
 }
 
 class CardDetailView extends StatelessWidget {
-  const CardDetailView({super.key, required this.def, this.chars, this.status = '', this.actions = const []});
+  const CardDetailView({super.key, required this.def, this.chars, this.back = false, this.status = '', this.actions = const []});
   final CardDef? def;
+
+  /// Shows the back face (a transformed or back-face-up double-faced card).
+  final bool back;
   final Chars? chars;
   final String status;
   final List<Widget> actions;
@@ -93,7 +97,7 @@ class CardDetailView extends StatelessWidget {
     final wide = MediaQuery.of(context).size.width > 700;
     final image = ConstrainedBox(
       constraints: BoxConstraints(maxHeight: wide ? h * 0.7 : h * 0.45, maxWidth: 420),
-      child: AspectRatio(aspectRatio: 63 / 88, child: CardPicture(def: d, chars: chars, size: 'large')),
+      child: AspectRatio(aspectRatio: 63 / 88, child: CardPicture(def: d, chars: chars, size: 'large', back: back)),
     );
     final info = Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
       Text(chars?.name ?? d?.name ?? '', style: t.heading),
