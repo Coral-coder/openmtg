@@ -137,6 +137,7 @@ extension GameEffects on Game {
     final from = o.zone;
     final lki = chars(id).copy();
     final counters = Map.of(o.counters);
+    final damagedBy = List.of(o.damagedBy);
     final oldZcc = o.zcc;
     var dest = to;
     var shuffle = false;
@@ -160,7 +161,7 @@ extension GameEffects on Game {
       final what = dest == Zone.graveyard ? (sacrificed ? 'is sacrificed' : (lki.isCreature ? 'dies' : 'goes to the graveyard')) : (dest == Zone.exile ? 'is exiled' : (dest == Zone.hand ? 'returns to its owner\'s hand' : 'leaves the battlefield'));
       _log('${lki.name} $what.', obj: id, kind: 'leave');
     }
-    _emit(ZoneEvent(id, oldZcc, o.zcc, from, dest, lki, counters: counters, sacrificed: sacrificed));
+    _emit(ZoneEvent(id, oldZcc, o.zcc, from, dest, lki, counters: counters, sacrificed: sacrificed, damagedBy: damagedBy));
     for (final x in untilLeaves) {
       final xo = state.objOrNull(x);
       if (xo != null && xo.zone == Zone.exile) _putOntoBattlefield(x, xo.owner);
@@ -783,7 +784,9 @@ extension GameEffects on Game {
           final copy = GameObject(id: state.nextId++, cardName: o.cardName, owner: ctx.controller, zone: Zone.stack)..controller = ctx.controller;
           state.objects[copy.id] = copy;
           final it = orig.clone();
-          state.stack.add(StackItem(id: state.nextId++, kind: StackKind.spell, controller: ctx.controller, sourceId: copy.id, sourceZcc: copy.zcc, ability: orig.ability, objId: copy.id, modes: it.modes, targets: it.targets, x: it.x, kicked: it.kicked, sourceName: orig.sourceName, isCopy: true)..targetZcc = it.targetZcc);
+          final copyItem = StackItem(id: state.nextId++, kind: StackKind.spell, controller: ctx.controller, sourceId: copy.id, sourceZcc: copy.zcc, ability: orig.ability, objId: copy.id, modes: it.modes, targets: it.targets, x: it.x, kicked: it.kicked, sourceName: orig.sourceName, isCopy: true)..targetZcc = it.targetZcc;
+          state.stack.add(copyItem);
+          _emit(CopyEvent(copyItem.id, copy.id, ctx.controller));
         }
       case AllowPlay(:final set, :final duration, :final free):
         for (final id in resolveObjs(set, ctx)) {
@@ -1036,6 +1039,7 @@ extension GameEffects on Game {
   }
 
   void _scry(PlayerId p, int n) {
+    if (n > 0) _emit(ScryEvent(p, surveil: false));
     final pl = state.player(p);
     final top = pl.library.take(n).toList();
     if (top.isEmpty) return;
@@ -1054,6 +1058,7 @@ extension GameEffects on Game {
   }
 
   void _surveil(PlayerId p, int n) {
+    if (n > 0) _emit(ScryEvent(p, surveil: true));
     final pl = state.player(p);
     final top = pl.library.take(n).toList();
     if (top.isEmpty) return;

@@ -49,17 +49,19 @@ String _produce(ManaProduce p) => '${p.fixed.isNotEmpty ? p.fixed.map((m) => m.n
 
 String _trig(Trigger t) => switch (t) {
       EntersTrigger(:final set) => 'enters(${_set(set)})',
-      DiesTrigger(:final set) => 'dies(${_set(set)})',
+      DiesTrigger(:final set, :final damagedBySelf) => 'dies(${_set(set)}${damagedBySelf ? ' damaged by ~' : ''})',
       LeavesTrigger(:final set) => 'leaves(${_set(set)})',
       PutIntoGraveyardTrigger(:final set) => 'toGy(${_set(set)})',
-      AttacksTrigger(:final set, :final condition) => 'attacks(${_set(set)})${condition == null ? '' : ' while ${_cond(condition)}'}',
+      AttacksTrigger(:final set, :final condition, :final alone, :final minAttackers, :final attacksYou) =>
+        'attacks(${_set(set)}${alone ? ' alone' : ''}${minAttackers > 0 ? ' with >=$minAttackers' : ''}${attacksYou ? ' you' : ''})${condition == null ? '' : ' while ${_cond(condition)}'}',
       YouAttackTrigger(:final min) => 'youAttack(>=$min)',
-      BlocksTrigger(:final set) => 'blocks(${_set(set)})',
-      BecomesBlockedTrigger(:final set) => 'blocked(${_set(set)})',
+      BlocksTrigger(:final set, :final other) => 'blocks(${_set(set)}${other == null ? '' : ' each ${_filter(other)}'})',
+      BecomesBlockedTrigger(:final set, :final other) => 'blocked(${_set(set)}${other == null ? '' : ' by each ${_filter(other)}'})',
       DealsDamageTrigger(:final set, :final toPlayer, :final toOpponent, :final combat) => 'deals${combat == true ? 'Combat' : (combat == false ? 'Noncombat' : '')}Damage(${_set(set)}${toPlayer ? ' →player' : ''}${toOpponent ? ' →opp' : ''})',
       IsDealtDamageTrigger(:final set) => 'isDealtDamage(${_set(set)})',
-      CastTrigger(:final who, :final filter) => 'cast(${who.name}: ${_filter(filter)})',
-      StepTrigger(:final step, :final whose) => 'step(${step.name}, ${whose.name})',
+      CastTrigger(:final who, :final filter, :final self, :final nth, :final orCopy, :final targets, :final kicked) =>
+        'cast${orCopy ? 'OrCopy' : ''}(${self ? '~' : '${who.name}: ${_filter(filter)}'}${nth > 0 ? ' #$nth' : ''}${targets == null ? '' : ' targeting ${_set(targets)}'}${kicked ? ' kicked' : ''})',
+      StepTrigger(:final step, :final whose, :final ofAttached) => 'step(${step.name}, ${ofAttached ? 'attached' : whose.name})',
       GainLifeTrigger(:final who, :final firstTimeEachTurn) => 'gainLife(${who.name}${firstTimeEachTurn ? ' first' : ''})',
       LoseLifeTrigger(:final who) => 'loseLife(${who.name})',
       DrawTrigger(:final who, :final nth) => 'draw(${who.name}${nth > 0 ? ' #$nth' : ''})',
@@ -69,6 +71,12 @@ String _trig(Trigger t) => switch (t) {
       BecomesUntappedTrigger(:final set) => 'untapped(${_set(set)})',
       SacrificedTrigger(:final set) => 'sacrificed(${_set(set)})',
       TokenCreatedTrigger() => 'tokenCreated',
+      UnblockedTrigger(:final set) => 'unblocked(${_set(set)})',
+      TappedTrigger(:final set) => 'tapped(${_set(set)})',
+      CycleTrigger(:final who, :final self) => 'cycle(${self ? '~' : who.name})',
+      CrimeTrigger() => 'crime',
+      ScryTrigger(:final who, :final scry, :final surveil) => '${scry ? 'scry' : ''}${scry && surveil ? '/' : ''}${surveil ? 'surveil' : ''}(${who.name})',
+      TransformedTrigger(:final set) => 'transformed(${_set(set)})',
     };
 
 String _cond(Condition c) => switch (c) {

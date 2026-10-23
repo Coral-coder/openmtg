@@ -1,0 +1,33 @@
+# Cards for test/triggers_test.dart (tools/make_fixture.py builds triggers.json).
+Plains
+Island
+Swamp
+Mountain
+Forest
+Grizzly Bears
+Serra Angel
+Hill Giant
+Giant Growth
+Shock
+Opt
+Attentive Sunscribe
+Agent of the Fates
+Ichor Wellspring
+Baku Altar
+Kami of Ancient Law
+Desolation Twin
+Clarion Spirit
+Abyssal Nightstalker
+Archmage Emeritus
+Bant Sojourners
+Bomber Corps
+Ezuri's Archers
+Abattoir Ghoul
+Frost Walker
+Bandit's Haul
+Blood Reckoning
+Arwen Undómiel
+Parasitic Bond
+Akrasan Squire
+Abnormal Endurance
+Shadowheart, Cleric of Trickery

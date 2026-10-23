@@ -1304,8 +1304,11 @@ class EntersTrigger extends Trigger {
 }
 
 class DiesTrigger extends Trigger {
-  const DiesTrigger(this.set);
+  const DiesTrigger(this.set, {this.damagedBySelf = false});
   final ObjSet set;
+
+  /// "Whenever a creature dealt damage by ~ this turn dies."
+  final bool damagedBySelf;
 }
 
 /// Leaves the battlefield (any zone).
@@ -1322,9 +1325,15 @@ class PutIntoGraveyardTrigger extends Trigger {
 }
 
 class AttacksTrigger extends Trigger {
-  const AttacksTrigger(this.set, {this.alone = false, this.condition});
+  const AttacksTrigger(this.set, {this.alone = false, this.condition, this.minAttackers = 0, this.attacksYou = false});
   final ObjSet set;
   final bool alone;
+
+  /// "Whenever ~ and at least two other creatures attack": at least this many attackers.
+  final int minAttackers;
+
+  /// "Whenever a creature attacks you or a planeswalker you control."
+  final bool attacksYou;
 
   /// "Whenever ~ attacks while you control ..." (checked as the trigger event happens).
   final Condition? condition;
@@ -1336,22 +1345,68 @@ class YouAttackTrigger extends Trigger {
   final int min;
 }
 
+/// [other]: "blocks a creature (with flying)": triggers once per blocked creature, which is
+/// the event's object ("that creature").
 class BlocksTrigger extends Trigger {
-  const BlocksTrigger(this.set);
+  const BlocksTrigger(this.set, {this.other});
+  final ObjSet set;
+  final Filter? other;
+}
+
+/// [other]: "becomes blocked by a creature": once per blocker, which is "that creature".
+class BecomesBlockedTrigger extends Trigger {
+  const BecomesBlockedTrigger(this.set, {this.other});
+  final ObjSet set;
+  final Filter? other;
+}
+
+/// "Whenever ~ attacks and isn't blocked" (checked once blockers are declared).
+class UnblockedTrigger extends Trigger {
+  const UnblockedTrigger(this.set);
   final ObjSet set;
 }
 
-class BecomesBlockedTrigger extends Trigger {
-  const BecomesBlockedTrigger(this.set);
+/// "Whenever ~ becomes tapped".
+class TappedTrigger extends Trigger {
+  const TappedTrigger(this.set);
+  final ObjSet set;
+}
+
+/// "When you cycle ~" ([self]) / "whenever you/a player cycles a card" (CR 702.29).
+class CycleTrigger extends Trigger {
+  const CycleTrigger(this.who, {this.self = false});
+  final Who who;
+  final bool self;
+}
+
+/// "Whenever you commit a crime" (targeting an opponent, their permanents or spells, or cards
+/// in their graveyard).
+class CrimeTrigger extends Trigger {
+  const CrimeTrigger();
+}
+
+/// "Whenever you scry" / "whenever you surveil" / "whenever you scry or surveil".
+class ScryTrigger extends Trigger {
+  const ScryTrigger(this.who, {this.scry = true, this.surveil = false});
+  final Who who;
+  final bool scry, surveil;
+}
+
+/// "When ~ transforms (into …)".
+class TransformedTrigger extends Trigger {
+  const TransformedTrigger(this.set);
   final ObjSet set;
 }
 
 /// A source in [set] deals damage. [toPlayer]/[toOpponent]: only to a player; [combat]: only
 /// combat damage (true) or only noncombat (false).
 class DealsDamageTrigger extends Trigger {
-  const DealsDamageTrigger(this.set, {this.toPlayer = false, this.toOpponent = false, this.combat, this.toCreature = false, this.duringYourTurn = false});
+  const DealsDamageTrigger(this.set, {this.toPlayer = false, this.toOpponent = false, this.combat, this.toCreature = false, this.duringYourTurn = false, this.orTypes = const {}});
   final ObjSet set;
   final bool toPlayer, toOpponent, toCreature;
+
+  /// "to a player or planeswalker": with [toPlayer], permanents of these types count too.
+  final Set<CardType> orTypes;
   final bool? combat;
   final bool duringYourTurn;
 }
@@ -1363,17 +1418,35 @@ class IsDealtDamageTrigger extends Trigger {
 
 /// A player in [who] casts a spell matching [filter].
 class CastTrigger extends Trigger {
-  const CastTrigger(this.who, this.filter, {this.duringOpponentsTurn = false});
+  const CastTrigger(this.who, this.filter, {this.duringOpponentsTurn = false, this.self = false, this.nth = 0, this.orCopy = false, this.targets, this.kicked = false});
   final Who who;
   final Filter filter;
   final bool duringOpponentsTurn;
+
+  /// "When you cast ~": the spell's own ability, from the stack.
+  final bool self;
+
+  /// "Your second spell each turn" (counting the caster's spells this turn).
+  final int nth;
+
+  /// "Whenever you cast or copy …".
+  final bool orCopy;
+
+  /// "A spell that targets ~": the spell must target something in this set.
+  final ObjSet? targets;
+
+  /// "A kicked spell".
+  final bool kicked;
 }
 
 /// The beginning of [step] of [whose] turn.
 class StepTrigger extends Trigger {
-  const StepTrigger(this.step, this.whose);
+  const StepTrigger(this.step, this.whose, {this.ofAttached = false});
   final TurnStep step;
   final Who whose;
+
+  /// "Enchanted creature's controller's upkeep" / "enchanted player's upkeep".
+  final bool ofAttached;
 }
 
 class GainLifeTrigger extends Trigger {

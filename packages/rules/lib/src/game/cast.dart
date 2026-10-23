@@ -428,6 +428,8 @@ extension GameCast on Game {
     o.activatedEver.add(key);
     item.sourceLki = lki;
     _log('${state.player(p).name} activates ${c.name}.', player: p, obj: id, kind: 'activate');
+    // Cycling and typecycling (CR 702.29): "when you cycle ~".
+    if (a.zone == ZoneKind.hand && RegExp(r'^([a-z ]+)?cycling\b').hasMatch(a.text)) _emit(CycleEvent(p, id));
     _targetedEvents(item);
     _dirty();
   }
