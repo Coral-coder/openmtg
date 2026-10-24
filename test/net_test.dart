@@ -158,7 +158,7 @@ Future<(LockstepMatch, LockstepMatch)> startMatch(Hub hub, MatchArchive ha, Matc
 
 void main() {
   setUpAll(() {
-    db = CardDatabase.fromJson(jsonDecode(File('assets/data/pool.json').readAsStringSync()) as Map<String, dynamic>);
+    db = CardDatabase.fromJson(jsonDecode(File('packages/mtg_ui/assets/data/pool.json').readAsStringSync()) as Map<String, dynamic>);
   });
 
   test('lockstep over loopback plays a whole game in sync', () async {

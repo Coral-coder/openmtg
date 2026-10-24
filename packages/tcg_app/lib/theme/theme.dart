@@ -82,11 +82,11 @@ class GameTheme {
   String label(String s) => uppercase ? s.toUpperCase() : s;
 
   TextStyle style(double size, {FontWeight weight = FontWeight.w600, Color? color, double? height}) =>
-      TextStyle(fontSize: size, fontWeight: weight, color: color ?? text, fontFamily: font, fontFamilyFallback: fallback, letterSpacing: letterSpacing, height: height ?? 1.15);
+      TextStyle(fontSize: size, fontWeight: weight, color: color ?? text, fontFamily: bundledFont(font), fontFamilyFallback: fallback, letterSpacing: letterSpacing, height: height ?? 1.15);
 
   /// A style in the title font (headings, buttons).
   TextStyle display(double size, {FontWeight weight = FontWeight.w700, Color? color}) =>
-      TextStyle(fontSize: size, fontWeight: weight, color: color ?? text, fontFamily: titleFont ?? font, fontFamilyFallback: fallback, letterSpacing: titleFont == 'Bangers' ? 1.0 : letterSpacing, height: 1.12);
+      TextStyle(fontSize: size, fontWeight: weight, color: color ?? text, fontFamily: bundledFont(titleFont ?? font), fontFamilyFallback: fallback, letterSpacing: titleFont == 'Bangers' ? 1.0 : letterSpacing, height: 1.12);
 
   TextStyle get title => display(26, weight: FontWeight.w800, color: accent);
   TextStyle get heading => display(18, weight: FontWeight.w700);
@@ -100,7 +100,7 @@ class GameTheme {
             ? ColorScheme.dark(primary: accent, secondary: accent2, surface: surface, error: danger, onPrimary: buttonText, onSurface: text)
             : ColorScheme.light(primary: accent, secondary: accent2, surface: surface, error: danger, onPrimary: buttonText, onSurface: text),
         useMaterial3: true,
-        fontFamily: font,
+        fontFamily: bundledFont(font),
         fontFamilyFallback: fallback,
         textTheme: TextTheme(bodyMedium: style(14, weight: FontWeight.w500), bodyLarge: style(16, weight: FontWeight.w500), titleLarge: style(22, weight: FontWeight.w700)),
         appBarTheme: AppBarTheme(backgroundColor: bg, foregroundColor: accent),
@@ -646,3 +646,7 @@ class ManaPips extends StatelessWidget {
     ]);
   }
 }
+
+/// The theme fonts ship inside this package (OFL licensed, see fonts/), so apps refer to them
+/// with the package prefix; system fonts pass through unchanged.
+String bundledFont(String family) => const {'Antonio', 'Alegreya', 'Philosopher', 'Bangers'}.contains(family) ? 'packages/tcg_app/$family' : family;

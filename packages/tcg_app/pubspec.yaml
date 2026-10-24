@@ -27,3 +27,20 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+
+flutter:
+  fonts:
+    - family: Antonio
+      fonts:
+        - asset: fonts/Antonio.ttf
+    - family: Alegreya
+      fonts:
+        - asset: fonts/Alegreya.ttf
+    - family: Bangers
+      fonts:
+        - asset: fonts/Bangers.ttf
+    - family: Philosopher
+      fonts:
+        - asset: fonts/Philosopher.ttf
+        - asset: fonts/Philosopher-Bold.ttf
+          weight: 700

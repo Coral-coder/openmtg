@@ -448,6 +448,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+  mtg_ui:
+    dependency: "direct main"
+    description:
+      path: "packages/mtg_ui"
+      relative: true
+    source: path
+    version: "1.0.0"
   nostr:
     dependency: "direct main"
     description:

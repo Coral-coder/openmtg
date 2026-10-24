@@ -15,6 +15,8 @@ dependencies:
     path: packages/tcg_core
   tcg_app:
     path: packages/tcg_app
+  mtg_ui:
+    path: packages/mtg_ui
   collection: ^1.19.1
   crypto: ^3.0.7
   http: ^1.5.0
@@ -35,21 +37,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/data/
-  # Open Font License fonts for the themes (licenses in assets/fonts/).
-  fonts:
-    - family: Antonio
-      fonts:
-        - asset: assets/fonts/Antonio.ttf
-    - family: Alegreya
-      fonts:
-        - asset: assets/fonts/Alegreya.ttf
-    - family: Bangers
-      fonts:
-        - asset: assets/fonts/Bangers.ttf
-    - family: Philosopher
-      fonts:
-        - asset: assets/fonts/Philosopher.ttf
-        - asset: assets/fonts/Philosopher-Bold.ttf
-          weight: 700
+  # Theme fonts ship in packages/tcg_app, the bundled card pool in packages/mtg_ui.

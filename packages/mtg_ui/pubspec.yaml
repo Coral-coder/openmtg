@@ -1,0 +1,29 @@
+name: mtg_ui
+description: The Magic app for the shared card-game shell — title, menu, table, decks, card database, settings, store and sessions — on top of the rules engine and tcg_app.
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  rules:
+    path: ../rules
+  tcg_core:
+    path: ../tcg_core
+  tcg_app:
+    path: ../tcg_app
+  http: ^1.5.0
+  shared_preferences: ^2.5.6
+  share_plus: ^13.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/data/

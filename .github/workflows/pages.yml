@@ -18,9 +18,9 @@ on:
       - "packages/rules/lib/**"
       - "packages/rules/bin/**"
       - "packages/tcg_core/lib/**"
-      - "packages/tcg_app/lib/**"
+      - "packages/tcg_app/**"
+      - "packages/mtg_ui/**"
       - "web/**"
-      - "assets/**"
       - "pubspec.yaml"
       - "pubspec.lock"
   schedule:

@@ -31,10 +31,10 @@ class CardData extends ChangeNotifier {
   bool get hasFull => _full != null;
 
   Future<void> loadBundled(AssetBundle bundle) async {
-    final raw = await bundle.loadString('assets/data/pool.json');
+    final raw = await bundle.loadString('packages/mtg_ui/assets/data/pool.json');
     _pool = CardDatabase.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     try {
-      coverage = jsonDecode(await bundle.loadString('assets/data/coverage.json')) as Map<String, dynamic>;
+      coverage = jsonDecode(await bundle.loadString('packages/mtg_ui/assets/data/coverage.json')) as Map<String, dynamic>;
     } catch (_) {}
     // A previously downloaded full database (phones keep it in their cache directory).
     try {

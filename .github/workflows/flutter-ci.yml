@@ -61,5 +61,8 @@ jobs:
       - name: Shared app shell (tcg_app)
         working-directory: packages/tcg_app
         run: flutter pub get && flutter analyze --no-fatal-infos
+      - name: Magic app package (mtg_ui)
+        working-directory: packages/mtg_ui
+        run: flutter pub get && flutter analyze --no-fatal-infos
       - run: flutter test --reporter expanded
       - run: flutter build web --release --base-href /openmtg/play/
