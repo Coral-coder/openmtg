@@ -336,7 +336,7 @@ class AppStore extends ChangeNotifier implements MatchArchive {
   }
 
   Future<void> forgetRemoteMatch(String code) async {
-    final s = session, link = s?.match;
+    final s = session, link = s?.link;
     if (s != null && link != null && link.transport is RelayTransport && (link.transport as RelayTransport).code == code) {
       session = null;
       s.dispose();

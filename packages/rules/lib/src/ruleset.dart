@@ -30,5 +30,8 @@ class MtgRuleset implements TcgRuleset {
   GameAction moveFromJson(Map<String, dynamic> json) => GameAction.fromJson(json);
 
   @override
+  ConcedeAction concede(int seat) => ConcedeAction(seat);
+
+  @override
   Bot bot(int seat, int seed) => Bot(seat, seed: seed);
 }

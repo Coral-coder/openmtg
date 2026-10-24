@@ -289,7 +289,7 @@ class _LocalLobbyScreenState extends State<LocalLobbyScreen> {
     _subs.add(sub);
     match.begin();
     Timer(const Duration(milliseconds: 300), () {
-      if (match.game != null && mounted && store.session?.match != match) go();
+      if (match.game != null && mounted && store.session?.link != match) go();
     });
   }
 
@@ -390,13 +390,13 @@ class _RemoteLobbyScreenState extends State<RemoteLobbyScreen> {
   void dispose() {
     sub?.cancel();
     relaySub?.cancel();
-    if (AppStore.shared.session?.match != match) match?.dispose();
+    if (AppStore.shared.session?.link != match) match?.dispose();
     codeController.dispose();
     super.dispose();
   }
 
   Future<void> forget(String code) async {
-    if (transport?.code == code && AppStore.shared.session?.match != match) {
+    if (transport?.code == code && AppStore.shared.session?.link != match) {
       await sub?.cancel();
       await relaySub?.cancel();
       sub = null;
@@ -423,7 +423,7 @@ class _RemoteLobbyScreenState extends State<RemoteLobbyScreen> {
       return;
     }
     await sub?.cancel();
-    if (store.session?.match != match) await match?.dispose();
+    if (store.session?.link != match) await match?.dispose();
     final t = RelayTransport(code: code, secretKey: store.relayIdentity, relays: store.relays);
     transport = t;
     await relaySub?.cancel();
@@ -437,7 +437,7 @@ class _RemoteLobbyScreenState extends State<RemoteLobbyScreen> {
     store.rememberRemoteMatch(code: code, host: isHost);
     sub = m.events.listen((e) {
       if ((e == 'start' || e == 'hello' || e == 'action') && m.game != null) {
-        if (store.session?.match == m) return;
+        if (store.session?.link == m) return;
         store.rememberRemoteMatch(code: code, host: isHost, opponent: m.remoteName);
         store.startLinkedGame(m);
         Console.shared.play(Fx.confirm);

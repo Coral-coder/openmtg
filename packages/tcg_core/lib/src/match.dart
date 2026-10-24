@@ -31,6 +31,9 @@ abstract class TcgMatch {
 
   /// The moves applied so far, the deal first.
   List<TcgMove> get moves;
+
+  /// The turn number (for saves and notifications).
+  int get turn;
 }
 
 /// A card game's rules: makes matches and reads moves.
@@ -48,6 +51,9 @@ abstract class TcgRuleset {
   TcgMove deal(List<List<String>> decks, Map<String, dynamic>? options);
 
   TcgMove moveFromJson(Map<String, dynamic> json);
+
+  /// [seat] concedes the match.
+  TcgMove concede(int seat);
 
   /// A computer player for [seat].
   TcgBot bot(int seat, int seed);

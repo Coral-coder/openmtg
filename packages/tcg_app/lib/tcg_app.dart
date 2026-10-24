@@ -2,6 +2,7 @@
 /// notifications, and the Android self-updater with its prompt.
 library;
 
+export 'app/match_session.dart';
 export 'app/notifications.dart';
 export 'app/platform/files.dart';
 export 'app/sound.dart';

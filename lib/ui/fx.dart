@@ -5,7 +5,6 @@ import 'package:rules/rules.dart';
 
 import 'package:tcg_app/tcg_app.dart';
 import '../app/store.dart';
-import '../app/session.dart';
 import 'card_view.dart';
 import 'table_controller.dart';
 

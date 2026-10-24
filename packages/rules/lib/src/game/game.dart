@@ -82,6 +82,9 @@ class Game implements TcgMatch {
   List<GameAction> get moves => actions;
 
   @override
+  int get turn => state.turn;
+
+  @override
   void apply(covariant GameAction a) {
     if (state.over && a is! ConcedeAction) throw GameError('The game is over');
     switch (a) {

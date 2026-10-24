@@ -153,7 +153,7 @@ class _GameScreenState extends State<GameScreen> {
         IconButton(icon: Icon(Icons.close, color: t.accent), tooltip: 'Leave the table', onPressed: () => Navigator.of(context).maybePop()),
         Expanded(
           child: Text(
-            s.isLinked ? s.match?.status ?? '' : (s.thinking ? '${s.playerNames[s.opponentSeat]} is thinking…' : t.label(t.name)),
+            s.isLinked ? s.link?.status ?? '' : (s.thinking ? '${s.playerNames[s.opponentSeat]} is thinking…' : t.label(t.name)),
             style: t.style(12, color: t.muted),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

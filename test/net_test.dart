@@ -358,5 +358,7 @@ class _OtherGame implements TcgRuleset {
   @override
   TcgMove moveFromJson(Map<String, dynamic> json) => inner.moveFromJson(json);
   @override
+  TcgMove concede(int seat) => inner.concede(seat);
+  @override
   TcgBot bot(int seat, int seed) => inner.bot(seat, seed);
 }
