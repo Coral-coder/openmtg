@@ -9,6 +9,7 @@ library;
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
+import 'package:tcg_core/tcg_core.dart';
 
 import '../cards/card.dart';
 import '../cards/card_db.dart';
@@ -18,7 +19,6 @@ import '../oracle/parser.dart';
 import 'actions.dart';
 import 'chars.dart';
 import 'state.dart';
-import '../util/sort.dart';
 
 part 'layers.dart';
 part 'query.dart';
@@ -41,7 +41,7 @@ class _Choices {
   final bool auto;
 }
 
-class Game {
+class Game implements TcgMatch {
   Game(this.db, {required List<String> players, required int seed}) : state = GameState(seed: seed, names: players);
 
   final CardDatabase db;
@@ -64,6 +64,7 @@ class Game {
   bool _castDuringResolution = false;
 
   /// Fingerprint of the state, for lockstep comparison.
+  @override
   String get fingerprint => sha256.convert(utf8.encode(state.digest())).toString().substring(0, 24);
 
   // -------------------------------------------------------------------------------------------
@@ -71,7 +72,17 @@ class Game {
   // -------------------------------------------------------------------------------------------
 
   /// Applies [a]; throws [GameError] if it isn't legal now.
-  void apply(GameAction a) {
+  @override
+  bool get over => state.over;
+
+  @override
+  PlayerId? get toAct => state.pending?.decision.player ?? state.priority;
+
+  @override
+  List<GameAction> get moves => actions;
+
+  @override
+  void apply(covariant GameAction a) {
     if (state.over && a is! ConcedeAction) throw GameError('The game is over');
     switch (a) {
       case StartAction():

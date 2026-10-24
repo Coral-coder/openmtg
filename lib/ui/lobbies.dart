@@ -6,14 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:rules/rules.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../app/sound.dart';
+import 'package:tcg_app/tcg_app.dart';
 import '../app/store.dart';
-import '../net/ble.dart';
-import '../net/lan.dart';
-import '../net/protocol.dart';
-import '../net/relay.dart';
-import '../net/transport.dart';
-import '../theme/theme.dart';
 
 /// Color pips for a deck's colors.
 String deckColors(Deck d, CardDatabase db) {
@@ -270,7 +264,7 @@ class _LocalLobbyScreenState extends State<LocalLobbyScreen> {
     final store = AppStore.shared;
     final d = deck;
     if (d == null) return;
-    final match = LockstepMatch(transport: t, db: store.db, localName: store.playerName, localId: store.deviceId, localDeck: d.cards, isHost: isHost, rules: store.rules, archive: store);
+    final match = LockstepMatch(transport: t, ruleset: MtgRuleset(store.db), localName: store.playerName, localId: store.deviceId, localDeck: d.cards, isHost: isHost, options: store.rules.toJson(), archive: store);
     late StreamSubscription<String> sub;
     void go() {
       sub.cancel();
@@ -434,7 +428,7 @@ class _RemoteLobbyScreenState extends State<RemoteLobbyScreen> {
     transport = t;
     await relaySub?.cancel();
     relaySub = t.relayStatus.listen((m) => setState(() => relaysUp = m.values.where((v) => v).length));
-    final m = LockstepMatch(transport: t, db: store.db, localName: store.playerName, localId: store.deviceId, localDeck: d.cards, isHost: isHost, rules: store.rules, matchKey: 'relay:$code', archive: store);
+    final m = LockstepMatch(transport: t, ruleset: MtgRuleset(store.db), localName: store.playerName, localId: store.deviceId, localDeck: d.cards, isHost: isHost, options: store.rules.toJson(), matchKey: 'relay:$code', archive: store);
     match = m;
     setState(() {
       hostedCode = isHost ? code : null;

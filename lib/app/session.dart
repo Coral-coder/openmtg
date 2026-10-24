@@ -4,9 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:rules/rules.dart';
 
-import '../net/protocol.dart';
-import 'notifications.dart';
-import 'sound.dart';
+import 'package:tcg_app/tcg_app.dart';
 
 enum SessionMode { solo, hotseat, linked }
 
@@ -31,9 +29,9 @@ class GameSession extends ChangeNotifier {
         seed = 0,
         rules = RulesOptions.standard,
         match = match,
-        playerNames = [for (final p in match.game!.state.players) p.name],
+        playerNames = [for (final p in (match.game! as Game).state.players) p.name],
         decks = const [],
-        game = match.game! {
+        game = match.game! as Game {
     localSeat = match.localSeat;
     _lastLog = game.state.log.length;
     _matchSub = match.events.listen((e) {
@@ -80,7 +78,7 @@ class GameSession extends ChangeNotifier {
 
   GameState get state => game.state;
   bool get isLinked => mode == SessionMode.linked;
-  List<GameAction> get actions => match?.actions ?? game.actions;
+  List<GameAction> get actions => game.actions;
 
   /// The player who must act now: the pending decision's owner, or who has priority.
   PlayerId? get toAct => state.pending?.decision.player ?? state.priority;
@@ -130,7 +128,7 @@ class GameSession extends ChangeNotifier {
 
   void _followMatch() {
     final m = match!;
-    game = m.game!;
+    game = m.game! as Game;
     localSeat = m.localSeat;
     playerNames
       ..clear()

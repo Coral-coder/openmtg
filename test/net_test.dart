@@ -3,9 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openmtg/net/lan.dart';
-import 'package:openmtg/net/protocol.dart';
-import 'package:openmtg/net/transport.dart';
+import 'package:tcg_app/tcg_app.dart';
 import 'package:rules/rules.dart';
 
 late CardDatabase db;
@@ -13,8 +11,8 @@ late CardDatabase db;
 /// Two LockstepMatch instances play a full bot game against each other across a transport.
 Future<void> playAcross(Transport a, Transport b) async {
   final decks = [starterDeck(db, colorPairs['Boros (RW)']!), starterDeck(db, colorPairs['Dimir (UB)']!)];
-  final host = LockstepMatch(transport: a, db: db, localName: 'Host', localId: 'h', localDeck: decks[0], isHost: true, seed: 42);
-  final guest = LockstepMatch(transport: b, db: db, localName: 'Guest', localId: 'g', localDeck: decks[1], isHost: false);
+  final host = LockstepMatch(transport: a, ruleset: MtgRuleset(db), localName: 'Host', localId: 'h', localDeck: decks[0], isHost: true, seed: 42);
+  final guest = LockstepMatch(transport: b, ruleset: MtgRuleset(db), localName: 'Guest', localId: 'g', localDeck: decks[1], isHost: false);
   host.begin();
   guest.begin();
   final deadline = DateTime.now().add(const Duration(seconds: 30));
@@ -25,19 +23,19 @@ Future<void> playAcross(Transport a, Transport b) async {
   expect(guest.game, isNotNull);
   // Each side moves only when it is their turn; bots pick the moves.
   var steps = 0;
-  while (!host.game!.state.over && steps < 1500 && host.error == null && guest.error == null) {
-    final hp = host.game!._toAct;
+  while (!(host.game! as Game).state.over && steps < 1500 && host.error == null && guest.error == null) {
+    final hp = (host.game! as Game)._toAct;
     if (hp == host.localSeat) {
-      final action = Bot(hp!).next(host.game!);
+      final action = Bot(hp!).next((host.game! as Game));
       host.perform(action!);
     } else {
       // Wait for the guest to see the same state, then let them move.
       while (guest.actions.length < host.actions.length && DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 5));
       }
-      final gp = guest.game!._toAct;
+      final gp = (guest.game! as Game)._toAct;
       expect(gp, guest.localSeat, reason: 'guest should be to act at seq ${guest.actions.length}');
-      guest.perform(Bot(gp!).next(guest.game!)!);
+      guest.perform(Bot(gp!).next((guest.game! as Game))!);
     }
     while (guest.actions.length != host.actions.length && DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 5));
@@ -47,8 +45,8 @@ Future<void> playAcross(Transport a, Transport b) async {
   expect(host.error, isNull);
   expect(guest.error, isNull);
   expect(host.desynced, isFalse);
-  expect(host.game!.state.over, isTrue, reason: 'game should finish within $steps moves');
-  expect(guest.game!.state.digest(), host.game!.state.digest());
+  expect((host.game! as Game).state.over, isTrue, reason: 'game should finish within $steps moves');
+  expect((guest.game! as Game).state.digest(), (host.game! as Game).state.digest());
   await host.dispose();
   await guest.dispose();
 }
@@ -123,10 +121,10 @@ class MemoryArchive implements MatchArchive {
 }
 
 LockstepMatch hostOn(Transport t, MatchArchive a, {int seed = 42}) =>
-    LockstepMatch(transport: t, db: db, localName: 'Host', localId: 'h', localDeck: starterDeck(db, colorPairs['Boros (RW)']!), isHost: true, seed: seed, matchKey: 'relay:TEST', archive: a);
+    LockstepMatch(transport: t, ruleset: MtgRuleset(db), localName: 'Host', localId: 'h', localDeck: starterDeck(db, colorPairs['Boros (RW)']!), isHost: true, seed: seed, matchKey: 'relay:TEST', archive: a);
 
 LockstepMatch guestOn(Transport t, MatchArchive a) =>
-    LockstepMatch(transport: t, db: db, localName: 'Guest', localId: 'g', localDeck: starterDeck(db, colorPairs['Dimir (UB)']!), isHost: false, matchKey: 'relay:TEST', archive: a);
+    LockstepMatch(transport: t, ruleset: MtgRuleset(db), localName: 'Guest', localId: 'g', localDeck: starterDeck(db, colorPairs['Dimir (UB)']!), isHost: false, matchKey: 'relay:TEST', archive: a);
 
 Future<void> until(bool Function() done, {String? reason}) async {
   final deadline = DateTime.now().add(const Duration(seconds: 10));
@@ -141,10 +139,10 @@ bool inStep(LockstepMatch a, LockstepMatch b) =>
 
 /// The player to act moves (a bot picks), and both devices see it before the next move.
 Future<void> playMoves(LockstepMatch host, LockstepMatch guest, int n) async {
-  for (var i = 0; i < n && !host.game!.state.over; i++) {
-    final p = host.game!._toAct!;
+  for (var i = 0; i < n && !(host.game! as Game).state.over; i++) {
+    final p = (host.game! as Game)._toAct!;
     final mover = p == host.localSeat ? host : guest;
-    mover.perform(Bot(p).next(mover.game!)!);
+    mover.perform(Bot(p).next((mover.game! as Game))!);
     await until(() => inStep(host, guest), reason: 'move ${host.actions.length}');
   }
 }
@@ -168,23 +166,39 @@ void main() {
     await playAcross(a, b);
   });
 
+  test('a device playing a different card game is refused', () async {
+    final (a, b) = LoopbackTransport.pair();
+    final deck = starterDeck(db, colorPairs['Boros (RW)']!);
+    final host = LockstepMatch(transport: a, ruleset: MtgRuleset(db), localName: 'Host', localId: 'h', localDeck: deck, isHost: true, seed: 1);
+    final guest = LockstepMatch(transport: b, ruleset: _OtherGame(MtgRuleset(db)), localName: 'Guest', localId: 'g', localDeck: deck, isHost: false);
+    host.begin();
+    guest.begin();
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    expect(host.game, isNull);
+    expect(guest.game, isNull);
+    expect(host.error, contains('different card game'));
+    expect(guest.error, contains('different card game'));
+    await host.dispose();
+    await guest.dispose();
+  });
+
   test('lockstep catches a divergence', () async {
     final (a, b) = LoopbackTransport.pair();
     final decks = [starterDeck(db, colorPairs['Boros (RW)']!), starterDeck(db, colorPairs['Dimir (UB)']!)];
-    final host = LockstepMatch(transport: a, db: db, localName: 'Host', localId: 'h', localDeck: decks[0], isHost: true, seed: 7);
-    final guest = LockstepMatch(transport: b, db: db, localName: 'Guest', localId: 'g', localDeck: decks[1], isHost: false);
+    final host = LockstepMatch(transport: a, ruleset: MtgRuleset(db), localName: 'Host', localId: 'h', localDeck: decks[0], isHost: true, seed: 7);
+    final guest = LockstepMatch(transport: b, ruleset: MtgRuleset(db), localName: 'Guest', localId: 'g', localDeck: decks[1], isHost: false);
     host.begin();
     guest.begin();
     await Future<void>.delayed(const Duration(milliseconds: 200));
     // Tamper with the guest's state, then let the host move: digests must disagree.
     // (While a decision is open the game re-runs from its snapshot, so tamper with that too.)
-    guest.game!.state.players[0].life = 99;
-    guest.game!.state.pending?.snapshot.players[0].life = 99;
-    final p = host.game!._toAct!;
+    (guest.game! as Game).state.players[0].life = 99;
+    (guest.game! as Game).state.pending?.snapshot.players[0].life = 99;
+    final p = (host.game! as Game)._toAct!;
     if (p == host.localSeat) {
-      host.perform(Bot(p).next(host.game!)!);
+      host.perform(Bot(p).next((host.game! as Game))!);
     } else {
-      guest.perform(Bot(p).next(guest.game!)!);
+      guest.perform(Bot(p).next((guest.game! as Game))!);
     }
     await Future<void>.delayed(const Duration(milliseconds: 200));
     expect(host.desynced || guest.desynced, isTrue);
@@ -237,9 +251,9 @@ void main() {
     final hub = Hub();
     final (host, guest) = await startMatch(hub, MemoryArchive(), MemoryArchive());
     hub.cut();
-    final p = host.game!._toAct!;
+    final p = (host.game! as Game)._toAct!;
     final mover = p == host.localSeat ? host : guest;
-    mover.perform(Bot(p).next(mover.game!)!);
+    mover.perform(Bot(p).next((mover.game! as Game))!);
     await Future<void>.delayed(const Duration(milliseconds: 100));
     expect(host.actions.length == guest.actions.length, isFalse);
     hub.restore();
@@ -255,12 +269,12 @@ void main() {
     final shared = host.actions.length;
     hub.cut();
     // Cut off from each other, each device records something different after the same move.
-    final p = host.game!._toAct!;
+    final p = (host.game! as Game)._toAct!;
     final mover = p == host.localSeat ? host : guest;
     final other = p == host.localSeat ? guest : host;
-    mover.perform(Bot(p).next(mover.game!)!);
+    mover.perform(Bot(p).next((mover.game! as Game))!);
     other.perform(ConcedeAction(other.localSeat));
-    final next = mover.game!._toAct == mover.localSeat ? Bot(mover.localSeat).next(mover.game!) : null;
+    final next = (mover.game! as Game)._toAct == mover.localSeat ? Bot(mover.localSeat).next((mover.game! as Game)) : null;
     if (next != null) mover.perform(next);
     final hostLine = List.of(host.digests);
     hub.restore();
@@ -269,7 +283,7 @@ void main() {
     expect(guest.digests, hostLine);
     expect(guest.digests[shared - 1], host.digests[shared - 1]);
     expect(guest.notice, isNotNull, reason: 'the guest is told it went back');
-    if (!host.game!.state.over) await playMoves(host, guest, 10);
+    if (!(host.game! as Game).state.over) await playMoves(host, guest, 10);
     await host.dispose();
     await guest.dispose();
   });
@@ -277,11 +291,11 @@ void main() {
   test('two moves at the same moment: the host’s stands and nobody falls out of step', () async {
     final hub = Hub();
     final (host, guest) = await startMatch(hub, MemoryArchive(), MemoryArchive());
-    final p = host.game!._toAct!;
+    final p = (host.game! as Game)._toAct!;
     final mover = p == host.localSeat ? host : guest;
     final other = p == host.localSeat ? guest : host;
     // Both send before either hears the other.
-    mover.perform(Bot(p).next(mover.game!)!);
+    mover.perform(Bot(p).next((mover.game! as Game))!);
     other.perform(ConcedeAction(other.localSeat));
     await until(() => inStep(host, guest));
     expect(host.desynced || guest.desynced, isFalse);
@@ -292,12 +306,12 @@ void main() {
   test('conceding on the other player’s move ends the game the same way on both devices', () async {
     final hub = Hub();
     final (host, guest) = await startMatch(hub, MemoryArchive(), MemoryArchive());
-    final p = host.game!._toAct!;
+    final p = (host.game! as Game)._toAct!;
     final waiting = p == host.localSeat ? guest : host;
     waiting.perform(ConcedeAction(waiting.localSeat));
     await until(() => inStep(host, guest));
-    expect(host.game!.state.winner, 1 - waiting.localSeat);
-    expect(guest.game!.state.winner, 1 - waiting.localSeat);
+    expect((host.game! as Game).state.winner, 1 - waiting.localSeat);
+    expect((guest.game! as Game).state.winner, 1 - waiting.localSeat);
     await host.dispose();
     await guest.dispose();
   });
@@ -327,4 +341,22 @@ void main() {
 
 extension on Game {
   int? get _toAct => state.pending?.decision.player ?? state.priority;
+}
+
+/// Magic's rules under another game's id, to check that peers compare which game they play.
+class _OtherGame implements TcgRuleset {
+  _OtherGame(this.inner);
+  final MtgRuleset inner;
+  @override
+  String get id => 'other';
+  @override
+  int get engineVersion => inner.engineVersion;
+  @override
+  TcgMatch newMatch(List<String> playerNames, int seed) => inner.newMatch(playerNames, seed);
+  @override
+  TcgMove deal(List<List<String>> decks, Map<String, dynamic>? options) => inner.deal(decks, options);
+  @override
+  TcgMove moveFromJson(Map<String, dynamic> json) => inner.moveFromJson(json);
+  @override
+  TcgBot bot(int seat, int seed) => inner.bot(seat, seed);
 }

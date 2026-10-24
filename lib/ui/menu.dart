@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rules/rules.dart';
 
 import '../app/store.dart';
-import '../app/updater.dart';
-import '../net/relay.dart';
-import '../theme/theme.dart';
+import 'package:tcg_app/tcg_app.dart';
 
 const fanContentNotice =
     'OpenMTG is unofficial Fan Content permitted under the Fan Content Policy. Not approved or endorsed by Wizards of the Coast. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC. Card data and images courtesy of Scryfall. Free, with no ads and nothing to buy.';

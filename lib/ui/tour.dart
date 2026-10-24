@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/store.dart';
-import '../theme/theme.dart';
+import 'package:tcg_app/tcg_app.dart';
 
 /// One stop on a guided tour: the part of the screen to light up (none for a centered note)
 /// and what to say about it.

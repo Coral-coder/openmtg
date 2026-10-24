@@ -30,6 +30,9 @@ jobs:
       - run: dart pub get
       - run: dart analyze --fatal-warnings
       - run: dart test --reporter expanded
+      - name: Shared core (tcg_core)
+        working-directory: packages/tcg_core
+        run: dart pub get && dart analyze --fatal-warnings && dart test
       - name: Chaos harness (300 bot games, each replayed)
         run: dart run bin/chaos.dart --games 300 --seed ${{ github.run_number }}
       - name: Same games on the Dart VM and in JavaScript (browser and phone stay in lockstep)
@@ -55,5 +58,8 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
+      - name: Shared app shell (tcg_app)
+        working-directory: packages/tcg_app
+        run: flutter pub get && flutter analyze --no-fatal-infos
       - run: flutter test --reporter expanded
       - run: flutter build web --release --base-href /openmtg/play/

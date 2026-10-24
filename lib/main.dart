@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'app/notifications.dart';
+import 'package:tcg_app/tcg_app.dart';
 import 'app/store.dart';
-import 'theme/theme.dart';
 import 'ui/database.dart';
 import 'ui/decks.dart';
 import 'ui/lobbies.dart';

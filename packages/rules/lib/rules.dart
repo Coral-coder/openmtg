@@ -17,3 +17,5 @@ export 'src/game/state.dart';
 export 'src/ai/bot.dart';
 export 'src/formats/decks.dart';
 export 'src/ir/describe.dart';
+export 'src/ruleset.dart';
+export 'package:tcg_core/tcg_core.dart' show TcgMatch, TcgMove, TcgRuleset, TcgBot, TcgError;

@@ -5,7 +5,7 @@ import 'package:rules/rules.dart';
 
 import '../app/session.dart';
 import '../app/store.dart';
-import '../theme/theme.dart';
+import 'package:tcg_app/tcg_app.dart';
 import 'card_detail.dart';
 import 'decisions.dart';
 import 'fx.dart';

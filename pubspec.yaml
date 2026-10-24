@@ -11,6 +11,10 @@ dependencies:
     sdk: flutter
   rules:
     path: packages/rules
+  tcg_core:
+    path: packages/tcg_core
+  tcg_app:
+    path: packages/tcg_app
   collection: ^1.19.1
   crypto: ^3.0.7
   http: ^1.5.0

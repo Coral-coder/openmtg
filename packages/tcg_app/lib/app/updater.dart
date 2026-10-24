@@ -45,9 +45,12 @@ class Updater extends ChangeNotifier {
   Updater._();
   static final shared = Updater._();
 
-  static const repo = 'Coral-coder/openmtg';
-  static const manifestUrl = 'https://github.com/$repo/releases/latest/download/update.json';
-  static const latestApkUrl = 'https://github.com/$repo/releases/latest/download/OpenMTG.apk';
+  /// The GitHub repository whose releases carry the APK, and the APK's file name. Each app sets
+  /// these at startup (the defaults are OpenMTG's).
+  static String repo = 'Coral-coder/openmtg';
+  static String apkName = 'OpenMTG.apk';
+  static String get manifestUrl => 'https://github.com/$repo/releases/latest/download/update.json';
+  static String get latestApkUrl => 'https://github.com/$repo/releases/latest/download/$apkName';
   static const _channel = MethodChannel('openmtg/updater');
 
   /// Updates are only self-served on Android; iOS builds come through TestFlight.

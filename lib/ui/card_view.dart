@@ -7,8 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:rules/rules.dart';
 
-import '../app/platform/files.dart';
-import '../theme/theme.dart';
+import 'package:tcg_app/tcg_app.dart';
 
 /// Card images come from Scryfall's image CDN on demand and are cached (the browser's cache on
 /// the web, a file cache on phones). They are always shown whole, so the artist credit and the

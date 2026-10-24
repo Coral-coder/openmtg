@@ -12,11 +12,13 @@ the browser (GitHub Pages), Android and iOS. It grew out of
 
 | Path | What |
 | --- | --- |
+| `packages/tcg_core/` | What every card game shares: the match contract (a seed plus moves, with a fingerprint that's the same on every platform), the seeded generator and the stable sort. |
+| `packages/tcg_app/` | The game-independent app shell: lockstep networking (Nostr relays, Wi‑Fi, Bluetooth), themes, synthesized sounds, notifications, the Android self-updater. |
 | `packages/rules/` | The rules engine, pure Dart and deterministic. `lib/src/game/` is organised by CR area, `lib/src/oracle/` turns oracle text into the ability IR, `lib/src/ai/` is the computer player. |
 | `packages/rules/bin/build_db.dart` | Scryfall bulk data → `cards.json`, `printings.json`, `coverage.json`, `manifest.json`. |
 | `packages/rules/bin/chaos.dart` | Plays hundreds of bot games and replays each from its log, comparing fingerprints. |
 | `packages/rules/bin/cards.dart` | Coverage of one set, or one card's parse: `dart run bin/cards.dart test/fixtures/fdn.json "Llanowar Elves"`. |
-| `lib/` | The app: `app/` (store, sessions, card data, sounds, updater), `net/` (lockstep protocol, Nostr relays, Wi‑Fi, Bluetooth), `theme/`, `ui/`. |
+| `lib/` | The Magic app on top of the shell: `app/` (store, sessions, card data), `ui/` (title, menu, table, decks, cards). |
 | `assets/data/pool.json` | The bundled, playable card pool (Foundations). The full database is downloaded on demand from the site. |
 | `site/` | The landing page; the web build goes under `/play/`, the card data under `/data/`. |
 | `tools/fetch_scryfall.sh` | Downloads Scryfall's bulk files politely. |

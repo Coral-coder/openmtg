@@ -2,15 +2,21 @@
 /// sync. A game is its seed plus its ordered actions. Each action names the player making it.
 library;
 
+import 'package:tcg_core/tcg_core.dart';
+
 import 'rules_options.dart';
 import 'state.dart';
 
-sealed class GameAction {
+sealed class GameAction extends TcgMove {
   const GameAction(this.player);
 
   /// Who acts (-1 for the start action).
   final PlayerId player;
 
+  @override
+  int get seat => player;
+
+  @override
   Map<String, dynamic> toJson();
 
   static GameAction fromJson(Map<String, dynamic> j) {

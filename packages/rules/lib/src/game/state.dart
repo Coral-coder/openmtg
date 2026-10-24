@@ -8,7 +8,8 @@ import '../cards/card.dart';
 import '../cards/mana.dart';
 import '../ir/describe.dart';
 import '../ir/ir.dart';
-import '../util/rng.dart';
+import 'package:tcg_core/tcg_core.dart';
+
 import 'chars.dart';
 import 'rules_options.dart';
 
@@ -895,11 +896,8 @@ class GameState {
 }
 
 /// A thrown error for illegal actions and answers (from a bug or a misbehaving peer).
-class GameError implements Exception {
-  GameError(this.message);
-  final String message;
-  @override
-  String toString() => message;
+class GameError extends TcgError {
+  GameError(super.message);
 }
 
 /// Thrown inside a task when it needs a decision it doesn't have an answer for yet.

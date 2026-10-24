@@ -9,6 +9,8 @@ environment:
 dependencies:
   crypto: ^3.0.7
   fixnum: ^1.1.1
+  tcg_core:
+    path: ../tcg_core
 
 dev_dependencies:
   lints: ^6.0.0

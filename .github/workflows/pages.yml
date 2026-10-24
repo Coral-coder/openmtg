@@ -17,6 +17,8 @@ on:
       - "lib/**"
       - "packages/rules/lib/**"
       - "packages/rules/bin/**"
+      - "packages/tcg_core/lib/**"
+      - "packages/tcg_app/lib/**"
       - "web/**"
       - "assets/**"
       - "pubspec.yaml"

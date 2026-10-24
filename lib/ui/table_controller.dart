@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:rules/rules.dart';
 
 import '../app/session.dart';
-import '../app/sound.dart';
+import 'package:tcg_app/tcg_app.dart';
 
 /// What the local player is in the middle of choosing on the table: targets, attackers,
 /// blockers, mana sources. Turned into one answer when they confirm.

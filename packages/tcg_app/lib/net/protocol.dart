@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-
-import 'package:rules/rules.dart';
+import 'package:tcg_core/tcg_core.dart';
 
 import 'transport.dart';
 
@@ -26,25 +25,29 @@ abstract class MatchArchive {
 /// last shared move and takes them, so a crash or a lost message never strands a game.
 ///
 /// Messages (JSON):
-/// - hello: who I am, my deck, and my log (game id, fingerprints); answered once with `r`.
-/// - start: the deal (seed, names, decks, seat ids, rules), sent to a device without the game.
+/// - hello: who I am, which card game, my deck, and my log (game id, fingerprints); answered once
+///   with `r`.
+/// - start: the deal (seed, names, decks, seat ids, options), sent to a device without the game.
+
+/// The rules come from a [TcgRuleset], so the same protocol carries any card game.
 /// - action: move `seq`, its fingerprint `d` and the fingerprint `p` of the position it was made
 ///   from, so a move from a different history is never applied on top of this one.
 /// - need: send me your moves from `from` on.
 class LockstepMatch {
   LockstepMatch({
     required this.transport,
-    required this.db,
+    required this.ruleset,
     required this.localName,
     required this.localId,
     required this.localDeck,
     required this.isHost,
     int? seed,
-    this.engineVersion = rulesEngineVersion,
-    this.rules = RulesOptions.standard,
+    int? engineVersion,
+    this.options,
     this.matchKey,
     this.archive,
-  }) : _seed = seed ?? Random.secure().nextInt(1 << 31) {
+  })  : engineVersion = engineVersion ?? ruleset.engineVersion,
+        _seed = seed ?? Random.secure().nextInt(1 << 31) {
     _sub = transport.messages.listen(_onMessage, onError: (_) {});
     _stateSub = transport.stateChanges.listen((s) {
       if (s == LinkState.connected) _sendHello();
@@ -54,7 +57,7 @@ class LockstepMatch {
   }
 
   final Transport transport;
-  final CardDatabase db;
+  final TcgRuleset ruleset;
   final String localName, localId;
   final List<String> localDeck;
   final bool isHost;
@@ -66,13 +69,13 @@ class LockstepMatch {
   String? matchKey;
   final MatchArchive? archive;
 
-  /// The host's rules; a guest takes them from the deal.
-  RulesOptions rules;
+  /// The host's game options (rules variants) as JSON; a guest takes them from the deal.
+  Map<String, dynamic>? options;
 
   String? remoteName, remoteId;
   List<String>? remoteDeck;
-  Game? game;
-  final List<GameAction> actions = [];
+  TcgMatch? game;
+  final List<TcgMove> actions = [];
   final List<String> digests = [];
 
   /// Which seat made each move (-1 for the deal).
@@ -122,6 +125,7 @@ class LockstepMatch {
     _send({
       't': 'hello',
       'v': protocolVersion,
+      'g': ruleset.id,
       'ev': engineVersion,
       'name': localName,
       'id': localId,
@@ -193,6 +197,10 @@ class LockstepMatch {
   void _onHello(Map<String, dynamic> m) {
     final id = m['id'] as String;
     if (id == localId) return;
+    if ((m['g'] ?? 'mtg') != ruleset.id) {
+      if (game == null) _fail('The other player is playing a different card game (${m['g']})');
+      return;
+    }
     if (m['v'] != protocolVersion || m['ev'] != engineVersion) {
       // An old hello replayed from a relay's history doesn't spoil a game already going.
       if (game == null) _fail('The other player runs a different game version (${m['v']}/${m['ev']} vs $protocolVersion/$engineVersion)');
@@ -264,7 +272,7 @@ class LockstepMatch {
       }
     }
     final decks = [for (final d in setup['decks'] as List) (d as List).cast<String>()];
-    _load(setup, [StartAction(decks, rules: RulesOptions.fromJson(setup['rules'] as Map<String, dynamic>?))], const [-1]);
+    _load(setup, [ruleset.deal(decks, (setup['rules'] as Map?)?.cast<String, dynamic>())], const [-1]);
     if (theirGame != null && theirGame != gameId) {
       _desync('The two devices dealt the same game differently. Make sure both run the latest version.');
       return;
@@ -285,9 +293,9 @@ class LockstepMatch {
       'names': [localName, name],
       'decks': [localDeck, deck],
       'ids': [localId, id],
-      'rules': rules.toJson(),
+      'rules': options,
     };
-    _load(setup, [StartAction([localDeck, deck], rules: rules)], const [-1]);
+    _load(setup, [ruleset.deal([localDeck, deck], options)], const [-1]);
     _save();
     _sendStart();
     _events.add('start');
@@ -301,8 +309,8 @@ class LockstepMatch {
   }
 
   /// Deals the game [setup] describes and replays [moves] (the first is the deal itself).
-  void _load(Map<String, dynamic> setup, List<GameAction> moves, List<int> movers) {
-    final g = Game(db, players: (setup['names'] as List).cast<String>(), seed: setup['seed'] as int);
+  void _load(Map<String, dynamic> setup, List<TcgMove> moves, List<int> movers) {
+    final g = ruleset.newMatch((setup['names'] as List).cast<String>(), setup['seed'] as int);
     actions.clear();
     digests.clear();
     by.clear();
@@ -319,7 +327,7 @@ class LockstepMatch {
     }
     _setup = setup;
     seatIds = (setup['ids'] as List).cast<String>();
-    rules = RulesOptions.fromJson(setup['rules'] as Map<String, dynamic>?);
+    options = (setup['rules'] as Map?)?.cast<String, dynamic>();
     game = g;
   }
 
@@ -333,9 +341,9 @@ class LockstepMatch {
     try {
       final setup = (log['setup'] as Map).cast<String, dynamic>();
       if (!(setup['ids'] as List).contains(localId)) return;
-      final moves = [for (final j in log['moves'] as List) GameAction.fromJson((j as Map).cast<String, dynamic>())];
+      final moves = [for (final j in log['moves'] as List) ruleset.moveFromJson((j as Map).cast<String, dynamic>())];
       _load(setup, moves, (log['by'] as List).cast<int>());
-      if (!keepFinished && game!.state.over) _clear();
+      if (!keepFinished && game!.over) _clear();
     } catch (_) {
       _clear();
     }
@@ -373,15 +381,15 @@ class LockstepMatch {
     _status.add(status);
   }
 
-  static String _digest(Game g) => g.fingerprint;
+  static String _digest(TcgMatch g) => g.fingerprint;
 
   Map<String, dynamic> _actionMessage(int i) => {'t': 'action', 'seq': i, 'a': actions[i].toJson(), 'd': digests[i], 'p': digests[i - 1], 'by': by[i]};
 
   /// A move by the local player: applied and saved here, then sent.
-  void perform(GameAction action) {
+  void perform(TcgMove action) {
     final g = game;
     if (g == null) throw StateError('No game yet');
-    if (action.player != localSeat) throw GameError('That move belongs to the other player');
+    if (action.seat != localSeat) throw TcgError('That move belongs to the other player');
     g.apply(action);
     actions.add(action);
     by.add(localSeat);
@@ -425,12 +433,12 @@ class LockstepMatch {
         _compareLogs();
         break;
       }
-      final action = GameAction.fromJson(m['a'] as Map<String, dynamic>);
+      final action = ruleset.moveFromJson(m['a'] as Map<String, dynamic>);
       try {
         // A move must be made by the seat it says made it. (A peer also relays this device's own
         // earlier moves when it catches it up, so the local seat can appear here.)
         final by = m['by'] as int?;
-        if (by != null && by >= 0 && action is! StartAction && action.player != by) throw GameError('A move for the wrong seat');
+        if (by != null && by >= 0 && action.seat >= 0 && action.seat != by) throw TcgError('A move for the wrong seat');
         g.apply(action);
       } catch (e) {
         _fail('Illegal move from the other player: $e');

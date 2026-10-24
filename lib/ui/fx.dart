@@ -3,9 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:rules/rules.dart';
 
-import '../app/sound.dart';
+import 'package:tcg_app/tcg_app.dart';
 import '../app/store.dart';
-import '../theme/theme.dart';
 import '../app/session.dart';
 import 'card_view.dart';
 import 'table_controller.dart';

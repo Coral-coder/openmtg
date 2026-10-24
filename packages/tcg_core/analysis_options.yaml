@@ -1,0 +1,7 @@
+include: package:lints/recommended.yaml
+
+linter:
+  rules:
+    avoid_renaming_method_parameters: false
+    unintended_html_in_doc_comment: false
+    prefer_interpolation_to_compose_strings: false

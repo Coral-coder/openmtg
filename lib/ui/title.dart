@@ -2,10 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../app/sound.dart';
+import 'package:tcg_app/tcg_app.dart';
 import '../app/store.dart';
-import 'update.dart';
-import '../theme/theme.dart';
 import 'card_view.dart';
 import 'menu.dart';
 

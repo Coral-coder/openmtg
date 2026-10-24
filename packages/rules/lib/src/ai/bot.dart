@@ -8,10 +8,9 @@ import '../game/actions.dart';
 import '../game/chars.dart';
 import '../game/game.dart';
 import '../game/state.dart';
-import '../util/rng.dart';
-import '../util/sort.dart';
+import 'package:tcg_core/tcg_core.dart';
 
-class Bot {
+class Bot implements TcgBot {
   Bot(this.player, {int seed = 1}) : _rng = SeededRng(seed);
   final PlayerId player;
   final SeededRng _rng;
@@ -40,7 +39,8 @@ class Bot {
   }
 
   /// Applies this bot's next action to [g]. Returns false if it had nothing to do.
-  bool step(Game g) {
+  @override
+  bool step(covariant Game g) {
     final a = next(g);
     if (a == null) return false;
     try {

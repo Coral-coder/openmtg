@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:rules/rules.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'platform/files.dart';
+import 'package:tcg_app/tcg_app.dart';
 
 /// Where the generated card data is published (with the website, docs/PLAN.md §3).
 const siteUrl = 'https://coral-coder.github.io/openmtg/';

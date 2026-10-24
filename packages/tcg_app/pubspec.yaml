@@ -1,0 +1,29 @@
+name: tcg_app
+description: The game-independent app shell shared by OpenMTG and other card games — online (Nostr relays), Wi-Fi and Bluetooth play over lockstep, themes, synthesized sounds, notifications and the Android self-updater.
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  tcg_core:
+    path: ../tcg_core
+  collection: ^1.19.1
+  crypto: ^3.0.7
+  http: ^1.5.0
+  shared_preferences: ^2.5.6
+  path_provider: ^2.1.6
+  flutter_local_notifications: ^22.3.2
+  web_socket_channel: ^3.0.3
+  nostr: ^2.0.0
+  bluetooth_low_energy: ^6.2.1
+  permission_handler: ^13.0.2
+  audioplayers: ^6.8.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

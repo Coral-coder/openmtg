@@ -7,13 +7,9 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:rules/rules.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../net/protocol.dart';
-import '../net/relay.dart';
-import '../theme/theme.dart';
+import 'package:tcg_app/tcg_app.dart';
 import 'card_data.dart';
-import 'notifications.dart';
 import 'session.dart';
-import 'sound.dart';
 
 class Deck {
   Deck({required this.id, required this.name, required this.cards, this.format = DeckFormat.casual, this.starter = false, this.commander});

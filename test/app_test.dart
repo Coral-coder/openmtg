@@ -6,10 +6,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openmtg/app/sound.dart';
+import 'package:tcg_app/tcg_app.dart';
 import 'package:openmtg/app/store.dart';
 import 'package:openmtg/main.dart';
-import 'package:openmtg/theme/theme.dart';
 import 'package:rules/rules.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

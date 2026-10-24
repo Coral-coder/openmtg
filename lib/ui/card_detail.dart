@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rules/rules.dart';
 
-import '../theme/theme.dart';
+import 'package:tcg_app/tcg_app.dart';
 import 'card_view.dart';
 import 'table.dart';
 import 'table_controller.dart';
